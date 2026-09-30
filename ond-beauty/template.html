@@ -24,6 +24,7 @@
   --bad: #b3261e;
   --bad-bg: #fbe7e5;
   --flat-bg: #eeebef;
+  --wknd: rgba(138, 42, 92, 0.035);
   --font: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "DM Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
@@ -33,7 +34,7 @@
     --grid: #2d292e; --axis: #3d383e; --line: rgba(255,255,255,0.10);
     --accent: #e08ab5; --accent-soft: #3a2230;
     --s-ty: #3987e5; --s-ly: #d95926; --s-lly: #199e70; --s-tgt: #f6f2f6;
-    --good: #3cc23c; --good-bg: #16301a; --bad: #ff8a80; --bad-bg: #3a1c1b; --flat-bg: #2a262b;
+    --good: #3cc23c; --good-bg: #16301a; --bad: #ff8a80; --bad-bg: #3a1c1b; --flat-bg: #2a262b; --wknd: rgba(224, 138, 181, 0.05);
     color-scheme: dark;
   }
 }
@@ -42,10 +43,12 @@
   --grid: #2d292e; --axis: #3d383e; --line: rgba(255,255,255,0.10);
   --accent: #e08ab5; --accent-soft: #3a2230;
   --s-ty: #3987e5; --s-ly: #d95926; --s-lly: #199e70; --s-tgt: #f6f2f6;
-  --good: #3cc23c; --good-bg: #16301a; --bad: #ff8a80; --bad-bg: #3a1c1b; --flat-bg: #2a262b;
+  --good: #3cc23c; --good-bg: #16301a; --bad: #ff8a80; --bad-bg: #3a1c1b; --flat-bg: #2a262b; --wknd: rgba(224, 138, 181, 0.05);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
+.chart svg { user-select: none; -webkit-user-select: none; }
 body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 14px; line-height: 1.45; }
 .wrap { max-width: 1440px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 48px; }
 header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 24px; }
@@ -88,6 +91,37 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .fsum { font-size: 12px; color: var(--muted); }
 .loading { padding: 40px 0; color: var(--muted); }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-left: auto; font-size: 12px; color: var(--fg-2); }
+.lg { font: inherit; font-size: 12px; background: none; border: 0; color: var(--fg-2); cursor: pointer; padding: 3px 6px; border-radius: 6px; }
+.lg:hover { background: var(--flat-bg); }
+.lg[aria-pressed="false"] { opacity: 0.4; text-decoration: line-through; }
+.zoominfo { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--accent); font-weight: 600; background: var(--accent-soft); border-radius: 8px; padding: 2px 4px 2px 10px; }
+.hint { font-size: 12px; color: var(--muted); margin: 10px 0 0; }
+.panel { position: relative; }
+.panel.wide { grid-column: 1 / -1; }
+.panel.wide .chart { height: 380px; }
+.xp { position: absolute; top: 10px; right: 10px; background: none; border: 1px solid transparent; color: var(--muted); border-radius: 6px; width: 26px; height: 26px; display: grid; place-items: center; cursor: pointer; }
+.xp:hover { border-color: var(--line); color: var(--fg); background: var(--bg); }
+.ph { padding-right: 30px; }
+.chart .hit { cursor: crosshair; touch-action: pan-y; }
+.tip .thint { margin-top: 6px; padding-top: 5px; border-top: 1px solid var(--line); font-size: 10.5px; color: var(--muted); }
+.drill { margin-top: 18px; background: var(--surface); border: 1px solid var(--accent); border-radius: 10px; padding: 14px; min-width: 0; }
+.dh { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 16px; align-items: flex-start; margin-bottom: 10px; }
+.dh h2 { margin: 0; font-size: 16px; }
+.dh .fsum { margin: 4px 0 0; }
+.dctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dt tbody tr { cursor: pointer; }
+.dt tbody tr:hover { background: var(--flat-bg); }
+tr.cur td { background: var(--accent-soft); }
+.dt td.nm { font-weight: 600; max-width: 240px; overflow: hidden; text-overflow: ellipsis; }
+.dt td.barc { min-width: 180px; }
+.cbar { position: relative; height: 8px; display: inline-block; width: 110px; vertical-align: middle; margin-right: 8px; }
+.cbar::before { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; border-left: 1px solid var(--axis); }
+.cbar span { position: absolute; top: 0; height: 8px; border-radius: 2px; }
+.cbar .pos { background: var(--good); }
+.cbar .neg { background: var(--bad); }
+.dt td.barc small { font-family: var(--mono); font-size: 11px; color: var(--fg-2); }
+#table tbody tr { cursor: pointer; }
+#table tbody tr:hover { background: var(--flat-bg); }
 .legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: 14px; margin-top: 16px; }
@@ -125,6 +159,7 @@ thead tr:first-child th { color: var(--fg-2); }
 td.d { font-family: var(--mono); font-size: 11.5px; }
 td .up { color: var(--good); } td .down { color: var(--bad); }
 .note { color: var(--muted); font-size: 12px; margin-top: 14px; max-width: 80ch; }
+@media (max-width: 700px) { .bar { position: static; } }
 @media (max-width: 560px) { .wrap { padding-inline: 16px; } .legend { margin-left: 0; } .big { font-size: 21px; } }
 @media (prefers-reduced-motion: no-preference) { .seg button, nav.tabs button { transition: background .15s, color .15s; } }
 </style>
@@ -166,10 +201,21 @@ td .up { color: var(--good); } td .down { color: var(--bad); }
         <button id="g-full" data-v="full" aria-pressed="false">Through 31 Dec</button>
       </div>
     </div>
+    <div class="ctl"><span>View</span>
+      <div class="seg" id="view">
+        <button id="v-daily" data-v="daily" aria-pressed="true">Daily</button>
+        <button id="v-ma7" data-v="ma7" aria-pressed="false" title="Trailing 7-day average (per day for GMV and units)">7-day avg</button>
+        <button id="v-cum" data-v="cum" aria-pressed="false" title="Running total from 25 Sep; ratios are calculated on the running totals">Cumulative</button>
+      </div>
+    </div>
     <div class="legend" id="legend"></div>
+    <div class="zoominfo" id="zoominfo" hidden><span></span><button class="lnk" id="zoomreset">Reset zoom</button></div>
   </div>
+  <p class="hint">Hover a chart to compare every metric on that day · drag across a chart to zoom · click a day for its brand and category breakdown · click the legend to show or hide a line</p>
 
   <section class="grid" id="grid"><p class="loading">Loading Beauty sales data…</p></section>
+
+  <section class="drill" id="drill" hidden></section>
 
   <details class="tbl" id="tbl">
     <summary>Daily table</summary>
@@ -228,9 +274,9 @@ function recompute() {
 const filtered = () => DIMS.some(dm => state.f[dm.key].length);
 
 const METRICS = [
-  { key: "gmv",  name: "GMV",        unit: "AED", kind: "aed",   zero: true,  calc: a => a[I.gmv] },
+  { key: "gmv",  name: "GMV",        unit: "AED", kind: "aed",   zero: true,  additive: true,  calc: a => a[I.gmv] },
   { key: "asp",  name: "ASP",        unit: "AED", kind: "aed2",  zero: false, calc: a => a[I.u] ? a[I.gmv] / a[I.u] : null },
-  { key: "units",name: "Units",      unit: "",    kind: "int",   zero: true,  calc: a => a[I.u] },
+  { key: "units",name: "Units",      unit: "",    kind: "int",   zero: true,  additive: true,  calc: a => a[I.u] },
   { key: "mkd",  name: "MKD %",      unit: "",    kind: "pct",   zero: false, lowerBetter: true, calc: a => a[I.np] ? a[I.mkd] / a[I.np] : null },
   { key: "pc1",  name: "PC1 %",      unit: "",    kind: "pct",   zero: false, calc: a => a[I.rev] ? a[I.pc1] / a[I.rev] : null },
   { key: "ppc1", name: "Prov. PC1 %",unit: "",    kind: "pct",   zero: false, calc: a => a[I.rev] ? a[I.ppc1] / a[I.rev] : null },
@@ -314,19 +360,49 @@ function delta(m, cur, base) {
 const chip = (lbl, dl) => `<span class="chip ${dl ? dl.cls : ""}" title="vs ${lbl}">${lbl} ${dl ? dl.txt : "–"}</span>`;
 
 // ---------- state ----------
-const state = { region: "ALL", align: "dow", range: "td", f: { cat: [], sub: [], brand: [] } };
-try { const sv = JSON.parse(localStorage.getItem("ondBeauty") || "{}"); Object.assign(state, sv, { f: Object.assign(state.f, sv.f || {}) }); } catch (e) {}
+const state = { region: "ALL", align: "dow", range: "td", view: "daily", hide: [], zoom: null, expand: null, f: { cat: [], sub: [], brand: [] },
+  drill: { date: null, period: "day", dim: "cat", sort: "gmv" } };
+try {
+  const sv = JSON.parse(localStorage.getItem("ondBeauty") || "{}");
+  Object.assign(state, sv, { f: Object.assign(state.f, sv.f || {}), drill: Object.assign(state.drill, sv.drill || {}), zoom: null });
+} catch (e) {}
 for (const dm of DIMS) state.f[dm.key] = (state.f[dm.key] || []).filter(v => META.names[dm.key].includes(v));
+if (state.drill.date && !(state.drill.date >= START && state.drill.date <= lastActual)) state.drill.date = null;
 function save() { try { localStorage.setItem("ondBeauty", JSON.stringify(state)); } catch (e) {} }
+const VIEW_LBL = { daily: "Day", ma7: "7D avg", cum: "Cumulative" };
 
+// dates on the x axis (range + zoom)
+function axisDates() {
+  let d = range(START, state.range === "full" ? END : lastActual);
+  if (state.zoom) { const z = d.filter(x => x >= state.zoom[0] && x <= state.zoom[1]); if (z.length >= 2) d = z; else state.zoom = null; }
+  return d;
+}
+// the TY dates each point summarises: the day, the trailing 7 days, or 25 Sep → day
+function windowFor(d) {
+  if (state.view === "daily") return [d];
+  if (state.view === "ma7") { const out = []; for (let k = 6; k >= 0; k--) { const x = toS(toT(d) - k * DAY); if (x >= START) out.push(x); } return out; }
+  return range(START, d);
+}
+function seriesVal(m, win, years) {
+  const a = aggMany(years ? win.map(x => shift(x, years, state.align)) : win, state.region);
+  let v = val(m, a);
+  if (v != null && state.view === "ma7" && m.additive) v /= win.length;
+  return v;
+}
+function targetVal(m, win) {
+  let s = 0;
+  for (const d of win) { const t = target(m, state.region, d); if (t == null) return null; s += t; }
+  return state.view === "ma7" ? s / win.length : s;
+}
 function build(m) {
-  const dates = range(START, state.range === "full" ? END : lastActual);
-  const tyDates = dates.filter(d => d <= lastActual);
+  const dates = axisDates();
+  const tyDates = range(START, lastActual);
+  const wins = dates.map(windowFor);
   const s = {
-    ty: dates.map(d => d <= lastActual ? val(m, agg(d, state.region)) : null),
-    ly: dates.map(d => val(m, agg(shift(d, 1, state.align), state.region))),
-    lly: dates.map(d => val(m, agg(shift(d, 2, state.align), state.region))),
-    tgt: dates.map(d => target(m, state.region, d)),
+    ty: dates.map((d, i) => d <= lastActual ? seriesVal(m, wins[i], 0) : null),
+    ly: wins.map(w => seriesVal(m, w, 1)),
+    lly: wins.map(w => seriesVal(m, w, 2)),
+    tgt: wins.map(w => (m.key === TGT?.metric ? targetVal(m, w) : null)),
   };
   const ptd = {
     ty: val(m, aggMany(tyDates, state.region)),
@@ -334,7 +410,9 @@ function build(m) {
     lly: val(m, aggMany(tyDates.map(d => shift(d, 2, state.align)), state.region)),
     tgt: tyDates.every(d => target(m, state.region, d) != null) ? tyDates.reduce((a, d) => a + target(m, state.region, d), 0) : null,
   };
-  return { dates, s, ptd, n: tyDates.length };
+  const lw = windowFor(lastActual);
+  const latest = { ty: seriesVal(m, lw, 0), ly: seriesVal(m, lw, 1), lly: seriesVal(m, lw, 2), tgt: m.key === TGT?.metric ? targetVal(m, lw) : null };
+  return { dates, s, ptd, latest };
 }
 
 // ---------- chart ----------
@@ -346,24 +424,32 @@ function niceTicks(lo, hi, count) {
   for (let v = a; v <= b + step / 2; v += step) t.push(+v.toFixed(10));
   return t;
 }
-const NS = "http://www.w3.org/2000/svg";
+const CHARTS = [];   // { m, b, show(i), hide(), panel }
+function activeSeries(m) {
+  const tgtOn = hasTarget(m, state.region);
+  return SERIES.filter(x => (x.id !== "tgt" || tgtOn) && !state.hide.includes(x.id));
+}
 function drawChart(box, m, b) {
   const W = box.clientWidth, H = box.clientHeight, L = 46, R = 10, T = 8, B = 24;
-  const tgtOn = hasTarget(m, state.region);
-  const active = SERIES.filter(x => x.id !== "tgt" || tgtOn);
+  const active = activeSeries(m);
   const all = active.flatMap(x => b.s[x.id]).filter(v => v != null && isFinite(v));
-  if (!all.length) { box.innerHTML = `<p class="loading" style="text-align:center">No sales for this selection.</p>`; return; }
+  if (!all.length) { box.innerHTML = `<p class="loading" style="text-align:center">${active.length ? "No sales for this selection." : "All series are hidden. Turn one on in the legend."}</p>`; return null; }
   let lo = Math.min(...all), hi = Math.max(...all);
   if (m.zero) lo = 0; else { const pad = (hi - lo) * 0.15 || Math.abs(hi) * 0.05; lo -= pad; hi += pad; }
   const ticks = niceTicks(lo, hi, 4), y0 = ticks[0], y1 = ticks[ticks.length - 1];
-  const n = b.dates.length;
-  const x = i => L + (n === 1 ? (W - L - R) / 2 : i * (W - L - R) / (n - 1));
+  const n = b.dates.length, step = n === 1 ? 0 : (W - L - R) / (n - 1);
+  const x = i => L + (n === 1 ? (W - L - R) / 2 : i * step);
   const y = v => T + (1 - (v - y0) / (y1 - y0)) * (H - T - B);
+  const idxAt = px => Math.max(0, Math.min(n - 1, Math.round(n === 1 ? 0 : (px - L) / step)));
   let h = "";
+  // weekends (Fri/Sat) as faint bands so the weekly rhythm reads
+  if (n <= 120) b.dates.forEach((d, i) => { const wd = new Date(toT(d)).getUTCDay(); if (wd === 5 || wd === 6) { const a = Math.max(L, x(i) - step / 2), z = Math.min(W - R, x(i) + step / 2); h += `<rect x="${a}" y="${T}" width="${Math.max(z - a, 2)}" height="${H - T - B}" fill="var(--wknd)"/>`; } });
   for (const t of ticks) h += `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)" stroke-width="1"/><text x="${L - 6}" y="${y(t) + 3.5}" text-anchor="end">${fmt(m, t, true)}</text>`;
   h += `<line x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}" stroke="var(--axis)"/>`;
   const every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor((W - L - R) / 58))));
-  b.dates.forEach((d, i) => { if (i % every === 0 || (n <= 8)) h += `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${fmtD(d)}</text>`; });
+  b.dates.forEach((d, i) => { if (i % every === 0 || n <= 8) h += `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${fmtD(d)}</text>`; });
+  const di = b.dates.indexOf(state.drill.date);
+  if (di >= 0) h += `<line x1="${x(di)}" x2="${x(di)}" y1="${T}" y2="${H - B}" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3 3"/>`;
   for (const sr of [...active].reverse()) {
     const vals = b.s[sr.id]; let p = "", pen = false;
     vals.forEach((v, i) => { if (v == null || !isFinite(v)) { pen = false; return; } p += (pen ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1); pen = true; });
@@ -371,90 +457,204 @@ function drawChart(box, m, b) {
     if (sr.id === "ty" && n <= 20) vals.forEach((v, i) => { if (v != null) h += `<circle cx="${x(i)}" cy="${y(v)}" r="3" fill="${sr.color}" stroke="var(--surface)" stroke-width="1.5"/>`; });
   }
   const li = b.dates.indexOf(lastActual), lv = b.s.ty[li];
-  if (li >= 0 && lv != null) h += `<circle cx="${x(li)}" cy="${y(lv)}" r="4.5" fill="var(--s-ty)" stroke="var(--surface)" stroke-width="2"/>`;
+  if (li >= 0 && lv != null && active.some(a => a.id === "ty")) h += `<circle cx="${x(li)}" cy="${y(lv)}" r="4.5" fill="var(--s-ty)" stroke="var(--surface)" stroke-width="2"/>`;
+  h += `<rect class="sel" y="${T}" height="${H - T - B}" fill="var(--accent)" fill-opacity="0.12" visibility="hidden"/>`;
   h += `<g class="hov" visibility="hidden"><line class="hx" y1="${T}" y2="${H - B}" stroke="var(--axis)" stroke-width="1"/>${active.map(sr => `<circle class="hd-${sr.id}" r="4" fill="${sr.color}" stroke="var(--surface)" stroke-width="2"/>`).join("")}</g>`;
   h += `<rect x="${L}" y="0" width="${W - L - R}" height="${H}" fill="transparent" class="hit"/>`;
-  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${m.name} daily, ${active.map(a => a.label).join(", ")}">${h}</svg><div class="tip" hidden></div>`;
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${m.name} ${VIEW_LBL[state.view].toLowerCase()}, ${active.map(a => a.label).join(", ")}">${h}</svg><div class="tip" hidden></div>`;
 
-  const svg = box.firstChild, hov = svg.querySelector(".hov"), tip = box.querySelector(".tip");
-  const hit = svg.querySelector(".hit");
-  function show(ev) {
-    const r = svg.getBoundingClientRect(), px = ev.clientX - r.left;
-    const i = Math.max(0, Math.min(n - 1, Math.round(n === 1 ? 0 : (px - L) / ((W - L - R) / (n - 1)))));
-    hov.setAttribute("visibility", "visible");
-    hov.querySelector(".hx").setAttribute("x1", x(i)); hov.querySelector(".hx").setAttribute("x2", x(i));
-    for (const sr of active) {
-      const c = hov.querySelector(".hd-" + sr.id), v = b.s[sr.id][i];
-      if (v == null) c.setAttribute("visibility", "hidden"); else { c.setAttribute("visibility", "visible"); c.setAttribute("cx", x(i)); c.setAttribute("cy", y(v)); }
+  const svg = box.firstChild, hov = svg.querySelector(".hov"), tip = box.querySelector(".tip"), hit = svg.querySelector(".hit"), sel = svg.querySelector(".sel");
+  const api = {
+    show(i, withTip) {
+      if (i == null || i < 0 || i >= n) return api.hide();
+      hov.setAttribute("visibility", "visible");
+      hov.querySelector(".hx").setAttribute("x1", x(i)); hov.querySelector(".hx").setAttribute("x2", x(i));
+      for (const sr of active) {
+        const c = hov.querySelector(".hd-" + sr.id), v = b.s[sr.id][i];
+        if (v == null) c.setAttribute("visibility", "hidden"); else { c.setAttribute("visibility", "visible"); c.setAttribute("cx", x(i)); c.setAttribute("cy", y(v)); }
+      }
+      if (!withTip) { tip.hidden = true; return; }
+      const d = b.dates[i], ty = b.s.ty[i];
+      const on = id => active.some(a => a.id === id);
+      const row = (sr, v, sub, cmp) => `<div class="tr"><i style="background:${sr.color}"></i><span>${sr.label}${sub ? ` <small style="color:var(--muted)">${sub}</small>` : ""}</span><b>${fmt(m, v)}</b><em>${cmp ?? ""}</em></div>`;
+      const wl = state.view === "daily" ? "" : ` <small style="color:var(--muted);font-weight:400">${state.view === "ma7" ? "7-day avg to" : "25 Sep →"}</small>`;
+      let t = `<div class="td">${wl}${wl ? " " : ""}${fmtDL(d)}</div>`;
+      if (on("ty")) t += row(SERIES[0], ty, "", "");
+      if (on("ly")) t += row(SERIES[1], b.s.ly[i], fmtD(shift(d, 1, state.align)) + " '" + shift(d, 1, state.align).slice(2, 4), delta(m, ty, b.s.ly[i])?.txt);
+      if (on("lly")) t += row(SERIES[2], b.s.lly[i], fmtD(shift(d, 2, state.align)) + " '" + shift(d, 2, state.align).slice(2, 4), delta(m, ty, b.s.lly[i])?.txt);
+      if (on("tgt")) t += row(SERIES[3], b.s.tgt[i], "", delta(m, ty, b.s.tgt[i])?.txt);
+      if (d <= lastActual) t += `<div class="thint">Click for breakdown · drag to zoom</div>`;
+      tip.innerHTML = t; tip.hidden = false;
+      const tw = tip.offsetWidth, left = x(i) + 14 + tw > W ? x(i) - 14 - tw : x(i) + 14;
+      tip.style.left = Math.max(0, left) + "px"; tip.style.top = "6px";
+    },
+    hide() { hov.setAttribute("visibility", "hidden"); tip.hidden = true; },
+  };
+  // pointer: hover syncs every chart; drag selects a zoom window; a click opens that day's breakdown
+  let down = null;
+  const px = ev => ev.clientX - svg.getBoundingClientRect().left;
+  hit.addEventListener("pointerdown", ev => { if (ev.button) return; ev.preventDefault(); down = { x: px(ev), id: ev.pointerId }; try { hit.setPointerCapture(ev.pointerId); } catch (e) {} });
+  hit.addEventListener("pointermove", ev => {
+    const p = px(ev);
+    hoverAll(idxAt(p), api);
+    if (down && Math.abs(p - down.x) > 6) {
+      const a = Math.max(L, Math.min(p, down.x)), z = Math.min(W - R, Math.max(p, down.x));
+      sel.setAttribute("x", a); sel.setAttribute("width", z - a); sel.setAttribute("visibility", "visible");
     }
-    const d = b.dates[i], ty = b.s.ty[i];
-    const row = (sr, v, sub, cmp) => `<div class="tr"><i style="background:${sr.color}"></i><span>${sr.label}${sub ? ` <small style="color:var(--muted)">${sub}</small>` : ""}</span><b>${fmt(m, v)}</b><em>${cmp ?? ""}</em></div>`;
-    let t = `<div class="td">${fmtDL(d)}</div>`;
-    t += row(SERIES[0], ty, "", "");
-    t += row(SERIES[1], b.s.ly[i], fmtD(shift(d, 1, state.align)) + " '" + shift(d, 1, state.align).slice(2, 4), delta(m, ty, b.s.ly[i])?.txt);
-    t += row(SERIES[2], b.s.lly[i], fmtD(shift(d, 2, state.align)) + " '" + shift(d, 2, state.align).slice(2, 4), delta(m, ty, b.s.lly[i])?.txt);
-    if (tgtOn) t += row(SERIES[3], b.s.tgt[i], "", delta(m, ty, b.s.tgt[i])?.txt);
-    tip.innerHTML = t; tip.hidden = false;
-    const tw = tip.offsetWidth, left = x(i) + 14 + tw > W ? x(i) - 14 - tw : x(i) + 14;
-    tip.style.left = Math.max(0, left) + "px"; tip.style.top = "6px";
+  });
+  hit.addEventListener("pointerup", ev => {
+    if (!down) return;
+    const p = px(ev), moved = Math.abs(p - down.x) > 6, i0 = idxAt(Math.min(p, down.x)), i1 = idxAt(Math.max(p, down.x));
+    down = null; sel.setAttribute("visibility", "hidden");
+    if (moved && i1 > i0) { state.zoom = [b.dates[i0], b.dates[i1]]; render(); return; }
+    const d = b.dates[idxAt(p)];
+    if (d <= lastActual) openDrill(d);
+  });
+  hit.addEventListener("pointercancel", () => { down = null; sel.setAttribute("visibility", "hidden"); });
+  hit.addEventListener("pointerleave", () => { if (!down) hoverAll(null); });
+  return api;
+}
+function hoverAll(i, src) {
+  for (const c of CHARTS) {
+    if (!c.api) continue;
+    if (i == null) c.api.hide(); else c.api.show(i, c.api === src);
+    c.header(i);
   }
-  hit.addEventListener("pointermove", show);
-  hit.addEventListener("pointerdown", show);
-  hit.addEventListener("pointerleave", () => { hov.setAttribute("visibility", "hidden"); tip.hidden = true; });
 }
 
 // ---------- render ----------
 const grid = document.getElementById("grid");
 function render() {
-  for (const [id, key] of [["region", "region"], ["align", "align"], ["range", "range"]])
+  for (const [id, key] of [["region", "region"], ["align", "align"], ["range", "range"], ["view", "view"]])
     document.querySelectorAll(`#${id} button`).forEach(bt => bt.setAttribute("aria-pressed", bt.dataset.v === state[key]));
   const anyTgt = METRICS.some(m => hasTarget(m, state.region));
   document.getElementById("legend").innerHTML = SERIES.filter(s => s.id !== "tgt" || anyTgt)
-    .map(s => `<span><i style="border-color:${s.color};border-top-style:${s.dash ? (s.id === "lly" ? "dotted" : "dashed") : "solid"}"></i>${s.label}</span>`).join("");
+    .map(s => `<button class="lg" data-s="${s.id}" aria-pressed="${!state.hide.includes(s.id)}" title="Show or hide ${s.label}"><i style="border-color:${s.color};border-top-style:${s.dash ? (s.id === "lly" ? "dotted" : "dashed") : "solid"}"></i>${s.label}</button>`).join("");
   const rl = { ALL: "Overall", KSA: "KSA", UAE: "UAE" }[state.region];
   const fl = DIMS.filter(dm => state.f[dm.key].length).map(dm => state.f[dm.key].length === 1 ? state.f[dm.key][0] : `${state.f[dm.key].length} ${dm.label.toLowerCase()}s`);
-  document.getElementById("meta").innerHTML = `<b>${rl}</b>${fl.length ? " · <b>" + fl.join(" · ") + "</b>" : " · all Beauty"} · 25 Sep → ${fmtD(lastActual)} 2026 · latest day <b>${fmtDL(lastActual)}</b> · refreshed ${META.refreshed || ""}`;
+  document.getElementById("meta").innerHTML = `<b>${rl}</b>${fl.length ? " · <b>" + esc(fl.join(" · ")) + "</b>" : " · all Beauty"} · 25 Sep → ${fmtD(lastActual)} 2026 · latest day <b>${fmtDL(lastActual)}</b> · refreshed ${META.refreshed || ""}`;
+  const zb = document.getElementById("zoominfo");
+  zb.hidden = !state.zoom;
+  if (state.zoom) zb.querySelector("span").textContent = `Zoomed to ${fmtD(state.zoom[0])} – ${fmtD(state.zoom[1])}`;
 
   grid.innerHTML = "";
+  CHARTS.length = 0;
   const built = {};
   for (const m of METRICS) {
     const b = built[m.key] = build(m);
-    const li = b.dates.indexOf(lastActual);
-    const ty = b.s.ty[li], tgtOn = hasTarget(m, state.region);
+    const tgtOn = hasTarget(m, state.region);
     const el = document.createElement("article");
-    el.className = "panel";
+    el.className = "panel" + (state.expand === m.key ? " wide" : "");
     el.innerHTML = `<div class="ph">
         <div><h2>${m.name}${m.unit ? ` <small>${m.unit}</small>` : ""}</h2>
-          <div class="big">${fmt(m, ty)}<small>${fmtD(lastActual)}</small></div></div>
+          <div class="big"><span class="bv"></span><small class="bd"></small></div></div>
         <div class="chips">
-          <div class="chiprow"><span class="chiplbl">Day</span>${chip("LY", delta(m, ty, b.s.ly[li]))}${chip("LLY", delta(m, ty, b.s.lly[li]))}${tgtOn ? chip("Tgt", delta(m, ty, b.s.tgt[li])) : ""}</div>
+          <div class="chiprow cr1"></div>
           <div class="chiprow"><span class="chiplbl">Since 25 Sep · ${fmt(m, b.ptd.ty, true)}</span>${chip("LY", delta(m, b.ptd.ty, b.ptd.ly))}${chip("LLY", delta(m, b.ptd.ty, b.ptd.lly))}${tgtOn && b.ptd.tgt != null ? chip("Tgt", delta(m, b.ptd.ty, b.ptd.tgt)) : ""}</div>
         </div>
+        <button class="xp" data-m="${m.key}" aria-pressed="${state.expand === m.key}" title="${state.expand === m.key ? "Back to grid" : "Expand chart"}" aria-label="${state.expand === m.key ? "Back to grid" : "Expand " + m.name}">${state.expand === m.key ? ICON_SHRINK : ICON_EXPAND}</button>
       </div><div class="chart"></div>`;
-    grid.appendChild(el);
-    drawChart(el.querySelector(".chart"), m, b);
+    if (state.expand === m.key) grid.prepend(el); else grid.appendChild(el);
+    const bv = el.querySelector(".bv"), bd = el.querySelector(".bd"), cr1 = el.querySelector(".cr1");
+    const header = i => {
+      // hovered day, else the latest day with sales
+      const hv = i != null && b.s.ty[i] != null;
+      const v = hv ? { ty: b.s.ty[i], ly: b.s.ly[i], lly: b.s.lly[i], tgt: b.s.tgt[i] } : b.latest, d = hv ? b.dates[i] : lastActual;
+      bv.textContent = fmt(m, v.ty);
+      bd.textContent = (state.view === "daily" ? "" : VIEW_LBL[state.view] + " · ") + fmtD(d);
+      cr1.innerHTML = `<span class="chiplbl">${VIEW_LBL[state.view]}</span>${chip("LY", delta(m, v.ty, v.ly))}${chip("LLY", delta(m, v.ty, v.lly))}${tgtOn && !state.hide.includes("tgt") ? chip("Tgt", delta(m, v.ty, v.tgt)) : ""}`;
+    };
+    header(null);
+    CHARTS.push({ m, b, header, api: drawChart(el.querySelector(".chart"), m, b) });
   }
   renderTable(built);
+  renderDrill();
 }
 
 function renderTable(built) {
   const dates = range(START, lastActual).reverse();
   let h = `<thead><tr><th></th>${METRICS.map(m => `<th colspan="3">${m.name}</th>`).join("")}</tr><tr><th>Date</th>${METRICS.map(() => `<th>TY</th><th>vs LY</th><th>vs LLY</th>`).join("")}</tr></thead><tbody>`;
   for (const d of dates) {
-    h += `<tr><td class="d">${fmtDL(d)}</td>`;
+    h += `<tr class="${d === state.drill.date ? "cur" : ""}" data-d="${d}"><td class="d">${fmtDL(d)}</td>`;
     for (const m of METRICS) {
-      const b = built[m.key], i = b.dates.indexOf(d), ty = b.s.ty[i];
-      const a = delta(m, ty, b.s.ly[i]), c = delta(m, ty, b.s.lly[i]);
+      const w = windowFor(d), ty = seriesVal(m, w, 0), ly = seriesVal(m, w, 1), lly = seriesVal(m, w, 2);
+      const a = delta(m, ty, ly), c = delta(m, ty, lly);
       h += `<td>${fmt(m, ty)}</td><td><span class="${a?.cls || ""}">${a?.txt || "–"}</span></td><td><span class="${c?.cls || ""}">${c?.txt || "–"}</span></td>`;
     }
     h += `</tr>`;
   }
   document.getElementById("table").innerHTML = h + "</tbody>";
+  document.querySelector("#tbl summary").textContent = `${state.view === "daily" ? "Daily" : VIEW_LBL[state.view]} table`;
 }
 
-for (const [id, key] of [["region", "region"], ["align", "align"], ["range", "range"]])
-  document.getElementById(id).addEventListener("click", e => { const bt = e.target.closest("button"); if (!bt) return; state[key] = bt.dataset.v; save(); render(); });
-let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(render, 150); });
+// ---------- drill-down: what drove the day ----------
+function openDrill(d) {
+  state.drill.date = d; save(); render();
+  document.getElementById("drill").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
+}
+function breakdown(dim, dates) {
+  const ty = new Set(), ly = new Set();
+  for (const d of dates) { if (DIDX[d] != null) ty.add(DIDX[d]); const s = DIDX[shift(d, 1, state.align)]; if (s != null) ly.add(s); }
+  const mask = allowedMask(null), regs = RIDX[state.region], p = DPOS[dim], out = new Map();
+  const { m, d, k, c } = COL;
+  for (let r = 0; r < NR; r++) {
+    if (!mask[k[r]] || !regs.includes(c[r])) continue;
+    const isT = ty.has(d[r]); if (!isT && !ly.has(d[r])) continue;
+    const key = META.combos[k[r]][p];
+    let a = out.get(key); if (!a) out.set(key, a = [0, 0, 0, 0, 0, 0]);   // tyGmv, lyGmv, tyU, tyRev, tyPc1, tyMkd/np later
+    if (isT) { a[0] += m[I.gmv][r]; a[2] += m[I.u][r]; a[3] += m[I.rev][r]; a[4] += m[I.pc1][r]; } else a[1] += m[I.gmv][r];
+  }
+  return [...out.entries()].map(([i, a]) => ({ name: META.names[dim][i], ty: a[0], ly: a[1], u: a[2], pc1: a[3] ? a[4] / a[3] : null, chg: a[0] - a[1] }));
+}
+function renderDrill() {
+  const box = document.getElementById("drill"), D = state.drill;
+  box.hidden = !D.date;
+  if (!D.date) return;
+  const dates = D.period === "day" ? [D.date] : range(START, D.date);
+  const rows = breakdown(D.dim, dates);
+  const tot = rows.reduce((a, r) => a + r.ty, 0), totLy = rows.reduce((a, r) => a + r.ly, 0);
+  rows.sort(D.sort === "gmv" ? (a, b) => b.ty - a.ty : D.sort === "up" ? (a, b) => b.chg - a.chg : (a, b) => a.chg - b.chg);
+  const shown = rows.filter(r => r.ty || r.ly).slice(0, 25);
+  const g = { name: "GMV", kind: "aed" }, pctM = { kind: "pct" };
+  const dimL = DIMS.find(x => x.key === D.dim).label;
+  const sel = state.f[D.dim];
+  const maxAbs = Math.max(1, ...shown.map(r => Math.abs(r.chg)));
+  box.innerHTML = `<div class="dh">
+      <div><h2>What drove ${D.period === "day" ? fmtDL(D.date) : "25 Sep → " + fmtD(D.date)}</h2>
+        <p class="fsum">GMV vs LY (${state.align === "dow" ? "same weekday" : "same date"}) · ${{ ALL: "Overall", KSA: "KSA", UAE: "UAE" }[state.region]} · total ${fmt(g, tot)} ${chip("LY", delta(g, tot, totLy))}</p></div>
+      <div class="dctl">
+        <div class="seg" id="dperiod"><button data-v="day" aria-pressed="${D.period === "day"}">This day</button><button data-v="ptd" aria-pressed="${D.period === "ptd"}">Since 25 Sep</button></div>
+        <div class="seg" id="ddim">${DIMS.map(x => `<button data-v="${x.key}" aria-pressed="${D.dim === x.key}">${x.label}</button>`).join("")}</div>
+        <div class="seg" id="dsort"><button data-v="gmv" aria-pressed="${D.sort === "gmv"}">Top GMV</button><button data-v="up" aria-pressed="${D.sort === "up"}">Top gainers</button><button data-v="down" aria-pressed="${D.sort === "down"}">Top decliners</button></div>
+        <button class="lnk" id="dclose">Close</button>
+      </div></div>
+    <div class="tscroll"><table class="dt"><thead><tr><th>${dimL}</th><th>GMV</th><th>LY</th><th>vs LY</th><th class="bar-h">Change vs LY (AED)</th><th>Share</th><th>Units</th><th>PC1 %</th></tr></thead><tbody>
+    ${shown.map(r => { const dl = delta(g, r.ty, r.ly), w = Math.abs(r.chg) / maxAbs * 50;
+      return `<tr data-v="${esc(r.name)}" class="${sel.includes(r.name) ? "cur" : ""}" title="Filter the dashboard to ${esc(r.name)}"><td class="nm">${esc(r.name)}</td><td>${fmt(g, r.ty)}</td><td>${fmt(g, r.ly)}</td><td><span class="${dl?.cls || ""}">${dl?.txt || (r.ly ? "" : "new")}</span></td>
+        <td class="barc"><div class="cbar"><span class="${r.chg >= 0 ? "pos" : "neg"}" style="${r.chg >= 0 ? "left:50%" : "right:50%"};width:${w}%"></span></div><small>${r.chg >= 0 ? "+" : "−"}${fmt(g, Math.abs(r.chg))}</small></td>
+        <td>${tot ? (r.ty / tot * 100).toFixed(1) + "%" : "–"}</td><td>${Math.round(r.u).toLocaleString("en-US")}</td><td>${fmt(pctM, r.pc1)}</td></tr>`; }).join("") || `<tr><td colspan="8">No sales for this selection.</td></tr>`}
+    </tbody></table></div>
+    <p class="fsum">${rows.length > shown.length ? `Top ${shown.length} of ${rows.length}. ` : ""}Click a row to filter the dashboard to it; click again to remove it.</p>`;
+}
+document.getElementById("drill").addEventListener("click", e => {
+  const bt = e.target.closest("button");
+  if (bt?.id === "dclose") { state.drill.date = null; save(); render(); return; }
+  const seg = bt?.closest(".seg");
+  if (bt && seg) { state.drill[{ dperiod: "period", ddim: "dim", dsort: "sort" }[seg.id]] = bt.dataset.v; save(); renderDrill(); return; }
+  const tr = e.target.closest("tr[data-v]");
+  if (tr) { const k = state.drill.dim, v = tr.dataset.v, arr = state.f[k]; state.f[k] = arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]; applyFilters(true); }
+});
+document.getElementById("table").addEventListener("click", e => { const tr = e.target.closest("tr[data-d]"); if (tr) openDrill(tr.dataset.d); });
+
+const ICON_EXPAND = `<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 1.5h4v4M5.5 12.5h-4v-4M12.5 1.5 8 6M1.5 12.5 6 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+const ICON_SHRINK = `<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M12.5 5.5h-4v-4M1.5 8.5h4v4M8.5 5.5 13 1M5.5 8.5 1 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+grid.addEventListener("click", e => { const bt = e.target.closest(".xp"); if (!bt) return; state.expand = state.expand === bt.dataset.m ? null : bt.dataset.m; save(); render(); if (state.expand) grid.scrollIntoView({ block: "nearest" }); });
+document.getElementById("legend").addEventListener("click", e => { const bt = e.target.closest(".lg"); if (!bt) return; const s = bt.dataset.s; state.hide = state.hide.includes(s) ? state.hide.filter(x => x !== s) : [...state.hide, s]; save(); render(); });
+document.getElementById("zoomreset").addEventListener("click", () => { state.zoom = null; render(); });
+
+for (const [id, key] of [["region", "region"], ["align", "align"], ["range", "range"], ["view", "view"]])
+  document.getElementById(id).addEventListener("click", e => { const bt = e.target.closest("button"); if (!bt) return; state[key] = bt.dataset.v; if (key === "range") state.zoom = null; save(); render(); });
+let rt, lastW = innerWidth; window.addEventListener("resize", () => { if (innerWidth === lastW) return; lastW = innerWidth; clearTimeout(rt); rt = setTimeout(render, 150); });
 
 // ---------- filters ----------
 const CARET = `<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
