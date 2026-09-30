@@ -1,0 +1,365 @@
+<title>OND Beauty Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky control bar (tabs, region, comparison, range, legend) over a responsive grid of six metric panels; daily table below. */
+:root {
+  --bg: #f7f5f7;
+  --surface: #fdfcfd;
+  --fg: #19151a;
+  --fg-2: #57505a;
+  --muted: #8a838c;
+  --grid: #e6e1e7;
+  --axis: #c9c2ca;
+  --line: rgba(25, 21, 26, 0.10);
+  --accent: #8a2a5c;
+  --accent-soft: #f4e6ee;
+  --s-ty: #2a78d6;
+  --s-ly: #eb6834;
+  --s-lly: #1baf7a;
+  --s-tgt: #19151a;
+  --good: #006300;
+  --good-bg: #e3f2e3;
+  --bad: #b3261e;
+  --bad-bg: #fbe7e5;
+  --flat-bg: #eeebef;
+  --font: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "DM Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #110f12; --surface: #1b181c; --fg: #f6f2f6; --fg-2: #c7bfc8; --muted: #8f8791;
+    --grid: #2d292e; --axis: #3d383e; --line: rgba(255,255,255,0.10);
+    --accent: #e08ab5; --accent-soft: #3a2230;
+    --s-ty: #3987e5; --s-ly: #d95926; --s-lly: #199e70; --s-tgt: #f6f2f6;
+    --good: #3cc23c; --good-bg: #16301a; --bad: #ff8a80; --bad-bg: #3a1c1b; --flat-bg: #2a262b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #110f12; --surface: #1b181c; --fg: #f6f2f6; --fg-2: #c7bfc8; --muted: #8f8791;
+  --grid: #2d292e; --axis: #3d383e; --line: rgba(255,255,255,0.10);
+  --accent: #e08ab5; --accent-soft: #3a2230;
+  --s-ty: #3987e5; --s-ly: #d95926; --s-lly: #199e70; --s-tgt: #f6f2f6;
+  --good: #3cc23c; --good-bg: #16301a; --bad: #ff8a80; --bad-bg: #3a1c1b; --flat-bg: #2a262b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 14px; line-height: 1.45; }
+.wrap { max-width: 1440px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 48px; }
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 24px; }
+h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+h1 span { color: var(--accent); }
+.meta { color: var(--muted); font-size: 12px; }
+.meta b { color: var(--fg-2); font-weight: 600; }
+
+nav.tabs { display: flex; gap: 4px; margin-top: 16px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+nav.tabs button { font: inherit; font-weight: 600; background: none; border: 0; color: var(--fg-2); padding: 10px 14px; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding-block: 12px; border-bottom: 1px solid var(--line); }
+.ctl { display: flex; align-items: center; gap: 8px; }
+.ctl > span { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 2px; }
+.seg button { font: inherit; font-size: 13px; font-weight: 500; border: 0; background: none; color: var(--fg-2); padding: 5px 11px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-left: auto; font-size: 12px; color: var(--fg-2); }
+.legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: 14px; margin-top: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px 8px; min-width: 0; }
+.ph { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.ph h2 { font-size: 13px; font-weight: 600; margin: 0; color: var(--fg-2); }
+.ph h2 small { font-weight: 400; color: var(--muted); }
+.big { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; margin-top: 2px; }
+.big small { font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 4px; }
+.chips { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.chiprow { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.chip { font-family: var(--mono); font-size: 11px; padding: 2px 7px; border-radius: 999px; background: var(--flat-bg); color: var(--fg-2); white-space: nowrap; }
+.chip.up { background: var(--good-bg); color: var(--good); }
+.chip.down { background: var(--bad-bg); color: var(--bad); }
+.chiplbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.chart { position: relative; height: 230px; margin-top: 6px; }
+.chart svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.chart text { font-family: var(--mono); font-size: 10.5px; fill: var(--muted); }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); padding: 8px 10px; font-size: 12px; min-width: 190px; z-index: 3; }
+.tip .td { font-weight: 600; margin-bottom: 4px; }
+.tip .tr { display: grid; grid-template-columns: 10px 1fr auto auto; gap: 6px; align-items: center; font-variant-numeric: tabular-nums; }
+.tip .tr i { width: 10px; height: 2px; border-radius: 1px; }
+.tip .tr span:nth-child(2) { color: var(--fg-2); }
+.tip .tr b { font-weight: 600; font-family: var(--mono); font-size: 11.5px; }
+.tip .tr em { font-style: normal; font-family: var(--mono); font-size: 10.5px; color: var(--muted); min-width: 48px; text-align: right; }
+
+details.tbl { margin-top: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+details.tbl summary { cursor: pointer; padding: 12px 14px; font-weight: 600; }
+.tscroll { overflow-x: auto; padding: 0 14px 14px; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 12.5px; }
+th, td { padding: 6px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child { text-align: left; }
+thead th { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+thead tr:first-child th { color: var(--fg-2); }
+td.d { font-family: var(--mono); font-size: 11.5px; }
+td .up { color: var(--good); } td .down { color: var(--bad); }
+.note { color: var(--muted); font-size: 12px; margin-top: 14px; max-width: 80ch; }
+@media (max-width: 560px) { .wrap { padding-inline: 16px; } .legend { margin-left: 0; } .big { font-size: 21px; } }
+@media (prefers-reduced-motion: no-preference) { .seg button, nav.tabs button { transition: background .15s, color .15s; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>OND <span>Beauty</span></h1>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" id="tab-trend">Daily trend</button>
+  </nav>
+
+  <div class="bar">
+    <div class="ctl"><span>Region</span>
+      <div class="seg" id="region">
+        <button id="r-all" data-v="ALL" aria-pressed="true">Overall</button>
+        <button id="r-ksa" data-v="KSA" aria-pressed="false">KSA</button>
+        <button id="r-uae" data-v="UAE" aria-pressed="false">UAE</button>
+      </div>
+    </div>
+    <div class="ctl"><span>Compare</span>
+      <div class="seg" id="align">
+        <button id="a-dow" data-v="dow" aria-pressed="true" title="LY = 364 days back, LLY = 728 days back">Same weekday</button>
+        <button id="a-date" data-v="date" aria-pressed="false" title="Same calendar date in 2025 and 2024">Same date</button>
+      </div>
+    </div>
+    <div class="ctl"><span>Range</span>
+      <div class="seg" id="range">
+        <button id="g-td" data-v="td" aria-pressed="true">To date</button>
+        <button id="g-full" data-v="full" aria-pressed="false">Through 31 Dec</button>
+      </div>
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <section class="grid" id="grid"></section>
+
+  <details class="tbl" id="tbl">
+    <summary>Daily table</summary>
+    <div class="tscroll"><table id="table"></table></div>
+  </details>
+
+  <p class="note">Beauty = products with business unit “beauty”. GMV is gross (incl. VAT, all item statuses including cancelled and returned). Units = gross items. ASP = GMV ÷ units. MKD % = markdown discount ÷ normal price (AED). PC1 % = PC1 ÷ gross revenue. Prov. PC1 % = provisional PC1 ÷ gross revenue. Overall covers all countries, KSA and UAE included. Ratios are calculated from summed values. Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics. Today is excluded because the day is still in progress.</p>
+</div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const TARGETS = /*__TARGETS__*/null || {};
+const START = "2026-09-25", END = "2026-12-31";
+const I = Object.fromEntries(DATA.fields.map((f, i) => [f, i]));
+
+const METRICS = [
+  { key: "gmv",  name: "GMV",        unit: "AED", kind: "aed",   zero: true,  calc: a => a[I.gmv] },
+  { key: "asp",  name: "ASP",        unit: "AED", kind: "aed2",  zero: false, calc: a => a[I.u] ? a[I.gmv] / a[I.u] : null },
+  { key: "units",name: "Units",      unit: "",    kind: "int",   zero: true,  calc: a => a[I.u] },
+  { key: "mkd",  name: "MKD %",      unit: "",    kind: "pct",   zero: false, lowerBetter: true, calc: a => a[I.np] ? a[I.mkd] / a[I.np] : null },
+  { key: "pc1",  name: "PC1 %",      unit: "",    kind: "pct",   zero: false, calc: a => a[I.rev] ? a[I.pc1] / a[I.rev] : null },
+  { key: "ppc1", name: "Prov. PC1 %",unit: "",    kind: "pct",   zero: false, calc: a => a[I.rev] ? a[I.ppc1] / a[I.rev] : null },
+];
+const SERIES = [
+  { id: "ty",  label: "2026 (TY)", color: "var(--s-ty)",  w: 2.5, dash: "" },
+  { id: "ly",  label: "LY",        color: "var(--s-ly)",  w: 2,   dash: "" },
+  { id: "lly", label: "LLY",       color: "var(--s-lly)", w: 2,   dash: "1 3.5" },
+  { id: "tgt", label: "Target",    color: "var(--s-tgt)", w: 1.5, dash: "6 4" },
+];
+
+// ---------- dates ----------
+const DAY = 864e5;
+const toT = s => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10));
+const toS = t => new Date(t).toISOString().slice(0, 10);
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const WD = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const fmtD = s => { const d = new Date(toT(s)); return `${d.getUTCDate()} ${MON[d.getUTCMonth()]}`; };
+const fmtDL = s => { const d = new Date(toT(s)); return `${WD[d.getUTCDay()]} ${d.getUTCDate()} ${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
+const lastActual = Object.keys(DATA.days).filter(d => d >= START).sort().pop();
+function shift(s, years, mode) {
+  if (mode === "dow") return toS(toT(s) - years * 364 * DAY);
+  return (+s.slice(0, 4) - years) + s.slice(4);
+}
+function range(a, b) { const out = []; for (let t = toT(a); t <= toT(b); t += DAY) out.push(toS(t)); return out; }
+
+// ---------- aggregation ----------
+function agg(d, region) {
+  const day = DATA.days[d]; if (!day) return null;
+  const keys = region === "ALL" ? Object.keys(day) : [region];
+  let acc = null;
+  for (const k of keys) { const r = day[k]; if (!r) continue; acc = acc ? acc.map((v, i) => v + r[i]) : r.slice(); }
+  return acc;
+}
+function aggMany(dates, region) {
+  let acc = null;
+  for (const d of dates) { const a = agg(d, region); if (a) acc = acc ? acc.map((v, i) => v + a[i]) : a; }
+  return acc;
+}
+const val = (m, a) => (a ? m.calc(a) : null);
+const target = (m, region, d) => TARGETS?.[m.key]?.[region]?.[d] ?? null;
+const hasTarget = (m, region) => !!(TARGETS?.[m.key]?.[region] && Object.keys(TARGETS[m.key][region]).length);
+
+// ---------- formatting ----------
+function fmt(m, v, short) {
+  if (v == null || !isFinite(v)) return "–";
+  if (m.kind === "pct") return (v * 100).toFixed(1) + "%";
+  if (m.kind === "aed2") return v.toFixed(1);
+  if (m.kind === "int" && !short) return Math.round(v).toLocaleString("en-US");
+  const a = Math.abs(v);
+  if (a >= 1e6) return (v / 1e6).toFixed(a >= 1e7 ? 1 : 2) + "M";
+  if (a >= 1e3) return (v / 1e3).toFixed(a >= 1e5 ? 0 : 1) + "K";
+  return Math.round(v).toLocaleString("en-US");
+}
+function delta(m, cur, base) {
+  if (cur == null || base == null || !isFinite(cur) || !isFinite(base) || (m.kind !== "pct" && base === 0)) return null;
+  const d = m.kind === "pct" ? (cur - base) * 100 : (cur / base - 1) * 100;
+  const good = m.lowerBetter ? d < 0 : d > 0;
+  const txt = (d > 0 ? "+" : d < 0 ? "−" : "±") + Math.abs(d).toFixed(1) + (m.kind === "pct" ? "pp" : "%");
+  return { d, txt, cls: Math.abs(d) < 0.05 ? "" : good ? "up" : "down" };
+}
+const chip = (lbl, dl) => `<span class="chip ${dl ? dl.cls : ""}" title="vs ${lbl}">${lbl} ${dl ? dl.txt : "–"}</span>`;
+
+// ---------- state ----------
+const state = { region: "ALL", align: "dow", range: "td" };
+try { Object.assign(state, JSON.parse(localStorage.getItem("ondBeauty") || "{}")); } catch (e) {}
+function save() { try { localStorage.setItem("ondBeauty", JSON.stringify(state)); } catch (e) {} }
+
+function build(m) {
+  const dates = range(START, state.range === "full" ? END : lastActual);
+  const tyDates = dates.filter(d => d <= lastActual);
+  const s = {
+    ty: dates.map(d => d <= lastActual ? val(m, agg(d, state.region)) : null),
+    ly: dates.map(d => val(m, agg(shift(d, 1, state.align), state.region))),
+    lly: dates.map(d => val(m, agg(shift(d, 2, state.align), state.region))),
+    tgt: dates.map(d => target(m, state.region, d)),
+  };
+  const ptd = {
+    ty: val(m, aggMany(tyDates, state.region)),
+    ly: val(m, aggMany(tyDates.map(d => shift(d, 1, state.align)), state.region)),
+    lly: val(m, aggMany(tyDates.map(d => shift(d, 2, state.align)), state.region)),
+  };
+  return { dates, s, ptd, n: tyDates.length };
+}
+
+// ---------- chart ----------
+function niceTicks(lo, hi, count) {
+  if (lo === hi) { lo -= Math.abs(lo) * 0.1 || 1; hi += Math.abs(hi) * 0.1 || 1; }
+  const raw = (hi - lo) / count, p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map(x => x * p).find(x => x >= raw);
+  const a = Math.floor(lo / step) * step, b = Math.ceil(hi / step) * step, t = [];
+  for (let v = a; v <= b + step / 2; v += step) t.push(+v.toFixed(10));
+  return t;
+}
+const NS = "http://www.w3.org/2000/svg";
+function drawChart(box, m, b) {
+  const W = box.clientWidth, H = box.clientHeight, L = 46, R = 10, T = 8, B = 24;
+  const tgtOn = hasTarget(m, state.region);
+  const active = SERIES.filter(x => x.id !== "tgt" || tgtOn);
+  const all = active.flatMap(x => b.s[x.id]).filter(v => v != null && isFinite(v));
+  let lo = Math.min(...all), hi = Math.max(...all);
+  if (m.zero) lo = 0; else { const pad = (hi - lo) * 0.15 || Math.abs(hi) * 0.05; lo -= pad; hi += pad; }
+  const ticks = niceTicks(lo, hi, 4), y0 = ticks[0], y1 = ticks[ticks.length - 1];
+  const n = b.dates.length;
+  const x = i => L + (n === 1 ? (W - L - R) / 2 : i * (W - L - R) / (n - 1));
+  const y = v => T + (1 - (v - y0) / (y1 - y0)) * (H - T - B);
+  let h = "";
+  for (const t of ticks) h += `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)" stroke-width="1"/><text x="${L - 6}" y="${y(t) + 3.5}" text-anchor="end">${fmt(m, t, true)}</text>`;
+  h += `<line x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}" stroke="var(--axis)"/>`;
+  const every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor((W - L - R) / 58))));
+  b.dates.forEach((d, i) => { if (i % every === 0 || (n <= 8)) h += `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${fmtD(d)}</text>`; });
+  for (const sr of [...active].reverse()) {
+    const vals = b.s[sr.id]; let p = "", pen = false;
+    vals.forEach((v, i) => { if (v == null || !isFinite(v)) { pen = false; return; } p += (pen ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1); pen = true; });
+    if (p) h += `<path d="${p}" fill="none" stroke="${sr.color}" stroke-width="${sr.w}" stroke-dasharray="${sr.dash}" stroke-linejoin="round" stroke-linecap="round"/>`;
+    if (sr.id === "ty" && n <= 20) vals.forEach((v, i) => { if (v != null) h += `<circle cx="${x(i)}" cy="${y(v)}" r="3" fill="${sr.color}" stroke="var(--surface)" stroke-width="1.5"/>`; });
+  }
+  const li = b.dates.indexOf(lastActual), lv = b.s.ty[li];
+  if (li >= 0 && lv != null) h += `<circle cx="${x(li)}" cy="${y(lv)}" r="4.5" fill="var(--s-ty)" stroke="var(--surface)" stroke-width="2"/>`;
+  h += `<g class="hov" visibility="hidden"><line class="hx" y1="${T}" y2="${H - B}" stroke="var(--axis)" stroke-width="1"/>${active.map(sr => `<circle class="hd-${sr.id}" r="4" fill="${sr.color}" stroke="var(--surface)" stroke-width="2"/>`).join("")}</g>`;
+  h += `<rect x="${L}" y="0" width="${W - L - R}" height="${H}" fill="transparent" class="hit"/>`;
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${m.name} daily, ${active.map(a => a.label).join(", ")}">${h}</svg><div class="tip" hidden></div>`;
+
+  const svg = box.firstChild, hov = svg.querySelector(".hov"), tip = box.querySelector(".tip");
+  const hit = svg.querySelector(".hit");
+  function show(ev) {
+    const r = svg.getBoundingClientRect(), px = ev.clientX - r.left;
+    const i = Math.max(0, Math.min(n - 1, Math.round(n === 1 ? 0 : (px - L) / ((W - L - R) / (n - 1)))));
+    hov.setAttribute("visibility", "visible");
+    hov.querySelector(".hx").setAttribute("x1", x(i)); hov.querySelector(".hx").setAttribute("x2", x(i));
+    for (const sr of active) {
+      const c = hov.querySelector(".hd-" + sr.id), v = b.s[sr.id][i];
+      if (v == null) c.setAttribute("visibility", "hidden"); else { c.setAttribute("visibility", "visible"); c.setAttribute("cx", x(i)); c.setAttribute("cy", y(v)); }
+    }
+    const d = b.dates[i], ty = b.s.ty[i];
+    const row = (sr, v, sub, cmp) => `<div class="tr"><i style="background:${sr.color}"></i><span>${sr.label}${sub ? ` <small style="color:var(--muted)">${sub}</small>` : ""}</span><b>${fmt(m, v)}</b><em>${cmp ?? ""}</em></div>`;
+    let t = `<div class="td">${fmtDL(d)}</div>`;
+    t += row(SERIES[0], ty, "", "");
+    t += row(SERIES[1], b.s.ly[i], fmtD(shift(d, 1, state.align)) + " '" + shift(d, 1, state.align).slice(2, 4), delta(m, ty, b.s.ly[i])?.txt);
+    t += row(SERIES[2], b.s.lly[i], fmtD(shift(d, 2, state.align)) + " '" + shift(d, 2, state.align).slice(2, 4), delta(m, ty, b.s.lly[i])?.txt);
+    if (tgtOn) t += row(SERIES[3], b.s.tgt[i], "", delta(m, ty, b.s.tgt[i])?.txt);
+    tip.innerHTML = t; tip.hidden = false;
+    const tw = tip.offsetWidth, left = x(i) + 14 + tw > W ? x(i) - 14 - tw : x(i) + 14;
+    tip.style.left = Math.max(0, left) + "px"; tip.style.top = "6px";
+  }
+  hit.addEventListener("pointermove", show);
+  hit.addEventListener("pointerdown", show);
+  hit.addEventListener("pointerleave", () => { hov.setAttribute("visibility", "hidden"); tip.hidden = true; });
+}
+
+// ---------- render ----------
+const grid = document.getElementById("grid");
+function render() {
+  for (const [id, key] of [["region", "region"], ["align", "align"], ["range", "range"]])
+    document.querySelectorAll(`#${id} button`).forEach(bt => bt.setAttribute("aria-pressed", bt.dataset.v === state[key]));
+  const anyTgt = METRICS.some(m => hasTarget(m, state.region));
+  document.getElementById("legend").innerHTML = SERIES.filter(s => s.id !== "tgt" || anyTgt)
+    .map(s => `<span><i style="border-color:${s.color};border-top-style:${s.dash ? (s.id === "lly" ? "dotted" : "dashed") : "solid"}"></i>${s.label}</span>`).join("");
+  const rl = { ALL: "Overall", KSA: "KSA", UAE: "UAE" }[state.region];
+  document.getElementById("meta").innerHTML = `<b>${rl}</b> · 25 Sep → ${fmtD(lastActual)} 2026 · latest day <b>${fmtDL(lastActual)}</b> · refreshed ${DATA.refreshed || ""}`;
+
+  grid.innerHTML = "";
+  const built = {};
+  for (const m of METRICS) {
+    const b = built[m.key] = build(m);
+    const li = b.dates.indexOf(lastActual);
+    const ty = b.s.ty[li], tgtOn = hasTarget(m, state.region);
+    const el = document.createElement("article");
+    el.className = "panel";
+    el.innerHTML = `<div class="ph">
+        <div><h2>${m.name}${m.unit ? ` <small>${m.unit}</small>` : ""}</h2>
+          <div class="big">${fmt(m, ty)}<small>${fmtD(lastActual)}</small></div></div>
+        <div class="chips">
+          <div class="chiprow"><span class="chiplbl">Day</span>${chip("LY", delta(m, ty, b.s.ly[li]))}${chip("LLY", delta(m, ty, b.s.lly[li]))}${tgtOn ? chip("Tgt", delta(m, ty, b.s.tgt[li])) : ""}</div>
+          <div class="chiprow"><span class="chiplbl">Since 25 Sep · ${fmt(m, b.ptd.ty, true)}</span>${chip("LY", delta(m, b.ptd.ty, b.ptd.ly))}${chip("LLY", delta(m, b.ptd.ty, b.ptd.lly))}</div>
+        </div>
+      </div><div class="chart"></div>`;
+    grid.appendChild(el);
+    drawChart(el.querySelector(".chart"), m, b);
+  }
+  renderTable(built);
+}
+
+function renderTable(built) {
+  const dates = range(START, lastActual).reverse();
+  let h = `<thead><tr><th></th>${METRICS.map(m => `<th colspan="3">${m.name}</th>`).join("")}</tr><tr><th>Date</th>${METRICS.map(() => `<th>TY</th><th>vs LY</th><th>vs LLY</th>`).join("")}</tr></thead><tbody>`;
+  for (const d of dates) {
+    h += `<tr><td class="d">${fmtDL(d)}</td>`;
+    for (const m of METRICS) {
+      const b = built[m.key], i = b.dates.indexOf(d), ty = b.s.ty[i];
+      const a = delta(m, ty, b.s.ly[i]), c = delta(m, ty, b.s.lly[i]);
+      h += `<td>${fmt(m, ty)}</td><td><span class="${a?.cls || ""}">${a?.txt || "–"}</span></td><td><span class="${c?.cls || ""}">${c?.txt || "–"}</span></td>`;
+    }
+    h += `</tr>`;
+  }
+  document.getElementById("table").innerHTML = h + "</tbody>";
+}
+
+for (const [id, key] of [["region", "region"], ["align", "align"], ["range", "range"]])
+  document.getElementById(id).addEventListener("click", e => { const bt = e.target.closest("button"); if (!bt) return; state[key] = bt.dataset.v; save(); render(); });
+let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(render, 150); });
+render();
+</script>
