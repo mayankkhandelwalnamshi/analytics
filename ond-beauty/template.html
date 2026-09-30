@@ -65,6 +65,28 @@ nav.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-colo
 .seg button { font: inherit; font-size: 13px; font-weight: 500; border: 0; background: none; color: var(--fg-2); padding: 5px 11px; border-radius: 6px; cursor: pointer; }
 .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; }
+.dd { position: relative; }
+.ddb { font: inherit; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; color: var(--fg); cursor: pointer; max-width: 260px; }
+.ddb .k { white-space: nowrap; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.ddb .v { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.ddb.on { border-color: var(--accent); background: var(--accent-soft); }
+.ddb.on .v { color: var(--accent); font-weight: 600; }
+.ddb svg { flex: none; }
+.pop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; width: min(320px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,0.16); padding: 8px; }
+.pop input[type=search] { width: 100%; font: inherit; font-size: 13px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--bg); color: var(--fg); }
+.pop input[type=search]:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
+.opts { max-height: 300px; overflow-y: auto; margin-top: 6px; }
+.opt { display: grid; grid-template-columns: 16px 1fr auto; gap: 8px; align-items: center; padding: 5px 6px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.opt:hover { background: var(--flat-bg); }
+.opt input { margin: 0; accent-color: var(--accent); }
+.opt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.opt em { font-style: normal; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.popf { display: flex; justify-content: space-between; align-items: center; gap: 8px; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 6px; font-size: 12px; color: var(--muted); }
+.lnk { font: inherit; font-size: 12px; font-weight: 600; background: none; border: 0; color: var(--accent); cursor: pointer; padding: 4px 6px; border-radius: 6px; }
+.lnk:disabled { color: var(--muted); cursor: default; opacity: 0.6; }
+.fsum { font-size: 12px; color: var(--muted); }
+.loading { padding: 40px 0; color: var(--muted); }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-left: auto; font-size: 12px; color: var(--fg-2); }
 .legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
 
@@ -118,6 +140,13 @@ td .up { color: var(--good); } td .down { color: var(--bad); }
   </nav>
 
   <div class="bar">
+    <div class="filters" id="filters">
+      <div class="dd" data-f="cat"></div>
+      <div class="dd" data-f="sub"></div>
+      <div class="dd" data-f="brand"></div>
+      <button class="lnk" id="freset" disabled>Reset filters</button>
+      <span class="fsum" id="fsum"></span>
+    </div>
     <div class="ctl"><span>Region</span>
       <div class="seg" id="region">
         <button id="r-all" data-v="ALL" aria-pressed="true">Overall</button>
@@ -140,21 +169,62 @@ td .up { color: var(--good); } td .down { color: var(--bad); }
     <div class="legend" id="legend"></div>
   </div>
 
-  <section class="grid" id="grid"></section>
+  <section class="grid" id="grid"><p class="loading">Loading Beauty sales data…</p></section>
 
   <details class="tbl" id="tbl">
     <summary>Daily table</summary>
     <div class="tscroll"><table id="table"></table></div>
   </details>
 
-  <p class="note">Beauty = products with business unit “beauty”. GMV is gross (incl. VAT, all item statuses including cancelled and returned). Units = gross items. ASP = GMV ÷ units. MKD % = markdown discount ÷ normal price (AED). PC1 % = PC1 ÷ gross revenue. Prov. PC1 % = provisional PC1 ÷ gross revenue. Overall covers all countries, KSA and UAE included. Ratios are calculated from summed values. Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics. Today is excluded because the day is still in progress.</p>
+  <p class="note">Beauty = products with business unit “beauty”. Brand, category and sub-category come from the product catalogue (item_d); “(none)” means the field is blank there. Targets, when added, apply to all of Beauty and are hidden while a filter is active. GMV is gross (incl. VAT, all item statuses including cancelled and returned). Units = gross items. ASP = GMV ÷ units. MKD % = markdown discount ÷ normal price (AED). PC1 % = PC1 ÷ gross revenue. Prov. PC1 % = provisional PC1 ÷ gross revenue. Overall covers all countries, KSA and UAE included. Ratios are calculated from summed values. Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics. Today is excluded because the day is still in progress.</p>
 </div>
 
 <script>
-const DATA = /*__DATA__*/null;
+const META = /*__META__*/null;
 const TARGETS = /*__TARGETS__*/null || {};
+const BLOB = "__BLOB__";
 const START = "2026-09-25", END = "2026-12-31";
-const I = Object.fromEntries(DATA.fields.map((f, i) => [f, i]));
+const I = Object.fromEntries(META.fields.map((f, i) => [f, i]));
+const NF = META.fields.length, NR = META.n, DIDX = Object.fromEntries(META.dates.map((d, i) => [d, i]));
+const DIMS = [
+  { key: "cat",   label: "Category",     all: "All categories" },
+  { key: "sub",   label: "Sub-category", all: "All sub-categories" },
+  { key: "brand", label: "Brand",        all: "All brands" },
+];
+const DPOS = { brand: 0, cat: 1, sub: 2 };
+let COL = null, ACC = null, COMBO_GMV = null;
+
+async function loadData() {
+  const bin = Uint8Array.from(atob(BLOB), ch => ch.charCodeAt(0));
+  const buf = await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+  const m = [];
+  for (let j = 0; j < NF; j++) m.push(new Int32Array(buf, j * 4 * NR, NR));
+  let o = NF * 4 * NR;
+  const d = new Uint16Array(buf, o, NR); o += 2 * NR;
+  const k = new Uint16Array(buf, o, NR); o += 2 * NR;
+  const c = new Uint8Array(buf, o, NR);
+  COL = { m, d, k, c };
+  COMBO_GMV = new Float64Array(META.combos.length);
+  for (let r = 0; r < NR; r++) COMBO_GMV[k[r]] += m[0][r];
+}
+// allowed[k] = combo k passes every filter (optionally ignoring one dimension, for option lists)
+function allowedMask(skip) {
+  const mask = new Uint8Array(META.combos.length);
+  const act = DIMS.filter(dm => dm.key !== skip && state.f[dm.key].length).map(dm => [DPOS[dm.key], new Set(state.f[dm.key].map(v => META.names[dm.key].indexOf(v)))]);
+  META.combos.forEach((cb, i) => { mask[i] = act.every(([p, set]) => set.has(cb[p])) ? 1 : 0; });
+  return mask;
+}
+function recompute() {
+  const mask = allowedMask(null), nd = META.dates.length;
+  ACC = new Float64Array(nd * 3 * NF);
+  const { m, d, k, c } = COL;
+  for (let r = 0; r < NR; r++) {
+    if (!mask[k[r]]) continue;
+    const base = (d[r] * 3 + c[r]) * NF;
+    for (let j = 0; j < NF; j++) ACC[base + j] += m[j][r];
+  }
+}
+const filtered = () => DIMS.some(dm => state.f[dm.key].length);
 
 const METRICS = [
   { key: "gmv",  name: "GMV",        unit: "AED", kind: "aed",   zero: true,  calc: a => a[I.gmv] },
@@ -179,7 +249,7 @@ const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","
 const WD = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const fmtD = s => { const d = new Date(toT(s)); return `${d.getUTCDate()} ${MON[d.getUTCMonth()]}`; };
 const fmtDL = s => { const d = new Date(toT(s)); return `${WD[d.getUTCDay()]} ${d.getUTCDate()} ${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
-const lastActual = Object.keys(DATA.days).filter(d => d >= START).sort().pop();
+const lastActual = META.dates.filter(d => d >= START).pop();
 function shift(s, years, mode) {
   if (mode === "dow") return toS(toT(s) - years * 364 * DAY);
   return (+s.slice(0, 4) - years) + s.slice(4);
@@ -187,12 +257,12 @@ function shift(s, years, mode) {
 function range(a, b) { const out = []; for (let t = toT(a); t <= toT(b); t += DAY) out.push(toS(t)); return out; }
 
 // ---------- aggregation ----------
+const RIDX = { KSA: [0], UAE: [1], ALL: [0, 1, 2] };
 function agg(d, region) {
-  const day = DATA.days[d]; if (!day) return null;
-  const keys = region === "ALL" ? Object.keys(day) : [region];
-  let acc = null;
-  for (const k of keys) { const r = day[k]; if (!r) continue; acc = acc ? acc.map((v, i) => v + r[i]) : r.slice(); }
-  return acc;
+  const di = DIDX[d]; if (di == null) return null;
+  const acc = new Array(NF).fill(0);
+  for (const c of RIDX[region]) { const b = (di * 3 + c) * NF; for (let j = 0; j < NF; j++) acc[j] += ACC[b + j]; }
+  return acc.some(v => v !== 0) ? acc : null;
 }
 function aggMany(dates, region) {
   let acc = null;
@@ -201,7 +271,7 @@ function aggMany(dates, region) {
 }
 const val = (m, a) => (a ? m.calc(a) : null);
 const target = (m, region, d) => TARGETS?.[m.key]?.[region]?.[d] ?? null;
-const hasTarget = (m, region) => !!(TARGETS?.[m.key]?.[region] && Object.keys(TARGETS[m.key][region]).length);
+const hasTarget = (m, region) => !filtered() && !!(TARGETS?.[m.key]?.[region] && Object.keys(TARGETS[m.key][region]).length);
 
 // ---------- formatting ----------
 function fmt(m, v, short) {
@@ -224,8 +294,9 @@ function delta(m, cur, base) {
 const chip = (lbl, dl) => `<span class="chip ${dl ? dl.cls : ""}" title="vs ${lbl}">${lbl} ${dl ? dl.txt : "–"}</span>`;
 
 // ---------- state ----------
-const state = { region: "ALL", align: "dow", range: "td" };
-try { Object.assign(state, JSON.parse(localStorage.getItem("ondBeauty") || "{}")); } catch (e) {}
+const state = { region: "ALL", align: "dow", range: "td", f: { cat: [], sub: [], brand: [] } };
+try { const sv = JSON.parse(localStorage.getItem("ondBeauty") || "{}"); Object.assign(state, sv, { f: Object.assign(state.f, sv.f || {}) }); } catch (e) {}
+for (const dm of DIMS) state.f[dm.key] = (state.f[dm.key] || []).filter(v => META.names[dm.key].includes(v));
 function save() { try { localStorage.setItem("ondBeauty", JSON.stringify(state)); } catch (e) {} }
 
 function build(m) {
@@ -260,6 +331,7 @@ function drawChart(box, m, b) {
   const tgtOn = hasTarget(m, state.region);
   const active = SERIES.filter(x => x.id !== "tgt" || tgtOn);
   const all = active.flatMap(x => b.s[x.id]).filter(v => v != null && isFinite(v));
+  if (!all.length) { box.innerHTML = `<p class="loading" style="text-align:center">No sales for this selection.</p>`; return; }
   let lo = Math.min(...all), hi = Math.max(...all);
   if (m.zero) lo = 0; else { const pad = (hi - lo) * 0.15 || Math.abs(hi) * 0.05; lo -= pad; hi += pad; }
   const ticks = niceTicks(lo, hi, 4), y0 = ticks[0], y1 = ticks[ticks.length - 1];
@@ -319,7 +391,8 @@ function render() {
   document.getElementById("legend").innerHTML = SERIES.filter(s => s.id !== "tgt" || anyTgt)
     .map(s => `<span><i style="border-color:${s.color};border-top-style:${s.dash ? (s.id === "lly" ? "dotted" : "dashed") : "solid"}"></i>${s.label}</span>`).join("");
   const rl = { ALL: "Overall", KSA: "KSA", UAE: "UAE" }[state.region];
-  document.getElementById("meta").innerHTML = `<b>${rl}</b> · 25 Sep → ${fmtD(lastActual)} 2026 · latest day <b>${fmtDL(lastActual)}</b> · refreshed ${DATA.refreshed || ""}`;
+  const fl = DIMS.filter(dm => state.f[dm.key].length).map(dm => state.f[dm.key].length === 1 ? state.f[dm.key][0] : `${state.f[dm.key].length} ${dm.label.toLowerCase()}s`);
+  document.getElementById("meta").innerHTML = `<b>${rl}</b>${fl.length ? " · <b>" + fl.join(" · ") + "</b>" : " · all Beauty"} · 25 Sep → ${fmtD(lastActual)} 2026 · latest day <b>${fmtDL(lastActual)}</b> · refreshed ${META.refreshed || ""}`;
 
   grid.innerHTML = "";
   const built = {};
@@ -361,5 +434,69 @@ function renderTable(built) {
 for (const [id, key] of [["region", "region"], ["align", "align"], ["range", "range"]])
   document.getElementById(id).addEventListener("click", e => { const bt = e.target.closest("button"); if (!bt) return; state[key] = bt.dataset.v; save(); render(); });
 let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(render, 150); });
-render();
+
+// ---------- filters ----------
+const CARET = `<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+let openDim = null;
+function options(key) {
+  const mask = allowedMask(key), p = DPOS[key], tot = new Map();
+  META.combos.forEach((cb, i) => { if (mask[i]) tot.set(cb[p], (tot.get(cb[p]) || 0) + COMBO_GMV[i]); });
+  const sum = [...tot.values()].reduce((a, b) => a + b, 0) || 1;
+  return [...tot.entries()].map(([i, g]) => ({ v: META.names[key][i], share: g / sum })).sort((a, b) => b.share - a.share);
+}
+function renderFilters() {
+  document.querySelectorAll(".dd").forEach(el => {
+    const dm = DIMS.find(x => x.key === el.dataset.f), sel = state.f[dm.key];
+    const v = sel.length === 0 ? dm.all : sel.length === 1 ? sel[0] : `${sel.length} selected`;
+    el.innerHTML = `<button class="ddb ${sel.length ? "on" : ""}" id="dd-${dm.key}" aria-haspopup="listbox" aria-expanded="${openDim === dm.key}"><span class="k">${dm.label}</span><span class="v">${esc(v)}</span>${CARET}</button>`;
+    if (openDim === dm.key) {
+      const pop = document.createElement("div"); pop.className = "pop";
+      pop.innerHTML = `<input type="search" id="q-${dm.key}" placeholder="Search ${dm.label.toLowerCase()}" autocomplete="off"><div class="opts" role="listbox" aria-multiselectable="true"></div><div class="popf"><span></span><button class="lnk" data-clear>Clear</button></div>`;
+      el.appendChild(pop);
+      const q = pop.querySelector("input"), list = pop.querySelector(".opts"), foot = pop.querySelector(".popf span");
+      const opts = options(dm.key);
+      const draw = () => {
+        const t = q.value.trim().toLowerCase();
+        const hits = opts.filter(o => !t || o.v.toLowerCase().includes(t));
+        const shown = hits.slice(0, 300);
+        list.innerHTML = shown.map(o => `<label class="opt"><input type="checkbox" value="${esc(o.v)}" ${sel.includes(o.v) ? "checked" : ""}><span title="${esc(o.v)}">${esc(o.v)}</span><em>${o.share >= 0.001 ? (o.share * 100).toFixed(1) + "%" : "<0.1%"}</em></label>`).join("") || `<p class="fsum" style="padding:6px">No ${dm.label.toLowerCase()} matches “${esc(q.value)}”.</p>`;
+        foot.textContent = hits.length > shown.length ? `Showing 300 of ${hits.length}. Search to narrow.` : `${hits.length} · % of GMV`;
+      };
+      draw();
+      q.addEventListener("input", draw);
+      list.addEventListener("change", e => {
+        const val = e.target.value, arr = state.f[dm.key];
+        state.f[dm.key] = e.target.checked ? [...arr, val] : arr.filter(x => x !== val);
+        applyFilters(false);
+      });
+      pop.querySelector("[data-clear]").addEventListener("click", () => { state.f[dm.key] = []; applyFilters(false); });
+      setTimeout(() => q.focus(), 0);
+    }
+  });
+  document.getElementById("freset").disabled = !filtered();
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]); }
+function applyFilters(close) {
+  if (close) openDim = null;
+  save(); recompute(); render();
+  if (openDim) {
+    // keep the open list and its search text while ticking several options
+    const q = document.getElementById("q-" + openDim), txt = q ? q.value : "", top = document.querySelector(".pop .opts")?.scrollTop || 0;
+    renderFilters();
+    const q2 = document.getElementById("q-" + openDim);
+    if (q2 && txt) { q2.value = txt; q2.dispatchEvent(new Event("input")); }
+    const o = document.querySelector(".pop .opts"); if (o) o.scrollTop = top;
+  } else renderFilters();
+}
+document.getElementById("filters").addEventListener("click", e => {
+  const b = e.target.closest(".ddb");
+  if (b) { const k = b.parentElement.dataset.f; openDim = openDim === k ? null : k; renderFilters(); }
+});
+document.getElementById("freset").addEventListener("click", () => { for (const dm of DIMS) state.f[dm.key] = []; applyFilters(true); });
+document.addEventListener("pointerdown", e => { if (openDim && !e.target.closest(".dd")) { openDim = null; renderFilters(); } });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && openDim) { const k = openDim; openDim = null; renderFilters(); document.getElementById("dd-" + k)?.focus(); } });
+
+loadData().then(() => { recompute(); renderFilters(); render(); }).catch(err => {
+  grid.innerHTML = `<p class="loading">The sales data could not be unpacked in this browser (${esc(err.message)}). Open the page in a current version of Chrome, Edge, Safari or Firefox.</p>`;
+});
 </script>
