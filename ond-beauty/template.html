@@ -176,12 +176,12 @@ td .up { color: var(--good); } td .down { color: var(--bad); }
     <div class="tscroll"><table id="table"></table></div>
   </details>
 
-  <p class="note">Beauty = products with business unit “beauty”. Brand, category and sub-category come from the product catalogue (item_d); “(none)” means the field is blank there. Targets, when added, apply to all of Beauty and are hidden while a filter is active. GMV is gross (incl. VAT, all item statuses including cancelled and returned). Units = gross items. ASP = GMV ÷ units. MKD % = markdown discount ÷ normal price (AED). PC1 % = PC1 ÷ gross revenue. Prov. PC1 % = provisional PC1 ÷ gross revenue. Overall covers all countries, KSA and UAE included. Ratios are calculated from summed values. Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics. Today is excluded because the day is still in progress.</p>
+  <p class="note">Beauty = products with business unit “beauty”. Brand, category and sub-category come from the product catalogue (item_d); “(none)” means the field is blank there. Target = daily GMV plan for the Beauty merch team (planning_dod_merch_brand_category_targets), set by country, brand and category; it follows the Category and Brand filters and is hidden when a Sub-category is selected. Targets are loaded up to 30 Sep 2026 so far. GMV is gross (incl. VAT, all item statuses including cancelled and returned). Units = gross items. ASP = GMV ÷ units. MKD % = markdown discount ÷ normal price (AED). PC1 % = PC1 ÷ gross revenue. Prov. PC1 % = provisional PC1 ÷ gross revenue. Overall covers all countries, KSA and UAE included. Ratios are calculated from summed values. Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics. Today is excluded because the day is still in progress.</p>
 </div>
 
 <script>
 const META = /*__META__*/null;
-const TARGETS = /*__TARGETS__*/null || {};
+const TGT = /*__TARGETS__*/null;
 const BLOB = "__BLOB__";
 const START = "2026-09-25", END = "2026-12-31";
 const I = Object.fromEntries(META.fields.map((f, i) => [f, i]));
@@ -215,6 +215,7 @@ function allowedMask(skip) {
   return mask;
 }
 function recompute() {
+  recomputeTargets();
   const mask = allowedMask(null), nd = META.dates.length;
   ACC = new Float64Array(nd * 3 * NF);
   const { m, d, k, c } = COL;
@@ -270,8 +271,27 @@ function aggMany(dates, region) {
   return acc;
 }
 const val = (m, a) => (a ? m.calc(a) : null);
-const target = (m, region, d) => TARGETS?.[m.key]?.[region]?.[d] ?? null;
-const hasTarget = (m, region) => !filtered() && !!(TARGETS?.[m.key]?.[region] && Object.keys(TARGETS[m.key][region]).length);
+// Targets exist for GMV at date x country x brand x category, so they follow the Category and Brand filters only.
+let TACC = null;
+function recomputeTargets() {
+  TACC = new Map();
+  if (!TGT) return;
+  const bSel = state.f.brand.length ? new Set(state.f.brand) : null, cSel = state.f.cat.length ? new Set(state.f.cat) : null;
+  const R = TGT.rows;
+  for (let i = 0; i < R.length; i += 5) {
+    if (bSel && !bSel.has(TGT.brand[R[i + 2]])) continue;
+    if (cSel && !cSel.has(TGT.cat[R[i + 3]])) continue;
+    const d = TGT.dates[R[i]];
+    if (!TACC.has(d)) TACC.set(d, [0, 0, 0]);
+    TACC.get(d)[R[i + 1]] += R[i + 4];
+  }
+}
+const target = (m, region, d) => {
+  if (m.key !== TGT?.metric || !TACC.has(d)) return null;
+  const v = RIDX[region].reduce((a, c) => a + TACC.get(d)[c], 0);
+  return v || null;
+};
+const hasTarget = (m, region) => m.key === TGT?.metric && !state.f.sub.length && TACC.size > 0 && [...TACC.values()].some(a => RIDX[region].some(c => a[c]));
 
 // ---------- formatting ----------
 function fmt(m, v, short) {
@@ -312,6 +332,7 @@ function build(m) {
     ty: val(m, aggMany(tyDates, state.region)),
     ly: val(m, aggMany(tyDates.map(d => shift(d, 1, state.align)), state.region)),
     lly: val(m, aggMany(tyDates.map(d => shift(d, 2, state.align)), state.region)),
+    tgt: tyDates.every(d => target(m, state.region, d) != null) ? tyDates.reduce((a, d) => a + target(m, state.region, d), 0) : null,
   };
   return { dates, s, ptd, n: tyDates.length };
 }
@@ -407,7 +428,7 @@ function render() {
           <div class="big">${fmt(m, ty)}<small>${fmtD(lastActual)}</small></div></div>
         <div class="chips">
           <div class="chiprow"><span class="chiplbl">Day</span>${chip("LY", delta(m, ty, b.s.ly[li]))}${chip("LLY", delta(m, ty, b.s.lly[li]))}${tgtOn ? chip("Tgt", delta(m, ty, b.s.tgt[li])) : ""}</div>
-          <div class="chiprow"><span class="chiplbl">Since 25 Sep · ${fmt(m, b.ptd.ty, true)}</span>${chip("LY", delta(m, b.ptd.ty, b.ptd.ly))}${chip("LLY", delta(m, b.ptd.ty, b.ptd.lly))}</div>
+          <div class="chiprow"><span class="chiplbl">Since 25 Sep · ${fmt(m, b.ptd.ty, true)}</span>${chip("LY", delta(m, b.ptd.ty, b.ptd.ly))}${chip("LLY", delta(m, b.ptd.ty, b.ptd.lly))}${tgtOn && b.ptd.tgt != null ? chip("Tgt", delta(m, b.ptd.ty, b.ptd.tgt)) : ""}</div>
         </div>
       </div><div class="chart"></div>`;
     grid.appendChild(el);

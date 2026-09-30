@@ -10,8 +10,8 @@ data/combos.json holds the [brand, category, sub_category] list; row k = combo i
 The cube is packed as columnar binary (int32 metrics, uint16 date/combo, uint8 country),
 gzip-compressed and base64-embedded into template.html -> dist/ond_beauty_dashboard.html.
 
-targets.json shape (only metrics/regions that have a target; unfiltered Beauty only):
-    {"gmv": {"KSA": {"2026-10-01": 150000, ...}, "UAE": {...}, "ALL": {...}}}
+data/targets_raw.json is the result of sql/targets_beauty.sql ({date: "c,brand,category,gmv;..."}):
+daily GMV targets by country x brand x category. Pass a raw BigQuery result with --targets to refresh it.
 """
 import base64
 import datetime
@@ -67,9 +67,24 @@ def pack():
     return meta, blob
 
 
+def pack_targets():
+    days = json.loads((DATA / "targets_raw.json").read_text())
+    recs = [(d, *r.split(",")) for d in sorted(days) for r in days[d].split(";")]
+    dates = sorted(days)
+    brands = sorted({r[2] for r in recs})
+    cats = sorted({r[3] for r in recs})
+    bi = {v: i for i, v in enumerate(brands)}
+    ci = {v: i for i, v in enumerate(cats)}
+    di = {v: i for i, v in enumerate(dates)}
+    flat = []
+    for d, c, b, cat, g in recs:
+        flat += [di[d], int(c), bi[b], ci[cat], int(round(float(g)))]
+    return {"metric": "gmv", "dates": dates, "brand": brands, "cat": cats, "rows": flat}
+
+
 def build():
     meta, blob = pack()
-    targets = json.loads((DATA / "targets.json").read_text())
+    targets = pack_targets()
     html = (ROOT / "template.html").read_text()
     html = html.replace("/*__META__*/null", json.dumps(meta, separators=(",", ":")))
     html = html.replace("/*__TARGETS__*/null", json.dumps(targets, separators=(",", ":")))
@@ -81,6 +96,13 @@ def build():
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        merge(sys.argv[1:])
+    args = sys.argv[1:]
+    if "--targets" in args:
+        i = args.index("--targets")
+        raw = json.loads(pathlib.Path(args[i + 1]).read_text())
+        (DATA / "targets_raw.json").write_text(json.dumps(
+            {r["f"][0]["v"]: r["f"][1]["v"] for r in raw["rows"]}, separators=(",", ":")))
+        del args[i:i + 2]
+    if args:
+        merge(args)
     build()
