@@ -156,6 +156,7 @@ def pack():
         "combos": [[idx[k][v] for k, v in zip(KEY, c)] for c in combos],
         "lfl": lfl_map(),
         "oosDates": sorted(raw["oos_raw.json"]),
+        "platform": json.loads((DATA / "platform.json").read_text()),   # sql/platform_gmv.sql
         "refreshed": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
     bufs["orders"] = buf
