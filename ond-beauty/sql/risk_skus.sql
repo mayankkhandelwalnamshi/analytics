@@ -100,13 +100,23 @@ o AS (
   WHERE o.date BETWEEN '{FROM}' AND '{TO}' AND o.country IN ('SA', 'AE') AND it.ssku IN (SELECT ssku FROM top)
   GROUP BY 1, 2
 ),
+bg AS (
+  -- brand GMV since {H} in the country, all Beauty business models (for the SKU's share of its brand)
+  SELECT s.country cc, i.brand_code brand, SUM(s.gmv_inc_vat) bgh
+  FROM `noonbinamshi.custom_views.sales_metrics` s
+  JOIN (SELECT sku, ANY_VALUE(brand_code) brand_code FROM `noonbinamshi.custom_views.item_d`
+        WHERE business_unit = 'beauty' AND IFNULL(inventory_type, '') <> 'samples & gwp' GROUP BY 1) i USING (sku)
+  WHERE s.order_date_key BETWEEN '{H}' AND '{TO}' AND s.marketplace IN ('namshi', 'namshi_v2') AND s.gmv_inc_vat > 0
+    AND s.country IN ('SA', 'AE') AND i.brand_code IN (SELECT brand FROM it WHERE ssku IN (SELECT ssku FROM top))
+  GROUP BY 1, 2
+),
 info AS (
   SELECT ssku, ANY_VALUE(brand) brand, ANY_VALUE(cat) cat, ANY_VALUE(sub) sub, ANY_VALUE(title) title,
     ANY_VALUE(img) img, STRING_AGG(DISTINCT bc, ', ') bc, STRING_AGG(DISTINCT cfg, '|') allcfg
   FROM it WHERE ssku IN (SELECT ssku FROM top) GROUP BY 1
 )
 SELECT TO_JSON_STRING(STRUCT(
-  IF(t.cc = 'SA', 0, 1) AS c, ROW_NUMBER() OVER (PARTITION BY t.cc ORDER BY t.gh DESC) AS rk, t.ssku AS ss, ROUND(t.gh) AS gh,
+  IF(t.cc = 'SA', 0, 1) AS c, ROW_NUMBER() OVER (PARTITION BY t.cc ORDER BY t.gh DESC) AS rk, t.ssku AS ss, ROUND(t.gh) AS gh, ROUND(bg.bgh) AS bgh,
   i.brand AS br, i.cat AS ca, i.sub AS su, i.title AS ti, i.img AS im, i.bc AS bc, IFNULL(pc.cfgs, i.allcfg) AS cf,
   ROUND(t.gmv) AS g, ROUND(t.ly) AS ly, t.u AS u, ROUND(t.rev) AS rv, ROUND(t.pc1) AS p1, ROUND(t.ppc1) AS pp,
   t.u30 AS u30, ROUND(COALESCE(c1.cost, c2.cost), 2) AS co, ROUND(COALESCE(c1.pcost, c2.pcost), 2) AS pco,
@@ -114,6 +124,7 @@ SELECT TO_JSON_STRING(STRUCT(
   IFNULL(ld.ld30, 0) AS l30, IFNULL(ld.ldm, 0) AS lm, ROUND(IFNULL(o.oos, 0)) AS oo)) j
 FROM top t
 JOIN info i USING (ssku)
+LEFT JOIN bg ON bg.cc = t.cc AND bg.brand = i.brand
 LEFT JOIN pc ON pc.cc = t.cc AND pc.ssku = t.ssku
 LEFT JOIN cost c1 ON c1.cc = t.cc AND c1.sku = pc.psku
 LEFT JOIN cost c2 ON c2.cc <> t.cc AND c2.sku = pc.psku
