@@ -38,7 +38,8 @@ SETS = [("sales", "cube_raw.json", SALES_FIELDS, None),
         ("trafA", "traffic_raw.json", TRAFFIC_FIELDS, "0"),
         ("trafB", "traffic_raw.json", TRAFFIC_FIELDS, "1"),
         ("oos", "oos_raw.json", OOS_FIELDS, None),
-        ("asrt", "assort_raw.json", ["la", "cb", "st"], None)]   # Overall = KSA + UAE
+        ("asrt", "assort_raw.json", ["la", "cb", "st"], None),   # Overall = KSA + UAE
+        ("inv", "inv_raw.json", ["cv", "rv"], None)]             # inventory value at cost / retail (sql/daily_inventory_value.sql)
 
 
 def fold_small_oos(recs, threshold=10):
