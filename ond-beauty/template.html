@@ -197,6 +197,14 @@ thead th { font-size: 11px; color: var(--muted); font-weight: 600; text-transfor
 thead tr:first-child th { color: var(--fg-2); }
 td.d { font-family: var(--mono); font-size: 11.5px; }
 td .up { color: var(--good); } td .down { color: var(--bad); }
+details.gloss { margin-top: 12px; }
+.gbody { padding: 0 14px 14px; }
+.gbody h4 { margin: 14px 0 6px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.gbody .gl { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 6px 28px; font-size: 12.5px; }
+.gbody .gi { display: grid; grid-template-columns: 150px 1fr; gap: 10px; }
+.gbody .gi b { font-weight: 600; }
+.gbody .gi span { color: var(--fg-2); }
+@media (max-width: 500px) { .gbody .gi { grid-template-columns: 1fr; gap: 0; } }
 .note { color: var(--muted); font-size: 12px; margin-top: 14px; max-width: 80ch; }
 @media (max-width: 700px) { .bar { position: static; } }
 @media (max-width: 560px) { .wrap { padding-inline: 16px; } .legend { margin-left: 0; } .big { font-size: 21px; } }
@@ -213,6 +221,11 @@ td .up { color: var(--good); } td .down { color: var(--bad); }
     <button role="tab" aria-selected="true" id="tab-trend" data-tab="trend">Daily trend</button>
     <button role="tab" aria-selected="false" id="tab-mtd" data-tab="mtd">MTD performance</button>
   </nav>
+
+  <details class="tbl gloss" id="gloss">
+    <summary>Glossary · what each metric means and how it is calculated</summary>
+    <div class="gbody" id="gbody"></div>
+  </details>
 
   <div class="bar">
     <div class="filters" id="filters">
@@ -468,6 +481,69 @@ const METRICS = [
   ...["0-90", "90-180", "180-360", "360-720", "720+"].map((b, i) => ({ key: "ag" + i, name: `Age ${b} days`, section: "health", unit: "share of inventory value at cost", kind: "pct", neutral: i < 2, lowerBetter: i >= 2, level: true, tyOnly: true, shade: true, calc: a => a[I.cv] ? a[I["ag" + i]] / a[I.cv] : null })),
   { key: "nwsh", name: "Newness share", section: "health", unit: "new ÷ live assortment · TY since 1 Jul 2026, LY since 1 Jul 2025", kind: "pct", level: true, calc: a => a[I.la] ? a[I.nw] / a[I.la] : null },
 ];
+// glossary: definition and calculation of every metric and term (rendered in the Glossary panel at the top)
+const GLOSS = {
+  gmv: "Gross merchandise value incl. VAT, all item statuses (incl. cancelled / returned). Namshi marketplaces (namshi, namshi_v2), lines with GMV > 0, Beauty business unit, samples & GWP excluded.",
+  asp: "Average selling price = GMV ÷ units.",
+  units: "Gross items sold (items_gross).",
+  ord: "Distinct order numbers holding Beauty items in scope (trend tab only; orders don't add up across rows).",
+  aov: "Average order value = GMV ÷ orders.",
+  ito: "Items per order = units ÷ orders.",
+  mkd: "Markdown % = markdown discount value ÷ normal price (AED).",
+  pc1: "PC1 % = PC1 ÷ gross revenue.",
+  ppc1: "Provisional PC1 % = provisional PC1 ÷ gross revenue.",
+  gv: "Glance views (product page views), onsite measures, all platforms.",
+  atc: "Add to carts (cart adds), all platforms.",
+  atcgv: "Add to carts ÷ glance views.",
+  ucr: "Unit conversion rate = units sold ÷ glance views.",
+  ctr: "Click-through rate = glance views ÷ impressions (search + non-search).",
+  imp: "Search + non-search impressions, all platforms.",
+  si: "Product impressions on search result pages.",
+  nsi: "Product impressions outside search (category / brand pages, widgets, …).",
+  aimp: "Impressions on the iOS + Android apps (search + non-search).",
+  asi: "Search impressions on the iOS + Android apps.",
+  ansi: "Non-search impressions on the iOS + Android apps.",
+  la: "Distinct live supplier SKUs with stock (psku_sku_mapped: is_live = 1, stock_net > 0), KSA + UAE added together.",
+  lar: "Live assortment with business model retail.",
+  lam: "Live assortment with business model MP.",
+  cb: "Cross-border: supplier SKUs live in KSA from the UAE warehouse.",
+  nw: "Live supplier SKUs activated in that country (item_d activated_at_sa / _ae) between 1 Jul of the year and the day.",
+  st: "Live stock units on primary Namshi retail listings (partner 3001).",
+  cv: "Inventory value at cost (stock_summary_history inventory_value_derived; Namshi retail, live stock, eligible for Namshi).",
+  rv: "Inventory value at retail = stock × offer price on primary Namshi retail listings.",
+  woc: "Weeks of cover (units) = live retail stock ÷ (retail units sold in the last 30 days ÷ 30 × 7). Lower = green.",
+  wocc: "Weeks of cover (COGS) = inventory value at cost ÷ (retail COGS of the last 30 days ÷ 30 × 7). Lower = green.",
+  oos: "Estimated GMV lost to out-of-stock SKUs (looker.out_of_stock_new), KSA + UAE, from 1 Jan 2025 (no LLY).",
+  oosr: "OOS GMV loss ÷ GMV (KSA + UAE).",
+  shst: "MTD tab: the row's live stock ÷ total live stock.",
+  shcv: "MTD tab: the row's inventory value at cost ÷ total.",
+  shrv: "MTD tab: the row's inventory value at retail ÷ total.",
+  ag0: "MTD tab: share of the row's inventory value at cost aged 0-89 days (ageing_cost, sku_config_ageing_detailed; TY only, from 1 Oct 2026).",
+  ag1: "Share of the row's inventory value at cost aged 90-179 days.",
+  ag2: "Share of the row's inventory value at cost aged 180-359 days.",
+  ag3: "Share of the row's inventory value at cost aged 360-719 days.",
+  ag4: "Share of the row's inventory value at cost aged 720+ days.",
+  nwsh: "New assortment ÷ live assortment. TY: activated since 1 Jul 2026; LY: since 1 Jul 2025 up to the LY day.",
+};
+const GLOSS_TERMS = [
+  ["TY / LY / LLY", "This year (2026), last year (2025) and the year before (2024)."],
+  ["LFL date", "Like-for-like date from the LFL mapping (e.g. Black Friday vs Black Friday). “Same date” compares the same calendar date."],
+  ["MTD", "Month to date: 1st of the month to the latest full day (yesterday). Flow metrics are summed over the period."],
+  ["Now", "Stock-type metrics (assortment, stock, inventory, WoC, shares) on the last day of the period; LY / LLY use the LFL day."],
+  ["Target", "Daily GMV plan for the Beauty pod (planning_dod_merch_brand_category_targets, pod cp_beauty) by country, brand and category."],
+  ["Krithi tgt", "LY GMV on LFL dates × 1.25, for every row."],
+  ["vs Tgt / vs LY / vs LLY", "% change for value metrics; percentage-point (pp) change for % metrics."],
+  ["Δ vs LY", "GMV TY − GMV LY, in AED."],
+  ["Drop Contrib vs LY", "(Row TY − row LY) ÷ total LY, in pp. Rows add up to the total's % change vs LY, so the most negative rows drove the drop."],
+  ["Share", "The row's GMV ÷ total GMV."],
+  ["Projection", "Summary tiles: full-month target / LY / LLY × the MTD achievement against it."],
+  ["Overall", "All countries (KSA, UAE, other GCC); assortment / stock / inventory are KSA + UAE."],
+];
+function renderGlossary() {
+  const sec = Object.entries(SECTIONS).map(([k, l]) => `<h4>${l}</h4><div class="gl">${METRICS.filter(m => (m.section || "sales") === k)
+    .map(m => `<div class="gi"><b>${m.name}</b><span>${GLOSS[m.key] || ""}</span></div>`).join("")}</div>`).join("");
+  document.getElementById("gbody").innerHTML = `<h4>Terms</h4><div class="gl">${GLOSS_TERMS.map(([t, d]) => `<div class="gi"><b>${t}</b><span>${esc(d)}</span></div>`).join("")}</div>${sec}`;
+}
 const SECTIONS = { sales: "Sales", traffic: "Traffic", assort: "Assortment & stock", health: "Health" };
 const SERIES = [
   { id: "ty",  label: "2026 (TY)", color: "var(--s-ty)",  w: 2.5, dash: "" },
@@ -1219,6 +1295,7 @@ document.getElementById("freset").addEventListener("click", () => { for (const d
 document.addEventListener("pointerdown", e => { if (openDim && !e.target.closest(".dd")) { openDim = null; renderFilters(); } });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && openDim) { const k = openDim; openDim = null; renderFilters(); document.getElementById("dd-" + k)?.focus(); } });
 
+renderGlossary();
 loadData().then(() => { recompute(); renderFilters(); render(); }).catch(err => {
   grid.innerHTML = `<p class="loading">The dashboard data could not be loaded (${esc(err.message)}). Open the page in a current version of Chrome, Edge, Safari or Firefox.</p>`;
 });
