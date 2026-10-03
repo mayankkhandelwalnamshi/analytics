@@ -16,3 +16,8 @@ Interactive HTML dashboard for Beauty during OND 2026 (from 1 Oct), compared wit
 ## Tabs
 
 1. **Daily trend** – GMV, ASP, Units, MKD %, PC1 %, Prov. PC1 % day on day vs LY / LLY (/ Target), for Overall, KSA and UAE.
+
+## Publishing
+
+`build.py` writes `dist/ond_beauty_dashboard.html` plus `dist/data/*.txt` (base64 gzip data files the page fetches).
+Publish the page together with every `dist/data/*.txt` file under `data/`.
