@@ -32,6 +32,7 @@ SALES_FIELDS = ["gmv", "u", "mkd", "np", "rev", "pc1", "ppc1"]
 TRAFFIC_FIELDS = ["gv", "atc", "si", "nsi", "asi", "ansi"]
 OOS_FIELDS = ["oos"]
 KEY = ["brand", "cat", "sub", "bm", "season"]          # product combo key (sql/*.sql)
+START = "2026-10-01"
 ATTRS = ["btype", "bgroup", "poc"]                      # brand attributes (sql/brand_attributes.sql)
 # (name, raw file, fields, traffic level or None). Traffic has two levels, see sql/daily_traffic_cube.sql.
 SETS = [("sales", "cube_raw.json", SALES_FIELDS, None),
@@ -187,7 +188,26 @@ def pack_targets():
     flat = []
     for d, c, b, cat, g in recs:
         flat += [di[d], int(c), bi[b], ci[cat], int(round(float(g)))]
-    return {"metric": "gmv", "dates": dates, "brand": brands, "cat": cats, "rows": flat}
+    return {"metric": "gmv", "dates": dates, "brand": brands, "cat": cats, "rows": flat, "bm": target_bm(brands)}
+
+
+def target_bm(brands):
+    """Targets are at brand level; each brand is given the business model (retail / mp) with most of its GMV
+    (latest year first, then all history) so the Business model filter can use them."""
+    cube = json.loads((DATA / "cube_raw.json").read_text())
+    gmv = [{}, {}]
+    for d, s in cube.items():
+        for rec in s.split(";"):
+            v = rec.split(",")
+            for g in gmv[:1 + (d >= START)]:
+                g.setdefault(v[1], {}).setdefault(v[4], 0.0)
+                g[v[1]][v[4]] += float(v[6])
+    fallback = json.loads((DATA / "target_bm_fallback.json").read_text())   # no sales yet: by item_d SKUs (sql/target_brand_bm.sql)
+    out = []
+    for br in brands:
+        m = gmv[1].get(br) or gmv[0].get(br)
+        out.append(max(m, key=m.get) if m else fallback.get(br))
+    return out
 
 
 def build():
