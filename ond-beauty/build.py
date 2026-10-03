@@ -43,9 +43,7 @@ SETS = [("sales", "cube_raw.json", SALES_FIELDS, None),
         ("inv", "inv_raw.json", ["cv", "rv"], None),             # inventory value at cost / retail (sql/daily_inventory_value.sql)
         ("rs", "retail_raw.json", ["ur30", "cg30"], None),       # retail units / COGS per day from 1 Sep (sql/daily_retail_cogs.sql);
                                                                  # the page turns them into trailing 30-day sums for WoC
-        ("age", "age_raw.json", ["ag0", "ag1", "ag2", "ag3", "ag4"], None),   # cost value by ageing band, TY (sql/daily_inventory_ageing.sql)
-        # every metric by ageing bucket, TY only (sql/daily_by_ageing.sql); the bucket is packed into the country byte: c + 3 * bucket
-        ("xage", "xage_raw.json", SALES_FIELDS + TRAFFIC_FIELDS + ["la", "cb", "st", "nw", "cv", "rv", "ur30", "cg30", "oos"], None)]
+        ("age", "age_raw.json", ["ag0", "ag1", "ag2", "ag3", "ag4"], None)]   # cost value by ageing band, TY (sql/daily_inventory_ageing.sql)
 
 
 def fold_small_oos(recs, threshold=10):
@@ -95,14 +93,11 @@ def pack():
                     if v[0] != lvl:
                         continue
                     v = v[1:]
-                b = 0
-                if name == "xage":
-                    b, v = int(v[0]), v[1:]
                 key = tuple(v[1:6])
                 if key not in combo_idx:
                     combo_idx[key] = len(combo_idx)
                 cols[0].append(di[d])
-                cols[1].append(int(v[0]) + 3 * b)
+                cols[1].append(int(v[0]))
                 cols[2].append(combo_idx[key])
                 for j in range(len(fields)):
                     cols[3 + j].append(int(round(float(v[6 + j]))))
