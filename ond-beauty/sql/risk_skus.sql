@@ -125,15 +125,13 @@ o AS (
   WHERE o.date BETWEEN '{FROM}' AND '{TO}' AND o.country IN ('SA', 'AE') AND it.ssku IN (SELECT ssku FROM top)
   GROUP BY 1, 2
 ),
--- open purchase orders (Namshi retail partner 3001, all approved / received 2026 Beauty POs whose ETA has passed, excluding POs
--- re-dated to a future ETA): open order qty and open shipment qty per sku and country
+-- open purchase orders (Namshi retail partner 3001, all approved / received 2026 Beauty POs, any ETA):
+-- open order qty and open shipment qty per sku and country
 po_orders AS (
   SELECT order_nr FROM `noonbinmlook.looker.po_expected_received_union`
   WHERE merch_team = 'beauty' AND LOWER(po_order_status) IN ('received', 'approved')
-    AND collection_start_date >= '2026-01-01' AND final_date >= '2026-01-01' AND eta_date < CURRENT_DATE()
+    AND collection_start_date >= '2026-01-01' AND final_date >= '2026-01-01'
     AND (COALESCE(open_order_qty, 0) + COALESCE(open_shipment_qty, 0) + COALESCE(adj_expected_qty, 0) + COALESCE(qty_received, 0) + COALESCE(order_non_shipment_qty, 0)) > 0
-    AND order_nr NOT IN (SELECT order_nr FROM `noonbinmlook.looker.po_expected_received_union` WHERE final_date >= '2026-01-01'
-                         GROUP BY order_nr HAVING COUNT(DISTINCT eta_date) > 1 AND MAX(eta_date) > CURRENT_DATE())
   GROUP BY ALL
 ),
 po_peru AS (
