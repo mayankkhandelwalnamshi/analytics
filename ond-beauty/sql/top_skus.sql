@@ -4,7 +4,9 @@
 --             {L30} = {TO} - 29 days.
 -- Product = item_d supplier_sku (the sku when blank); Beauty, business model retail, no samples & GWP.
 -- Sales scope as sql/daily_beauty_cube.sql (Namshi marketplaces, gmv_inc_vat > 0).
---   gmv / u / rev / pc1 / ppc1   MTD;  ly = GMV on the LY LFL dates;  y_* = yesterday ({TO})
+--   gmv / u / rev / pc1 / ppc1   MTD;  ly = GMV on the LY LFL dates
+--   co / pco = unit cost / provisional cost (ageing_cost sku_cost / sku_prov_cost on {TO}) of the sku whose live price is
+--   shown, in that country (else the other country, e.g. KSA sold CB from the UAE warehouse)
 --   u30 = units sold in the last 30 days; ld30 / ldm = days live (looker.live_days, live_day = 1 on any of the product's skus)
 --         in the last 30 days / MTD
 --   st / sc = stock_net of live Namshi retail listings (partner 3001) on {TO} from the country's own / the other warehouse
@@ -26,8 +28,6 @@ s AS (
     SUM(IF(s.order_date_key BETWEEN '{FROM}' AND '{TO}', s.rev_gross, 0)) rev,
     SUM(IF(s.order_date_key BETWEEN '{FROM}' AND '{TO}', s.pc1_gross, 0)) pc1,
     SUM(IF(s.order_date_key BETWEEN '{FROM}' AND '{TO}', s.prov_pc1_gross, 0)) ppc1,
-    SUM(IF(s.order_date_key = '{TO}', s.rev_gross, 0)) y_rev, SUM(IF(s.order_date_key = '{TO}', s.pc1_gross, 0)) y_pc1,
-    SUM(IF(s.order_date_key = '{TO}', s.prov_pc1_gross, 0)) y_ppc1,
     SUM(IF(s.order_date_key IN ({LY_DATES}), s.gmv_inc_vat, 0)) ly,
     SUM(IF(s.order_date_key BETWEEN '{L30}' AND '{TO}', s.items_gross, 0)) u30
   FROM `noonbinamshi.custom_views.sales_metrics` s JOIN it USING (sku)
@@ -56,14 +56,21 @@ pc AS (
   SELECT ps.cc, ps.ssku,
     SUM(IF(ps.wh = ps.cc, ps.st, 0)) stock, SUM(IF(ps.wh <> ps.cc, ps.st, 0)) stock_cb,
     LOGICAL_OR(ps.lv) live, LOGICAL_OR(ps.cc = 'SA' AND ps.wh = 'AE' AND ps.lv) cb,
-    ANY_VALUE(c.cfgs) cfgs, ANY_VALUE(pr.op) op, ANY_VALUE(pr.np) np
+    ANY_VALUE(c.cfgs) cfgs, ANY_VALUE(pr.op) op, ANY_VALUE(pr.np) np, ANY_VALUE(pr.sku) psku
   FROM ps
   JOIN (SELECT cc, ssku, STRING_AGG(cfg || ':' || IF(lv, '1', '0'), '|' ORDER BY lv DESC, cfg) cfgs FROM pcfg GROUP BY 1, 2) c USING (cc, ssku)
   JOIN (
     -- current price: the live listing with the most stock, else the primary listing
-    SELECT cc, ssku, ARRAY_AGG(STRUCT(offer_price AS op, normal_price AS np) ORDER BY lv DESC, stock_net DESC, is_primary DESC LIMIT 1)[OFFSET(0)].*
+    SELECT cc, ssku, ARRAY_AGG(STRUCT(offer_price AS op, normal_price AS np, sku) ORDER BY lv DESC, stock_net DESC, is_primary DESC LIMIT 1)[OFFSET(0)].*
     FROM p GROUP BY 1, 2
   ) pr USING (cc, ssku)
+  GROUP BY 1, 2
+),
+cost AS (
+  -- unit cost / provisional cost of the sku whose live price is shown (ageing_cost, Namshi retail, on {TO})
+  SELECT country cc, sku, ANY_VALUE(sku_cost) cost, ANY_VALUE(sku_prov_cost) pcost
+  FROM `noonbinmlook.namshi_analytics_custom.ageing_cost`
+  WHERE date = '{TO}' AND id_partner = 3001 AND country IN ('SA', 'AE') AND sku IN (SELECT sku FROM p)
   GROUP BY 1, 2
 ),
 ld AS (
@@ -89,12 +96,14 @@ SELECT TO_JSON_STRING(STRUCT(
   IF(t.cc = 'SA', 0, 1) AS c, ROW_NUMBER() OVER (PARTITION BY t.cc ORDER BY t.gmv DESC) AS rk, t.ssku AS ss,
   i.brand AS br, i.cat AS ca, i.sub AS su, i.title AS ti, i.img AS im, i.bc AS bc, IFNULL(pc.cfgs, i.allcfg) AS cf,
   ROUND(t.gmv) AS g, ROUND(t.ly) AS ly, t.u AS u, ROUND(t.rev) AS rv, ROUND(t.pc1) AS p1, ROUND(t.ppc1) AS pp,
-  ROUND(t.y_rev) AS yr, ROUND(t.y_pc1) AS y1, ROUND(t.y_ppc1) AS yp, t.u30 AS u30,
+  t.u30 AS u30, ROUND(COALESCE(c1.cost, c2.cost), 2) AS co, ROUND(COALESCE(c1.pcost, c2.pcost), 2) AS pco,
   IFNULL(pc.stock, 0) AS st, IFNULL(pc.stock_cb, 0) AS sc, IFNULL(pc.live, FALSE) AS lv, IFNULL(pc.cb, FALSE) AS cb, pc.op AS op, pc.np AS np,
   IFNULL(ld.ld30, 0) AS l30, IFNULL(ld.ldm, 0) AS lm, ROUND(IFNULL(o.oos, 0)) AS oo)) j
 FROM top t
 JOIN info i USING (ssku)
 LEFT JOIN pc ON pc.cc = t.cc AND pc.ssku = t.ssku
+LEFT JOIN cost c1 ON c1.cc = t.cc AND c1.sku = pc.psku
+LEFT JOIN cost c2 ON c2.cc <> t.cc AND c2.sku = pc.psku
 LEFT JOIN ld ON ld.cc = t.cc AND ld.ssku = t.ssku
 LEFT JOIN o ON o.cc = t.cc AND o.ssku = t.ssku
 ORDER BY t.cc, t.gmv DESC

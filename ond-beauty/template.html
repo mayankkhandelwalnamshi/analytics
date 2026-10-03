@@ -599,7 +599,7 @@ const GLOSS_TERMS = [
   ["Contrib. vs LY", "(Row TY − row LY) ÷ total LY, in pp. Rows add up to the total's % change vs LY, so the most negative rows drove the drop."],
   ["Share", "The row's GMV ÷ total GMV."],
   ["Projection", "Summary tiles: full-month target / LY / LLY × the MTD achievement against it."],
-  ["Top SKU performance", "Top 500 retail supplier SKUs per country by MTD GMV. Stock = live Namshi retail stock in the country's own warehouse + CB (KSA sold from the UAE warehouse). Price / markdown = the live listing with the most stock (markdown = 1 − offer ÷ normal price). PC1 yday = yesterday's PC1 ÷ revenue. Live days = days with the product live (looker.live_days). WoC = stock ÷ (units in the last 30 days ÷ live days in those 30 days × 7); “No sales in L30D” when nothing sold. SKU config chips: green = live in the country now."],
+  ["Top SKU performance", "Top 500 retail supplier SKUs per country by MTD GMV. Stock = live Namshi retail stock in the country's own warehouse + CB (KSA sold from the UAE warehouse). Live price / live markdown = the live listing with the most stock (markdown = 1 − offer ÷ normal price). Live PC1 = (live price − unit cost) ÷ live price; live prov PC1 uses the provisional cost (ageing_cost sku_cost / sku_prov_cost). Live days = days with the product live (looker.live_days). WoC = stock ÷ (units in the last 30 days ÷ live days in those 30 days × 7); “No sales in L30D” when nothing sold. SKU config chips: green = live in the country now."],
   ["Overall", "All countries (KSA, UAE, other GCC); assortment / stock / inventory are KSA + UAE."],
 ];
 function renderGlossary() {
@@ -1253,6 +1253,8 @@ function renderSkus() {
   const ratio = (n, d) => d ? n / d : null;
   const card = r => {
     const w = skuWoc(r), md = r.np && r.op != null ? 1 - r.op / r.np : null, dl = vly(r);
+    // live PC1 = (live offer price − unit cost) ÷ live offer price; prov uses the provisional cost
+    const lp1 = r.op && r.co != null ? (r.op - r.co) / r.op : null, lpp = r.op && r.pco != null ? (r.op - r.pco) / r.op : null;
     const cfgs = (r.cf || "").split("|").filter(Boolean).map(x => { const [k, l] = x.split(":"); return `<code class="${l === "1" ? "on" : ""}" title="${l === "1" ? "Live" : l === "0" ? "Not live" : ""}">${esc(k)}</code>`; }).join("");
     const kv = (k, v, cls = "") => `<div><span>${k}</span><b class="${cls}">${v}</b></div>`;
     return `<article class="card">
@@ -1271,8 +1273,8 @@ function renderSkus() {
         ${kv("LY GMV", r.ly ? fmt(aed, r.ly, true) : "–")}${kv("vs LY", dl ? dl.txt : r.ly ? "–" : "new", dl?.cls || "")}
         ${kv("MTD ASP", r.u ? fmt({ kind: "aed2" }, r.g / r.u) : "–")}${kv("Units MTD", r.u)}
         ${kv("Stock", r.sc ? `${Math.round(r.st).toLocaleString("en-US")} + ${Math.round(r.sc).toLocaleString("en-US")} CB` : Math.round(r.st).toLocaleString("en-US"))}${kv("WoC (L30D)", w == null ? "No sales in L30D" : w.toFixed(1) + " wk")}
-        ${kv(`Price (${cur})`, r.op != null ? Math.round(r.op).toLocaleString("en-US") : "–")}${kv("Markdown", fmt(pct, md))}
-        ${kv("PC1 yday", fmt(pct, ratio(r.y1, r.yr)))}${kv("Prov PC1 yday", fmt(pct, ratio(r.yp, r.yr)))}
+        ${kv(`Live price (${cur})`, r.op != null ? Math.round(r.op).toLocaleString("en-US") : "–")}${kv("Live markdown", fmt(pct, md))}
+        ${kv("Live PC1", fmt(pct, lp1), lp1 < 0 ? "down" : "")}${kv("Live prov PC1", fmt(pct, lpp), lpp < 0 ? "down" : "")}
         ${kv("PC1 MTD", fmt(pct, ratio(r.p1, r.rv)))}${kv("Prov PC1 MTD", fmt(pct, ratio(r.pp, r.rv)))}
         ${kv("OOS loss MTD", r.oo ? fmt(aed, r.oo, true) : "0", r.oo ? "down" : "")}${kv("Live days MTD", r.lm)}
       </div>
