@@ -29,7 +29,8 @@ ROOT = pathlib.Path(__file__).parent
 DATA = ROOT / "data"
 SALES_FIELDS = ["gmv", "u", "mkd", "np", "rev", "pc1", "ppc1"]
 TRAFFIC_FIELDS = ["gv", "atc", "si", "nsi", "asi", "ansi"]
-SETS = [("cube_raw.json", SALES_FIELDS), ("traffic_raw.json", TRAFFIC_FIELDS)]
+OOS_FIELDS = ["oos"]
+SETS = [("cube_raw.json", SALES_FIELDS), ("traffic_raw.json", TRAFFIC_FIELDS), ("oos_raw.json", OOS_FIELDS)]
 
 
 def merge(paths, target="cube_raw.json"):
@@ -109,6 +110,7 @@ def pack():
         "names": names,
         "combos": [[idx["brand"][b], idx["cat"][c], idx["sub"][s]] for b, c, s in combos],
         "lfl": lfl_map(),
+        "oosDates": sorted(json.loads((DATA / "oos_raw.json").read_text())),
         "refreshed": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
     blob = base64.b64encode(gzip.compress(buf, 9)).decode()

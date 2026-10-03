@@ -16,6 +16,7 @@ WITH beauty AS (
     IFNULL(ANY_VALUE(sub_category), '(none)') AS sub
   FROM `noonbinamshi.custom_views.item_d`
   WHERE business_unit = 'beauty'
+    AND IFNULL(inventory_type, '') <> 'samples & gwp'   -- samples & GWP are excluded from every metric
   GROUP BY sku
 ),
 x AS (
