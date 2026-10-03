@@ -183,6 +183,11 @@ td .up { color: var(--good); } td .down { color: var(--bad); }
       <div class="dd" data-f="cat"></div>
       <div class="dd" data-f="sub"></div>
       <div class="dd" data-f="brand"></div>
+      <div class="dd" data-f="bm"></div>
+      <div class="dd" data-f="season"></div>
+      <div class="dd" data-f="btype"></div>
+      <div class="dd" data-f="bgroup"></div>
+      <div class="dd" data-f="poc"></div>
       <button class="lnk" id="freset" disabled>Reset filters</button>
       <span class="fsum" id="fsum"></span>
     </div>
@@ -226,7 +231,7 @@ td .up { color: var(--good); } td .down { color: var(--bad); }
     <div class="tscroll"><table id="table"></table></div>
   </details>
 
-  <p class="note">OOS GMV loss = estimated GMV lost to out-of-stock SKUs (looker.out_of_stock_new, oos_gmv_loss), available for KSA and UAE from 1 Jan 2025, so there is no LLY; OOS loss / GMV divides it by KSA + UAE GMV. Samples &amp; GWP (item_d inventory type) are excluded from every metric. Traffic comes from onsite measures (all platforms; app = iOS + Android): glance views (GVs), add to carts (ATC), search and non-search impressions. ATC / GV = add to carts ÷ glance views. UCR % = units sold ÷ glance views. CTR % = glance views ÷ impressions (search + non-search, all platforms). For traffic, very small brand rows on a day (under 5 GVs, no ATC, under 500 impressions) are grouped as “(other brands)” within their category and sub-category, so totals and category filters are exact. Namshi marketplaces only (namshi, namshi_v2), lines with GMV above zero. LFL date compares each day with its like-for-like day from the LFL mapping (for example Black Friday 2026 vs Black Friday 2025); where the mapping gives an LLY date in the wrong year (30 Sep and 31 Dec) the same calendar date is used. Beauty = products with business unit “beauty”. Brand, category and sub-category come from the product catalogue (item_d); “(none)” means the field is blank there. Target = daily GMV plan for the Beauty pod (planning_dod_merch_brand_category_targets, pod cp_beauty), set by country, brand and category; it follows the Category and Brand filters and is hidden when a Sub-category is selected. Targets are loaded up to 31 Oct 2026 so far. GMV includes VAT and all item statuses (including cancelled and returned). Units = gross items. ASP = GMV ÷ units. Orders = distinct order numbers holding Beauty items in scope. AOV = Beauty GMV ÷ orders. ITO = units ÷ orders. Orders are exact for all Beauty and for one selected category, sub-category or brand; with several values or brand + category selected they are marked “≈” because an order holding more than one of them counts once per value. MKD % = markdown discount ÷ normal price (AED). PC1 % = PC1 ÷ gross revenue. Prov. PC1 % = provisional PC1 ÷ gross revenue. Overall covers all countries, KSA and UAE included. Ratios are calculated from summed values. Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics. Today is excluded because the day is still in progress.</p>
+  <p class="note">OOS GMV loss = estimated GMV lost to out-of-stock SKUs (looker.out_of_stock_new, oos_gmv_loss), available for KSA and UAE from 1 Jan 2025, so there is no LLY; OOS loss / GMV divides it by KSA + UAE GMV. Samples &amp; GWP (item_d inventory type) are excluded from every metric. Traffic comes from onsite measures (all platforms; app = iOS + Android): glance views (GVs), add to carts (ATC), search and non-search impressions. ATC / GV = add to carts ÷ glance views. UCR % = units sold ÷ glance views. CTR % = glance views ÷ impressions (search + non-search, all platforms). For traffic, very small brand rows on a day (under 5 GVs, no ATC, under 500 impressions) are grouped as “(other brands)” within their category and sub-category, so totals and category filters are exact. Namshi marketplaces only (namshi, namshi_v2), lines with GMV above zero. LFL date compares each day with its like-for-like day from the LFL mapping (for example Black Friday 2026 vs Black Friday 2025); where the mapping gives an LLY date in the wrong year (30 Sep and 31 Dec) the same calendar date is used. Beauty = products with business unit “beauty”. Brand, category, sub-category and business model come from the product catalogue (item_d); “(none)” means the field is blank there. Season comes from beauty_season_mapping (by sku_config), brand type from beauty_pestige_mastige_mapping, brand group from brand_group_beauty and brand POC from brand_poc_beauty; missing values are “unassigned”. Traffic is kept either by brand or by business model / season, so with a brand filter (brand, type, group or POC) the business model and season filters are not applied to traffic, and traffic cards show “≈”. The GMV target follows category and brand filters (including brand type, group and POC) and is hidden when a sub-category, business model or season is selected. Target = daily GMV plan for the Beauty pod (planning_dod_merch_brand_category_targets, pod cp_beauty), set by country, brand and category; Targets are loaded up to 31 Oct 2026 so far. GMV includes VAT and all item statuses (including cancelled and returned). Units = gross items. ASP = GMV ÷ units. Orders = distinct order numbers holding Beauty items in scope. AOV = Beauty GMV ÷ orders. ITO = units ÷ orders. Orders are exact for all Beauty and for one selected category, sub-category or brand; with several values or brand + category selected they are marked “≈” because an order holding more than one of them counts once per value. MKD % = markdown discount ÷ normal price (AED). PC1 % = PC1 ÷ gross revenue. Prov. PC1 % = provisional PC1 ÷ gross revenue. Overall covers all countries, KSA and UAE included. Ratios are calculated from summed values. Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics. Today is excluded because the day is still in progress.</p>
 </div>
 
 <script>
@@ -236,22 +241,33 @@ const BLOB = "__BLOB__";
 const START = "2026-10-01", END = "2026-12-31";
 // one flat field list across sales and traffic; ACC holds every field per date x country
 // ord = distinct orders (filled per filter state); gmvo = GMV in KSA + UAE only, the countries OOS loss covers
-const FIELDS = [...META.sets.flatMap(st => st.fields), "ord", "gmvo"];
+// both traffic levels (trafA / trafB) fill the same traffic fields, so field names are de-duplicated
+const FIELDS = [...new Set(META.sets.flatMap(st => st.fields)), "ord", "gmvo"];
 const OOS_DATES = new Set(META.oosDates);
 const I = Object.fromEntries(FIELDS.map((f, i) => [f, i]));
 const NF = FIELDS.length, DIDX = Object.fromEntries(META.dates.map((d, i) => [d, i]));
+// filters: pos = position in the product combo [brand, cat, sub, bm, season]; attr = brand attribute [type, group, POC]
 const DIMS = [
-  { key: "cat",   label: "Category",     all: "All categories" },
-  { key: "sub",   label: "Sub-category", all: "All sub-categories" },
-  { key: "brand", label: "Brand",        all: "All brands" },
+  { key: "cat",    label: "Category",       all: "All categories",     pos: 1 },
+  { key: "sub",    label: "Sub-category",   all: "All sub-categories", pos: 2 },
+  { key: "brand",  label: "Brand",          all: "All brands",         pos: 0, brandish: true },
+  { key: "bm",     label: "Business model", all: "All models",         pos: 3 },
+  { key: "season", label: "Season",         all: "All seasons",        pos: 4 },
+  { key: "btype",  label: "Brand type",     all: "All types",          attr: 0, brandish: true },
+  { key: "bgroup", label: "Brand group",    all: "All groups",         attr: 1, brandish: true },
+  { key: "poc",    label: "Brand POC",      all: "All POCs",           attr: 2, brandish: true },
 ];
-const DPOS = { brand: 0, cat: 1, sub: 2 };
-let SETS = null, ORD = null, ACC = null, COMBO_GMV = null, ORD_EXACT = true;
+const DIM = Object.fromEntries(DIMS.map(dm => [dm.key, dm]));
+const PLACEHOLDER = new Set(["*", "(other brands)"]);   // grouping rows, never offered as filter values
+const vidx = (dm, cb) => dm.pos != null ? cb[dm.pos] : META.battr[cb[0]][dm.attr];
+let SETS = null, ORD = null, ACC = null, COMBO_GMV = null, ORD_EXACT = true, TRAF_EXACT = true;
+const active = k => state.f[k].length > 0;
+const brandActive = () => DIMS.some(dm => dm.brandish && active(dm.key));
 
 async function loadData() {
   const bin = Uint8Array.from(atob(BLOB), ch => ch.charCodeAt(0));
   const buf = new Uint8Array(await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
-  let o = 0, f0 = 0;
+  let o = 0;
   SETS = META.sets.map(st => {
     const n = st.n, m = [];
     for (let j = 0; j < st.fields.length; j++) {
@@ -263,9 +279,7 @@ async function loadData() {
     const k = new Uint16Array(buf.slice(o, o + 2 * n).buffer); o += 2 * n;
     const c = buf.subarray(o, o + n); o += n;
     o += (4 - o % 4) % 4;
-    const set = { n, m, d, k, c, f0 };
-    f0 += st.fields.length;
-    return set;
+    return { name: st.name, n, m, d, k, c, f0: I[st.fields[0]] };
   });
   ORD = META.ord.map(n => {
     const lv = { n, cnt: new Int32Array(buf.slice(o, o + 4 * n).buffer) }; o += 4 * n;
@@ -279,42 +293,72 @@ async function loadData() {
   const S = SETS[0];
   for (let r = 0; r < S.n; r++) COMBO_GMV[S.k[r]] += S.m[0][r];
 }
-// allowed[k] = combo k passes every filter (optionally ignoring one dimension, for option lists)
+// allowed[k] = combo k passes every filter, ignoring the dimensions in skip (a key or a Set of keys)
 function allowedMask(skip) {
+  const sk = skip instanceof Set ? skip : new Set(skip ? [skip] : []);
   const mask = new Uint8Array(META.combos.length);
-  const act = DIMS.filter(dm => dm.key !== skip && state.f[dm.key].length).map(dm => [DPOS[dm.key], new Set(state.f[dm.key].map(v => META.names[dm.key].indexOf(v)))]);
-  META.combos.forEach((cb, i) => { mask[i] = act.every(([p, set]) => set.has(cb[p])) ? 1 : 0; });
+  const act = DIMS.filter(dm => !sk.has(dm.key) && active(dm.key)).map(dm => [dm, new Set(state.f[dm.key].map(v => META.names[dm.key].indexOf(v)))]);
+  META.combos.forEach((cb, i) => { mask[i] = act.every(([dm, set]) => set.has(vidx(dm, cb))) ? 1 : 0; });
   return mask;
+}
+// Traffic is stored at two levels: trafA by category x sub-category x business model x season (no brand) and
+// trafB by brand x category x sub-category. A brand filter needs trafB; business model / season are then not applied.
+function trafficPlan() {
+  if (!brandActive()) return { use: "trafA", skip: new Set(), exact: true };
+  return { use: "trafB", skip: new Set(["bm", "season"]), exact: !active("bm") && !active("season") };
 }
 function recompute() {
   recomputeTargets();
-  const mask = allowedMask(null), nd = META.dates.length;
+  const mask = allowedMask(null), nd = META.dates.length, tp = trafficPlan();
+  const tmask = tp.skip.size ? allowedMask(tp.skip) : mask;
+  TRAF_EXACT = tp.exact;
   ACC = new Float64Array(nd * 3 * NF);
-  addOrders(mask);
-  for (const { n, m, d, k, c, f0 } of SETS) {
-    const nf = m.length;
+  for (const { name, n, m, d, k, c, f0 } of SETS) {
+    if (name.startsWith("traf") && name !== tp.use) continue;
+    const mk = name === tp.use ? tmask : mask, nf = m.length;
     for (let r = 0; r < n; r++) {
-      if (!mask[k[r]]) continue;
+      if (!mk[k[r]]) continue;
       const base = (d[r] * 3 + c[r]) * NF + f0;
       for (let j = 0; j < nf; j++) ACC[base + j] += m[j][r];
     }
   }
+  addOrders(mask);
 }
 // Distinct orders don't add up across brands or categories, so take the level that matches the filters:
-// none -> all Beauty, category only -> per category, sub-category (with or without category) -> per category|sub,
-// brand only -> per brand, brand with category/sub-category -> per brand|category|sub. Exact for one value per filter.
+// none -> all Beauty; category only -> per category; sub-category (+ category) -> per category|sub;
+// brand filters only (brand, type, group, POC) -> per brand; business model only; season only.
+// Exact when one value passes; mixed filters are estimated from brand-level orders scaled by the share of
+// each brand's units that pass the filters (marked "≈").
 function addOrders(mask) {
-  const f = state.f, has = k => f[k].length > 0, ix = k => new Set(f[k].map(v => META.names[k].indexOf(v)));
+  const on = DIMS.filter(dm => active(dm.key)).map(dm => dm.key), only = ks => on.every(k => ks.includes(k));
+  const ix = k => new Set(state.f[k].map(v => META.names[k].indexOf(v)));
+  const brandOk = b => DIMS.filter(dm => dm.brandish && active(dm.key)).every(dm => ix(dm.key).has(dm.pos != null ? b : META.battr[b][dm.attr]));
   let lvl, keep;
-  if (!has("cat") && !has("sub") && !has("brand")) { lvl = 0; keep = () => true; }
-  else if (!has("brand") && !has("sub")) { lvl = 1; const s = ix("cat"); keep = k => s.has(k); }
-  else if (!has("brand")) { lvl = 2; const sc = has("cat") ? ix("cat") : null, ss = ix("sub"); keep = k => ss.has(META.pairs[k][1]) && (!sc || sc.has(META.pairs[k][0])); }
-  else if (!has("cat") && !has("sub")) { lvl = 3; const s = ix("brand"); keep = k => s.has(k); }
-  else { lvl = 4; keep = k => mask[k]; }
-  const single = ["cat", "sub", "brand"].every(k => f[k].length <= 1);
-  ORD_EXACT = lvl < 4 ? single : false;
-  const L = ORD[lvl], oi = I.ord;
-  for (let r = 0; r < L.n; r++) if (keep(L.k[r])) ACC[(L.d[r] * 3 + L.c[r]) * NF + oi] += L.cnt[r];
+  if (!on.length) { lvl = 0; keep = () => true; }
+  else if (only(["cat"])) { lvl = 1; const s = ix("cat"); keep = k => s.has(k); }
+  else if (only(["cat", "sub"])) { lvl = 2; const sc = active("cat") ? ix("cat") : null, ss = ix("sub"); keep = k => ss.has(META.pairs[k][1]) && (!sc || sc.has(META.pairs[k][0])); }
+  else if (only(["brand", "btype", "bgroup", "poc"])) { lvl = 3; keep = brandOk; }
+  else if (only(["bm"])) { lvl = 5; const s = ix("bm"); keep = k => s.has(k); }
+  else if (only(["season"])) { lvl = 6; const s = ix("season"); keep = k => s.has(k); }
+  const oi = I.ord;
+  if (lvl != null) {
+    const L = ORD[lvl], kept = new Set();
+    for (let r = 0; r < L.n; r++) if (keep(L.k[r])) { ACC[(L.d[r] * 3 + L.c[r]) * NF + oi] += L.cnt[r]; kept.add(L.k[r]); }
+    ORD_EXACT = kept.size <= 1 || lvl === 0;
+    return;
+  }
+  ORD_EXACT = false;
+  const S = SETS[0], NB = META.names.brand.length, ui = I.u - S.f0, nd = META.dates.length;
+  const tot = new Float32Array(nd * 3 * NB), pass = new Float32Array(nd * 3 * NB);
+  for (let r = 0; r < S.n; r++) {
+    const key = (S.d[r] * 3 + S.c[r]) * NB + META.combos[S.k[r]][0];
+    tot[key] += S.m[ui][r]; if (mask[S.k[r]]) pass[key] += S.m[ui][r];
+  }
+  const L = ORD[3];
+  for (let r = 0; r < L.n; r++) {
+    const key = (L.d[r] * 3 + L.c[r]) * NB + L.k[r];
+    if (pass[key] > 0) ACC[(L.d[r] * 3 + L.c[r]) * NF + oi] += L.cnt[r] * pass[key] / tot[key];
+  }
 }
 const filtered = () => DIMS.some(dm => state.f[dm.key].length);
 
@@ -384,10 +428,16 @@ let TACC = null;
 function recomputeTargets() {
   TACC = new Map();
   if (!TGT) return;
-  const bSel = state.f.brand.length ? new Set(state.f.brand) : null, cSel = state.f.cat.length ? new Set(state.f.cat) : null;
+  const cSel = state.f.cat.length ? new Set(state.f.cat) : null;
+  const bdims = DIMS.filter(dm => dm.brandish && active(dm.key));
+  const bIdx = Object.fromEntries(META.names.brand.map((b, i) => [b, i]));
+  const unas = [0, 1, 2].map(a => META.names[["btype", "bgroup", "poc"][a]].indexOf("unassigned"));
+  const brandOk = name => bdims.every(dm => dm.key === "brand" ? state.f.brand.includes(name)
+      : state.f[dm.key].includes(META.names[dm.key][bIdx[name] != null ? META.battr[bIdx[name]][dm.attr] : unas[dm.attr]]));
+  const okCache = TGT.brand.map(brandOk);
   const R = TGT.rows;
   for (let i = 0; i < R.length; i += 5) {
-    if (bSel && !bSel.has(TGT.brand[R[i + 2]])) continue;
+    if (bdims.length && !okCache[R[i + 2]]) continue;
     if (cSel && !cSel.has(TGT.cat[R[i + 3]])) continue;
     const d = TGT.dates[R[i]];
     if (!TACC.has(d)) TACC.set(d, [0, 0, 0]);
@@ -399,7 +449,7 @@ const target = (m, region, d) => {
   const v = RIDX[region].reduce((a, c) => a + TACC.get(d)[c], 0);
   return v || null;
 };
-const hasTarget = (m, region) => m.key === TGT?.metric && !state.f.sub.length && TACC.size > 0 && [...TACC.values()].some(a => RIDX[region].some(c => a[c]));
+const hasTarget = (m, region) => m.key === TGT?.metric && !active("sub") && !active("bm") && !active("season") && TACC.size > 0 && [...TACC.values()].some(a => RIDX[region].some(c => a[c]));
 
 // ---------- formatting ----------
 function fmt(m, v, short) {
@@ -424,7 +474,7 @@ function delta(m, cur, base) {
 const chip = (lbl, dl) => `<span class="chip ${dl ? dl.cls : ""}" title="vs ${lbl}">${lbl} ${dl ? dl.txt : "–"}</span>`;
 
 // ---------- state ----------
-const state = { region: "ALL", align: "lfl", range: "td", view: "daily", hide: [], zoom: null, expand: null, f: { cat: [], sub: [], brand: [] },
+const state = { region: "ALL", align: "lfl", range: "td", view: "daily", hide: [], zoom: null, expand: null, f: Object.fromEntries(DIMS.map(dm => [dm.key, []])),
   drill: { date: null, period: "day", dim: "cat", sort: "gmv" } };
 try {
   const sv = JSON.parse(localStorage.getItem("ondBeauty") || "{}");
@@ -624,7 +674,7 @@ function render() {
     const el = document.createElement("article");
     el.className = "panel" + (state.expand === m.key ? " wide" : "");
     el.innerHTML = `<div class="ph">
-        <div><h2>${m.name}${m.unit ? ` <small>${m.unit}</small>` : ""}${m.orders && !ORD_EXACT ? ` <small class="approx" title="Several values are selected, so orders holding more than one of them are counted once per value">≈ approx.</small>` : ""}</h2>
+        <div><h2>${m.name}${m.unit ? ` <small>${m.unit}</small>` : ""}${m.orders && !ORD_EXACT ? ` <small class="approx" title="Orders are estimated for this filter combination: brand-level orders scaled by the share of each brand's units that pass the filters, or several values selected">≈ approx.</small>` : ""}${(m.section === "traffic" || m.key === "ucr") && !TRAF_EXACT ? ` <small class="approx" title="Traffic is kept by brand or by business model / season, not both, so business model and season filters are not applied to traffic while a brand filter is on">≈ approx.</small>` : ""}</h2>
           <div class="big"><span class="bv"></span><small class="bd"></small></div></div>
         <div class="chips">
           <div class="chiprow cr1"></div>
@@ -673,23 +723,28 @@ function openDrill(d) {
 function breakdown(dim, dates) {
   const ty = new Set(), ly = new Set();
   for (const d of dates) { if (DIDX[d] != null) ty.add(DIDX[d]); const s = DIDX[shift(d, 1, state.align)]; if (s != null) ly.add(s); }
-  const mask = allowedMask(null), regs = RIDX[state.region], p = DPOS[dim], out = new Map();
-  // a: TY gmv, LY gmv, TY units, TY rev, TY pc1, TY gv, LY gv, TY atc
-  SETS.forEach(({ n, m, d, k, c, f0 }, si) => {
-    const col = f => m[I[f] - f0];
-    const g0 = col(["gmv", "gv", "oos"][si]);
+  const dm = DIM[dim], regs = RIDX[state.region], out = new Map(), mask = allowedMask(null);
+  // traffic level: by brand when grouping or filtering by a brand attribute, else by business model / season
+  const tp = dm.brandish ? { use: "trafB", skip: new Set(["bm", "season"]) } : trafficPlan();
+  const tmask = tp.skip.size ? allowedMask(tp.skip) : mask;
+  // a: TY gmv, LY gmv, TY units, TY rev, TY pc1, TY gv, LY gv, TY atc, TY oos
+  for (const { name, n, m, d, k, c, f0 } of SETS) {
+    if (name.startsWith("traf") && name !== tp.use) continue;
+    const mk = name === tp.use ? tmask : mask, col = f => m[I[f] - f0];
+    const g0 = col({ sales: "gmv", trafA: "gv", trafB: "gv", oos: "oos" }[name]);
     for (let r = 0; r < n; r++) {
-      if (!mask[k[r]] || !regs.includes(c[r])) continue;
+      if (!mk[k[r]] || !regs.includes(c[r])) continue;
       const isT = ty.has(d[r]); if (!isT && !ly.has(d[r])) continue;
-      const key = META.combos[k[r]][p];
+      const key = vidx(dm, META.combos[k[r]]);
+      if (key < 0) continue;
       let a = out.get(key); if (!a) out.set(key, a = [0, 0, 0, 0, 0, 0, 0, 0, 0]);
-      if (si === 2) { if (isT) a[8] += g0[r]; continue; }
-      if (si === 0) { if (isT) { a[0] += g0[r]; a[2] += col("u")[r]; a[3] += col("rev")[r]; a[4] += col("pc1")[r]; } else a[1] += g0[r]; }
+      if (name === "oos") { if (isT) a[8] += g0[r]; continue; }
+      if (name === "sales") { if (isT) { a[0] += g0[r]; a[2] += col("u")[r]; a[3] += col("rev")[r]; a[4] += col("pc1")[r]; } else a[1] += g0[r]; }
       else { if (isT) { a[5] += g0[r]; a[7] += col("atc")[r]; } else a[6] += g0[r]; }
     }
-  });
+  }
   return [...out.entries()].map(([i, a]) => ({ name: META.names[dim][i], ty: a[0], ly: a[1], u: a[2], pc1: a[3] ? a[4] / a[3] : null, chg: a[0] - a[1],
-    gv: a[5], gvLy: a[6], atcgv: a[5] ? a[7] / a[5] : null, oos: a[8] }));
+    gv: a[5], gvLy: a[6], atcgv: a[5] ? a[7] / a[5] : null, oos: a[8] })).filter(r => !PLACEHOLDER.has(r.name));
 }
 function renderDrill() {
   const box = document.getElementById("drill"), D = state.drill;
@@ -717,7 +772,7 @@ function renderDrill() {
     ${shown.map(r => { const dl = delta(g, r.ty, r.ly), w = Math.abs(r.chg) / maxAbs * 50;
       return `<tr data-v="${esc(r.name)}" class="${sel.includes(r.name) ? "cur" : ""}" title="Filter the dashboard to ${esc(r.name)}"><td class="nm">${esc(r.name)}</td><td>${fmt(g, r.ty)}</td><td>${fmt(g, r.ly)}</td><td><span class="${dl?.cls || ""}">${dl?.txt || (r.ly ? "" : "new")}</span></td>
         <td class="barc"><div class="cbar"><span class="${r.chg >= 0 ? "pos" : "neg"}" style="${r.chg >= 0 ? "left:50%" : "right:50%"};width:${w}%"></span></div><small>${r.chg >= 0 ? "+" : "−"}${fmt(g, Math.abs(r.chg))}</small></td>
-        <td>${tot ? (r.ty / tot * 100).toFixed(1) + "%" : "–"}</td><td>${Math.round(r.u).toLocaleString("en-US")}</td><td>${fmt(pctM, r.pc1)}</td><td>${fmt(cntM, r.gv)}</td><td>${(gd => `<span class="${gd?.cls || ""}">${gd?.txt || "–"}</span>`)(delta(cntM, r.gv, r.gvLy))}</td><td>${fmt(pctM, r.atcgv)}</td><td>${r.oos ? fmt(g, r.oos) : "–"}</td></tr>`; }).join("") || `<tr><td colspan="12">No sales for this selection.</td></tr>`}
+        <td>${tot ? (r.ty / tot * 100).toFixed(1) + "%" : "–"}</td><td>${Math.round(r.u).toLocaleString("en-US")}</td><td>${fmt(pctM, r.pc1)}</td><td>${r.gv ? fmt(cntM, r.gv) : "–"}</td><td>${(gd => `<span class="${gd?.cls || ""}">${gd?.txt || "–"}</span>`)(delta(cntM, r.gv, r.gvLy))}</td><td>${fmt(pctM, r.atcgv)}</td><td>${r.oos ? fmt(g, r.oos) : "–"}</td></tr>`; }).join("") || `<tr><td colspan="12">No sales for this selection.</td></tr>`}
     </tbody></table></div>
     <p class="fsum">${rows.length > shown.length ? `Top ${shown.length} of ${rows.length}. ` : ""}Click a row to filter the dashboard to it; click again to remove it.</p>`;
 }
@@ -745,10 +800,10 @@ let rt, lastW = innerWidth; window.addEventListener("resize", () => { if (innerW
 const CARET = `<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
 let openDim = null;
 function options(key) {
-  const mask = allowedMask(key), p = DPOS[key], tot = new Map();
-  META.combos.forEach((cb, i) => { if (mask[i]) tot.set(cb[p], (tot.get(cb[p]) || 0) + COMBO_GMV[i]); });
+  const mask = allowedMask(key), dm = DIM[key], tot = new Map();
+  META.combos.forEach((cb, i) => { if (!mask[i]) return; const v = vidx(dm, cb); if (v >= 0) tot.set(v, (tot.get(v) || 0) + COMBO_GMV[i]); });
   const sum = [...tot.values()].reduce((a, b) => a + b, 0) || 1;
-  return [...tot.entries()].map(([i, g]) => ({ v: META.names[key][i], share: g / sum })).sort((a, b) => b.share - a.share);
+  return [...tot.entries()].map(([i, g]) => ({ v: META.names[key][i], share: g / sum })).filter(o => !PLACEHOLDER.has(o.v)).sort((a, b) => b.share - a.share);
 }
 function renderFilters() {
   document.querySelectorAll(".dd").forEach(el => {

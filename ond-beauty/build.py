@@ -30,7 +30,26 @@ DATA = ROOT / "data"
 SALES_FIELDS = ["gmv", "u", "mkd", "np", "rev", "pc1", "ppc1"]
 TRAFFIC_FIELDS = ["gv", "atc", "si", "nsi", "asi", "ansi"]
 OOS_FIELDS = ["oos"]
-SETS = [("cube_raw.json", SALES_FIELDS), ("traffic_raw.json", TRAFFIC_FIELDS), ("oos_raw.json", OOS_FIELDS)]
+KEY = ["brand", "cat", "sub", "bm", "season"]          # product combo key (sql/*.sql)
+ATTRS = ["btype", "bgroup", "poc"]                      # brand attributes (sql/brand_attributes.sql)
+# (name, raw file, fields, traffic level or None). Traffic has two levels, see sql/daily_traffic_cube.sql.
+SETS = [("sales", "cube_raw.json", SALES_FIELDS, None),
+        ("trafA", "traffic_raw.json", TRAFFIC_FIELDS, "0"),
+        ("trafB", "traffic_raw.json", TRAFFIC_FIELDS, "1"),
+        ("oos", "oos_raw.json", OOS_FIELDS, None)]
+
+
+def fold_small_oos(recs, threshold=10):
+    """OOS rows under 10 AED of loss (about a third of rows, ~2% of the loss) are folded into '(other brands)'
+    within their country / category / sub-category / business model / season, so totals stay exact."""
+    out = {}
+    for rec in recs:
+        v = rec.split(",")
+        if abs(float(v[6])) < threshold:
+            v[1] = "(other brands)"
+        k = tuple(v[:6])
+        out[k] = out.get(k, 0.0) + float(v[6])
+    return [",".join(k) + f",{val:.0f}" for k, val in out.items() if round(val) != 0]
 
 
 def merge(paths, target="cube_raw.json"):
@@ -45,26 +64,33 @@ def merge(paths, target="cube_raw.json"):
 
 
 def pack():
-    """Sales and traffic share one date list and one brand/category/sub-category combo list.
+    """All sets share one date list and one product-combo list (brand, category, sub-category, business model, season).
     Each set is stored as columns: int32 per field (as 4 byte planes), then uint16 date, uint16 combo, uint8 country."""
-    sets = [(json.loads((DATA / f).read_text()), fields) for f, fields in SETS]
-    dates = sorted(set().union(*(days for days, _ in sets)))
+    raw = {f: json.loads((DATA / f).read_text()) for f in {s[1] for s in SETS}}
+    dates = sorted(set().union(*raw.values()))
     di = {d: i for i, d in enumerate(dates)}
     combo_idx = {}
     buf, sizes = b"", []
-    for days, fields in sets:
+    for name, f, fields, lvl in SETS:
         cols = [[] for _ in range(3 + len(fields))]  # d, c, k, metrics...
-        for d in sorted(days):
-            for rec in days[d].split(";"):
+        for d in sorted(raw[f]):
+            recs = raw[f][d].split(";")
+            if name == "oos":
+                recs = fold_small_oos(recs)
+            for rec in recs:
                 v = rec.split(",")
-                key = (v[1], v[2], v[3])
+                if lvl is not None:
+                    if v[0] != lvl:
+                        continue
+                    v = v[1:]
+                key = tuple(v[1:6])
                 if key not in combo_idx:
                     combo_idx[key] = len(combo_idx)
                 cols[0].append(di[d])
                 cols[1].append(int(v[0]))
                 cols[2].append(combo_idx[key])
                 for j in range(len(fields)):
-                    cols[3 + j].append(int(round(float(v[4 + j]))))
+                    cols[3 + j].append(int(round(float(v[6 + j]))))
         n = len(cols[0])
         for j in range(len(fields)):
             col = struct.pack(f"<{n}i", *cols[3 + j])
@@ -74,19 +100,17 @@ def pack():
         sizes.append(n)
     # distinct orders, one block per level (see sql/daily_orders.sql): int32 count, uint16 date, uint16 key, uint8 country
     orders = json.loads((DATA / "orders_raw.json").read_text())
-    levels = [[] for _ in range(5)]
+    levels = [[] for _ in range(7)]
     for d in sorted(orders):
         for rec in orders[d].split(";"):
             l, c, k, n = rec.split(",")
             l = int(l)
             if l == 4:
-                key = tuple(k.split("|"))
-                if key not in combo_idx:
-                    combo_idx[key] = len(combo_idx)
+                continue  # brand x category x ... level: too large; mixed filters are estimated on the page
             levels[l].append((di[d], int(c), k, int(n)))
     combos = list(combo_idx)
     assert len(combos) < 65536
-    names = {key: sorted({c[i] for c in combos}) for i, key in enumerate(["brand", "cat", "sub"])}
+    names = {key: sorted({c[i] for c in combos}) for i, key in enumerate(KEY)}
     idx = {key: {v: i for i, v in enumerate(names[key])} for key in names}
     pairs = sorted({tuple(r[2].split("|")) for r in levels[2]})
     pair_idx = {p: i for i, p in enumerate(pairs)}
@@ -95,22 +119,36 @@ def pack():
         lambda k: idx["cat"][k],
         lambda k: pair_idx[tuple(k.split("|"))],
         lambda k: idx["brand"][k],
-        lambda k: combo_idx[tuple(k.split("|"))],
+        None,
+        lambda k: idx["bm"][k],
+        lambda k: idx["season"][k],
     ]
     for l, rows in enumerate(levels):
         n = len(rows)
         buf += struct.pack(f"<{n}i", *[r[3] for r in rows]) + struct.pack(f"<{n}H", *[r[0] for r in rows])
         buf += struct.pack(f"<{n}H", *[keyof[l](r[2]) for r in rows]) + struct.pack(f"<{n}B", *[r[1] for r in rows])
         buf += b"\0" * (-len(buf) % 4)
+    # brand attributes: per brand index -> [type, group, poc] index, -1 for the '*' / '(other brands)' placeholders
+    battr_raw = json.loads((DATA / "brand_attrs.json").read_text())
+    attr_names = {a: sorted({v[i] for v in battr_raw.values()} | {"unassigned"}) for i, a in enumerate(ATTRS)}
+    battr = []
+    for b in names["brand"]:
+        if b in ("*", "(other brands)"):
+            battr.append([-1, -1, -1])
+        else:
+            vals = battr_raw.get(b, ["unassigned"] * 3)
+            battr.append([attr_names[a].index(vals[i]) for i, a in enumerate(ATTRS)])
+    names.update(attr_names)
     meta = {
         "ord": [len(rows) for rows in levels],
         "pairs": [[idx["cat"][c], idx["sub"][s]] for c, s in pairs],
-        "sets": [{"fields": fields, "n": n} for (_, fields), n in zip(sets, sizes)],
+        "sets": [{"name": name, "fields": fields, "n": n} for (name, _, fields, _), n in zip(SETS, sizes)],
         "dates": dates,
         "names": names,
-        "combos": [[idx["brand"][b], idx["cat"][c], idx["sub"][s]] for b, c, s in combos],
+        "battr": battr,
+        "combos": [[idx[k][v] for k, v in zip(KEY, c)] for c in combos],
         "lfl": lfl_map(),
-        "oosDates": sorted(json.loads((DATA / "oos_raw.json").read_text())),
+        "oosDates": sorted(raw["oos_raw.json"]),
         "refreshed": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
     blob = base64.b64encode(gzip.compress(buf, 9)).decode()
