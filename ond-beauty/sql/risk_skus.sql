@@ -2,7 +2,8 @@
 -- "Risk SKUs" tab. Billing project: noonprd-nm-analytics-ai.
 -- At risk = out of stock now (no live stock, own warehouse + CB, on {TO}) or WoC <= 3 weeks, where
 --   WoC = stock / (units sold in the last 30 days / days live in those 30 days * 7) (no WoC when nothing sold in 30 days).
--- Universe: products with GMV since {H} (1 Jul 2026); ranked by that GMV, top 500 risk SKUs per country.
+-- Universe: products with GMV since {H} (1 Jul 2026) in season carryover / unassigned / namshi noos / brand noos
+-- (beauty_season_mapping; every config of the product must be in one of these); ranked by that GMV, top 500 per country.
 -- Parameters: {FROM} = 1st of the month, {TO} = yesterday, {LY_DATES} = LY LFL dates of {FROM}..{TO} (sql/lfl_mapping.sql),
 --             {L30} = {TO} - 29 days, {H} = 2026-07-01.
 -- Product = configs linked by supplier_sku or barcode (see ids below); Beauty, business model retail, no samples & GWP.
@@ -16,11 +17,15 @@
 --   (sc = CB stock for KSA); live = any live listing with stock; cb = KSA listing live from the UAE warehouse;
 --   op / np = offer / normal price of the live listing with the most stock (else the primary listing);
 --   cfgs = the product's sku_configs with 1 when live in the country on {TO};  oos = OOS GMV loss MTD
-WITH it0 AS (
-  SELECT sku, ANY_VALUE(sku_config) cfg, ANY_VALUE(supplier_sku) sup, ANY_VALUE(global_barcode) gb, ANY_VALUE(brand_code) brand,
+WITH season AS (
+  SELECT sku_config, MAX(LOWER(season_tag)) AS beauty_season
+  FROM `noonbinmlook.namshi_analytics_custom.beauty_season_mapping` GROUP BY 1
+),
+it0 AS (
+  SELECT sku, ANY_VALUE(sku_config) cfg, IFNULL(ANY_VALUE(se.beauty_season), 'unassigned') season, ANY_VALUE(supplier_sku) sup, ANY_VALUE(global_barcode) gb, ANY_VALUE(brand_code) brand,
     ANY_VALUE(category) cat, ANY_VALUE(sub_category) sub, ANY_VALUE(product_title) title, ANY_VALUE(image_url_1) img,
     COALESCE(ANY_VALUE(global_barcode), ANY_VALUE(pbarcode_canonical), ANY_VALUE(partner_barcode)) bc
-  FROM `noonbinamshi.custom_views.item_d`
+  FROM `noonbinamshi.custom_views.item_d` LEFT JOIN season se USING (sku_config)
   WHERE business_unit = 'beauty' AND business_model = 'retail' AND IFNULL(inventory_type, '') <> 'samples & gwp'
   GROUP BY 1
 ),
@@ -35,9 +40,12 @@ ids AS (SELECT * FROM ids0 WHERE id IN (SELECT id FROM ids0 GROUP BY id HAVING C
 k0 AS (SELECT cfg, MIN(id) k FROM ids GROUP BY 1),
 i1 AS (SELECT id, MIN(k) k FROM ids JOIN k0 USING (cfg) GROUP BY 1),
 k1 AS (SELECT cfg, MIN(k) k FROM ids JOIN i1 USING (id) GROUP BY 1),
-i2 AS (SELECT id, MIN(k) k FROM ids JOIN k1 USING (cfg) GROUP BY 1),
-k2 AS (SELECT cfg, MIN(k) k FROM ids JOIN i2 USING (id) GROUP BY 1),
-it AS (SELECT it0.*, k2.k ssku FROM it0 JOIN k2 USING (cfg)),
+-- ok: every config of the product is in season carryover / unassigned / namshi noos / brand noos (only those products are shown)
+it AS (
+  SELECT it0.*, k1.k ssku,
+    LOGICAL_AND(season IN ('carryover', 'unassigned', 'namshi noos', 'brand noos')) OVER (PARTITION BY k1.k) ok
+  FROM it0 JOIN k1 USING (cfg)
+),
 s AS (
   SELECT s.country cc, it.ssku,
     SUM(IF(s.order_date_key BETWEEN '{H}' AND '{TO}', s.gmv_inc_vat, 0)) gh,
@@ -49,7 +57,7 @@ s AS (
     SUM(IF(s.order_date_key IN ({LY_DATES}), s.gmv_inc_vat, 0)) ly,
     SUM(IF(s.order_date_key BETWEEN '{L30}' AND '{TO}', s.items_gross, 0)) u30
   FROM `noonbinamshi.custom_views.sales_metrics` s JOIN it USING (sku)
-  WHERE (s.order_date_key BETWEEN '{H}' AND '{TO}' OR s.order_date_key IN ({LY_DATES}))
+  WHERE it.ok AND (s.order_date_key BETWEEN '{H}' AND '{TO}' OR s.order_date_key IN ({LY_DATES}))
     AND s.marketplace IN ('namshi', 'namshi_v2') AND s.gmv_inc_vat > 0 AND s.country IN ('SA', 'AE')
   GROUP BY 1, 2
 ),
@@ -151,18 +159,18 @@ bg AS (
   JOIN (SELECT sku, ANY_VALUE(brand_code) brand_code FROM `noonbinamshi.custom_views.item_d`
         WHERE business_unit = 'beauty' AND IFNULL(inventory_type, '') <> 'samples & gwp' GROUP BY 1) i USING (sku)
   WHERE s.order_date_key BETWEEN '{H}' AND '{TO}' AND s.marketplace IN ('namshi', 'namshi_v2') AND s.gmv_inc_vat > 0
-    AND s.country IN ('SA', 'AE') AND i.brand_code IN (SELECT brand FROM it WHERE ssku IN (SELECT ssku FROM top))
+    AND s.country IN ('SA', 'AE')
   GROUP BY 1, 2
 ),
 info AS (
   SELECT ssku, ANY_VALUE(brand) brand, ANY_VALUE(cat) cat, ANY_VALUE(sub) sub, ANY_VALUE(title) title,
     ANY_VALUE(img) img, STRING_AGG(DISTINCT bc, ', ') bc, STRING_AGG(DISTINCT cfg, '|') allcfg,
-    STRING_AGG(DISTINCT IFNULL(sup, sku), ', ') sups
+    STRING_AGG(DISTINCT IFNULL(sup, sku), ', ') sups, COALESCE(STRING_AGG(DISTINCT NULLIF(season, 'unassigned'), ', ' ORDER BY NULLIF(season, 'unassigned')), 'unassigned') seasons
   FROM it WHERE ssku IN (SELECT ssku FROM top) GROUP BY 1
 )
 SELECT TO_JSON_STRING(STRUCT(
   IF(t.cc = 'SA', 0, 1) AS c, ROW_NUMBER() OVER (PARTITION BY t.cc ORDER BY t.gh DESC) AS rk, i.sups AS ss, ROUND(t.gh) AS gh, ROUND(bg.bgh) AS bgh,
-  i.brand AS br, i.cat AS ca, i.sub AS su, i.title AS ti, i.img AS im, i.bc AS bc, IFNULL(pc.cfgs, i.allcfg) AS cf,
+  i.brand AS br, i.seasons AS sn, i.cat AS ca, i.sub AS su, i.title AS ti, i.img AS im, i.bc AS bc, IFNULL(pc.cfgs, i.allcfg) AS cf,
   ROUND(t.gmv) AS g, ROUND(t.ly) AS ly, t.u AS u, ROUND(t.rev) AS rv, ROUND(t.pc1) AS p1, ROUND(t.ppc1) AS pp,
   t.u30 AS u30, ROUND(COALESCE(c1.cost, c2.cost), 2) AS co, ROUND(COALESCE(c1.pcost, c2.pcost), 2) AS pco,
   IFNULL(pc.stock, 0) AS st, IFNULL(pc.stock_cb, 0) AS sc, IFNULL(pc.live, FALSE) AS lv, IFNULL(pc.cb, FALSE) AS cb, pc.op AS op, pc.np AS np,
