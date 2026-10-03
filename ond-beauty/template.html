@@ -205,7 +205,7 @@ td .up { color: var(--good); } td .down { color: var(--bad); }
       <div class="seg" id="view">
         <button id="v-daily" data-v="daily" aria-pressed="true">Daily</button>
         <button id="v-ma7" data-v="ma7" aria-pressed="false" title="Trailing 7-day average (per day for GMV and units)">7-day avg</button>
-        <button id="v-cum" data-v="cum" aria-pressed="false" title="Running total from 25 Sep; ratios are calculated on the running totals">Cumulative</button>
+        <button id="v-cum" data-v="cum" aria-pressed="false" title="Running total from 1 Oct; ratios are calculated on the running totals">Cumulative</button>
       </div>
     </div>
     <div class="legend" id="legend"></div>
@@ -222,14 +222,14 @@ td .up { color: var(--good); } td .down { color: var(--bad); }
     <div class="tscroll"><table id="table"></table></div>
   </details>
 
-  <p class="note">Namshi marketplaces only (namshi, namshi_v2), lines with GMV above zero. LFL date compares each day with its like-for-like day from the LFL mapping (for example Black Friday 2026 vs Black Friday 2025); where the mapping gives an LLY date in the wrong year (30 Sep and 31 Dec) the same calendar date is used. Beauty = products with business unit “beauty”. Brand, category and sub-category come from the product catalogue (item_d); “(none)” means the field is blank there. Target = daily GMV plan for the Beauty pod (planning_dod_merch_brand_category_targets, pod cp_beauty), set by country, brand and category; it follows the Category and Brand filters and is hidden when a Sub-category is selected. Targets start on 1 Oct 2026 and are loaded up to 31 Oct 2026 so far; the target chip compares sales with target from 1 Oct. GMV includes VAT and all item statuses (including cancelled and returned). Units = gross items. ASP = GMV ÷ units. MKD % = markdown discount ÷ normal price (AED). PC1 % = PC1 ÷ gross revenue. Prov. PC1 % = provisional PC1 ÷ gross revenue. Overall covers all countries, KSA and UAE included. Ratios are calculated from summed values. Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics. Today is excluded because the day is still in progress.</p>
+  <p class="note">Namshi marketplaces only (namshi, namshi_v2), lines with GMV above zero. LFL date compares each day with its like-for-like day from the LFL mapping (for example Black Friday 2026 vs Black Friday 2025); where the mapping gives an LLY date in the wrong year (30 Sep and 31 Dec) the same calendar date is used. Beauty = products with business unit “beauty”. Brand, category and sub-category come from the product catalogue (item_d); “(none)” means the field is blank there. Target = daily GMV plan for the Beauty pod (planning_dod_merch_brand_category_targets, pod cp_beauty), set by country, brand and category; it follows the Category and Brand filters and is hidden when a Sub-category is selected. Targets are loaded up to 31 Oct 2026 so far. GMV includes VAT and all item statuses (including cancelled and returned). Units = gross items. ASP = GMV ÷ units. MKD % = markdown discount ÷ normal price (AED). PC1 % = PC1 ÷ gross revenue. Prov. PC1 % = provisional PC1 ÷ gross revenue. Overall covers all countries, KSA and UAE included. Ratios are calculated from summed values. Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics. Today is excluded because the day is still in progress.</p>
 </div>
 
 <script>
 const META = /*__META__*/null;
 const TGT = /*__TARGETS__*/null;
 const BLOB = "__BLOB__";
-const START = "2026-09-25", END = "2026-12-31";
+const START = "2026-10-01", END = "2026-12-31";
 const I = Object.fromEntries(META.fields.map((f, i) => [f, i]));
 const NF = META.fields.length, NR = META.n, DIDX = Object.fromEntries(META.dates.map((d, i) => [d, i]));
 const DIMS = [
@@ -378,7 +378,7 @@ function axisDates() {
   if (state.zoom) { const z = d.filter(x => x >= state.zoom[0] && x <= state.zoom[1]); if (z.length >= 2) d = z; else state.zoom = null; }
   return d;
 }
-// the TY dates each point summarises: the day, the trailing 7 days, or 25 Sep → day
+// the TY dates each point summarises: the day, the trailing 7 days, or START → day
 function windowFor(d) {
   if (state.view === "daily") return [d];
   if (state.view === "ma7") { const out = []; for (let k = 6; k >= 0; k--) { const x = toS(toT(d) - k * DAY); if (x >= START) out.push(x); } return out; }
@@ -484,7 +484,7 @@ function drawChart(box, m, b) {
       const d = b.dates[i], ty = b.s.ty[i];
       const on = id => active.some(a => a.id === id);
       const row = (sr, v, sub, cmp) => `<div class="tr"><i style="background:${sr.color}"></i><span>${sr.label}${sub ? ` <small style="color:var(--muted)">${sub}</small>` : ""}</span><b>${fmt(m, v)}</b><em>${cmp ?? ""}</em></div>`;
-      const wl = state.view === "daily" ? "" : ` <small style="color:var(--muted);font-weight:400">${state.view === "ma7" ? "7-day avg to" : "25 Sep →"}</small>`;
+      const wl = state.view === "daily" ? "" : ` <small style="color:var(--muted);font-weight:400">${state.view === "ma7" ? "7-day avg to" : fmtD(START) + " →"}</small>`;
       let t = `<div class="td">${wl}${wl ? " " : ""}${fmtDL(d)}</div>`;
       if (on("ty")) t += row(SERIES[0], ty, "", "");
       if (on("ly")) t += row(SERIES[1], b.s.ly[i], fmtD(shift(d, 1, state.align)) + " '" + shift(d, 1, state.align).slice(2, 4), delta(m, ty, b.s.ly[i])?.txt);
@@ -539,7 +539,7 @@ function render() {
     .map(s => `<button class="lg" data-s="${s.id}" aria-pressed="${!state.hide.includes(s.id)}" title="Show or hide ${s.label}"><i style="border-color:${s.color};border-top-style:${s.dash ? (s.id === "lly" ? "dotted" : "dashed") : "solid"}"></i>${s.label}</button>`).join("");
   const rl = { ALL: "Overall", KSA: "KSA", UAE: "UAE" }[state.region];
   const fl = DIMS.filter(dm => state.f[dm.key].length).map(dm => state.f[dm.key].length === 1 ? state.f[dm.key][0] : `${state.f[dm.key].length} ${dm.label.toLowerCase()}s`);
-  document.getElementById("meta").innerHTML = `<b>${rl}</b>${fl.length ? " · <b>" + esc(fl.join(" · ")) + "</b>" : " · all Beauty"} · 25 Sep → ${fmtD(lastActual)} 2026 · latest day <b>${fmtDL(lastActual)}</b> · refreshed ${META.refreshed || ""}`;
+  document.getElementById("meta").innerHTML = `<b>${rl}</b>${fl.length ? " · <b>" + esc(fl.join(" · ")) + "</b>" : " · all Beauty"} · ${fmtD(START)} → ${fmtD(lastActual)} 2026 · latest day <b>${fmtDL(lastActual)}</b> · refreshed ${META.refreshed || ""}`;
   const zb = document.getElementById("zoominfo");
   zb.hidden = !state.zoom;
   if (state.zoom) zb.querySelector("span").textContent = `Zoomed to ${fmtD(state.zoom[0])} – ${fmtD(state.zoom[1])}`;
@@ -557,7 +557,7 @@ function render() {
           <div class="big"><span class="bv"></span><small class="bd"></small></div></div>
         <div class="chips">
           <div class="chiprow cr1"></div>
-          <div class="chiprow"><span class="chiplbl">Since 25 Sep · ${fmt(m, b.ptd.ty, true)}</span>${chip("LY", delta(m, b.ptd.ty, b.ptd.ly))}${chip("LLY", delta(m, b.ptd.ty, b.ptd.lly))}</div>${tgtOn && b.ptd.tgt != null ? `<div class="chiprow"><span class="chiplbl">Since ${fmtD(b.ptd.tgtFrom)} · ${fmt(m, b.ptd.tgtTy, true)} vs ${fmt(m, b.ptd.tgt, true)}</span>${chip("Tgt", delta(m, b.ptd.tgtTy, b.ptd.tgt))}</div>` : ""}
+          <div class="chiprow"><span class="chiplbl">Since ${fmtD(START)} · ${fmt(m, b.ptd.ty, true)}</span>${chip("LY", delta(m, b.ptd.ty, b.ptd.ly))}${chip("LLY", delta(m, b.ptd.ty, b.ptd.lly))}${tgtOn && b.ptd.tgt != null && b.ptd.tgtFrom === START ? chip("Tgt", delta(m, b.ptd.tgtTy, b.ptd.tgt)) : ""}</div>${tgtOn && b.ptd.tgt != null && b.ptd.tgtFrom !== START ? `<div class="chiprow"><span class="chiplbl">Since ${fmtD(b.ptd.tgtFrom)} · ${fmt(m, b.ptd.tgtTy, true)} vs ${fmt(m, b.ptd.tgt, true)}</span>${chip("Tgt", delta(m, b.ptd.tgtTy, b.ptd.tgt))}</div>` : ""}
         </div>
         <button class="xp" data-m="${m.key}" aria-pressed="${state.expand === m.key}" title="${state.expand === m.key ? "Back to grid" : "Expand chart"}" aria-label="${state.expand === m.key ? "Back to grid" : "Expand " + m.name}">${state.expand === m.key ? ICON_SHRINK : ICON_EXPAND}</button>
       </div><div class="chart"></div>`;
@@ -627,10 +627,10 @@ function renderDrill() {
   const sel = state.f[D.dim];
   const maxAbs = Math.max(1, ...shown.map(r => Math.abs(r.chg)));
   box.innerHTML = `<div class="dh">
-      <div><h2>What drove ${D.period === "day" ? fmtDL(D.date) : "25 Sep → " + fmtD(D.date)}</h2>
+      <div><h2>What drove ${D.period === "day" ? fmtDL(D.date) : fmtD(START) + " → " + fmtD(D.date)}</h2>
         <p class="fsum">GMV vs LY (${state.align === "lfl" ? "LFL date" : "same date"}) · ${{ ALL: "Overall", KSA: "KSA", UAE: "UAE" }[state.region]} · total ${fmt(g, tot)} ${chip("LY", delta(g, tot, totLy))}</p></div>
       <div class="dctl">
-        <div class="seg" id="dperiod"><button data-v="day" aria-pressed="${D.period === "day"}">This day</button><button data-v="ptd" aria-pressed="${D.period === "ptd"}">Since 25 Sep</button></div>
+        <div class="seg" id="dperiod"><button data-v="day" aria-pressed="${D.period === "day"}">This day</button><button data-v="ptd" aria-pressed="${D.period === "ptd"}">Since ${fmtD(START)}</button></div>
         <div class="seg" id="ddim">${DIMS.map(x => `<button data-v="${x.key}" aria-pressed="${D.dim === x.key}">${x.label}</button>`).join("")}</div>
         <div class="seg" id="dsort"><button data-v="gmv" aria-pressed="${D.sort === "gmv"}">Top GMV</button><button data-v="up" aria-pressed="${D.sort === "up"}">Top gainers</button><button data-v="down" aria-pressed="${D.sort === "down"}">Top decliners</button></div>
         <button class="lnk" id="dclose">Close</button>

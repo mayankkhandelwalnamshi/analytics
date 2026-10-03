@@ -1,8 +1,8 @@
 -- OND Beauty dashboard: daily Beauty sales by country x brand x category x sub-category.
 -- Billing project: noonprd-nm-analytics-ai. One row per day, records packed to keep the result small:
 --   r = "c,brand,category,sub_category,gmv,units,mkd,np,rev,pc1,ppc1;..."   c: 0=KSA 1=UAE 2=Other GCC
--- Run once per window ({FROM}/{TO}): 2024-09-18..2024-11-05, 2024-11-06..2025-01-02,
--- 2025-09-18..2025-11-05, 2025-11-06..2026-01-02, 2026-09-25..yesterday.
+-- Run once per window ({FROM}/{TO}): 2024-10-01..2024-11-15, 2024-11-16..2024-12-31,
+-- 2025-10-01..2025-11-15, 2025-11-16..2025-12-31, 2026-10-01..yesterday.
 --
 -- Definitions (aligned with the team's standard sales query):
 --   Namshi marketplaces only (namshi, namshi_v2), rows with gmv_inc_vat > 0
