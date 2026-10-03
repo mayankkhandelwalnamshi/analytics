@@ -23,6 +23,7 @@
   --good-bg: #e3f2e3;
   --bad: #b3261e;
   --bad-bg: #fbe7e5;
+  --warn: #8a5300; --warn-bg: #fdf0d8;
   --flat-bg: #eeebef;
   --wknd: rgba(138, 42, 92, 0.035);
   --font: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -34,7 +35,7 @@
     --grid: #2d292e; --axis: #3d383e; --line: rgba(255,255,255,0.10);
     --accent: #e08ab5; --accent-soft: #3a2230;
     --s-ty: #3987e5; --s-ly: #d95926; --s-lly: #199e70; --s-tgt: #f6f2f6;
-    --good: #3cc23c; --good-bg: #16301a; --bad: #ff8a80; --bad-bg: #3a1c1b; --flat-bg: #2a262b; --wknd: rgba(224, 138, 181, 0.05);
+    --good: #3cc23c; --good-bg: #16301a; --bad: #ff8a80; --bad-bg: #3a1c1b; --warn: #f2b45a; --warn-bg: #3a2c14; --flat-bg: #2a262b; --wknd: rgba(224, 138, 181, 0.05);
     color-scheme: dark;
   }
 }
@@ -43,7 +44,7 @@
   --grid: #2d292e; --axis: #3d383e; --line: rgba(255,255,255,0.10);
   --accent: #e08ab5; --accent-soft: #3a2230;
   --s-ty: #3987e5; --s-ly: #d95926; --s-lly: #199e70; --s-tgt: #f6f2f6;
-  --good: #3cc23c; --good-bg: #16301a; --bad: #ff8a80; --bad-bg: #3a1c1b; --flat-bg: #2a262b; --wknd: rgba(224, 138, 181, 0.05);
+  --good: #3cc23c; --good-bg: #16301a; --bad: #ff8a80; --bad-bg: #3a1c1b; --warn: #f2b45a; --warn-bg: #3a2c14; --flat-bg: #2a262b; --wknd: rgba(224, 138, 181, 0.05);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -167,6 +168,7 @@ body:not([data-tab="sku"]) .skus { display: none; }
 .card .pl { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--flat-bg); color: var(--fg-2); }
 .card .pl.up { background: var(--good-bg); color: var(--good); }
 .card .pl.down { background: var(--bad-bg); color: var(--bad); }
+.card .pl.warn { background: var(--warn-bg); color: var(--warn); }
 .card .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font-size: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
 .card .kv div { display: flex; justify-content: space-between; gap: 8px; min-width: 0; }
 .card .kv span { color: var(--muted); }
@@ -288,7 +290,7 @@ details.gloss { margin-top: 12px; }
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" id="tab-trend" data-tab="trend">Daily trend</button>
     <button role="tab" aria-selected="false" id="tab-mtd" data-tab="mtd">MTD performance</button>
-    <button role="tab" aria-selected="false" id="tab-sku" data-tab="sku">Top SKU performance</button>
+    <button role="tab" aria-selected="false" id="tab-sku" data-tab="sku">Risk SKUs</button>
   </nav>
   <div class="bar">
     <div class="filters" id="filters">
@@ -338,7 +340,7 @@ details.gloss { margin-top: 12px; }
 
   <section class="mtd" id="mtd" aria-label="MTD performance by cut"></section>
 
-  <section class="skus" id="skus" aria-label="Top SKU performance"></section>
+  <section class="skus" id="skus" aria-label="Retail SKUs at risk"></section>
 
   <section class="grid tonly" id="grid"><p class="loading">Loading Beauty sales data…</p></section>
 
@@ -599,7 +601,7 @@ const GLOSS_TERMS = [
   ["Contrib. vs LY", "(Row TY − row LY) ÷ total LY, in pp. Rows add up to the total's % change vs LY, so the most negative rows drove the drop."],
   ["Share", "The row's GMV ÷ total GMV."],
   ["Projection", "Summary tiles: full-month target / LY / LLY × the MTD achievement against it."],
-  ["Top SKU performance", "Top 500 retail supplier SKUs per country by MTD GMV. Stock = live Namshi retail stock in the country's own warehouse + CB (KSA sold from the UAE warehouse). Live price / live markdown = the live listing with the most stock (markdown = 1 − offer ÷ normal price). Live PC1 = (live price − unit cost) ÷ live price; live prov PC1 uses the provisional cost (ageing_cost sku_cost / sku_prov_cost). Live days = days with the product live (looker.live_days). WoC = stock ÷ (units in the last 30 days ÷ live days in those 30 days × 7); “No sales in L30D” when nothing sold. SKU config chips: green = live in the country now."],
+  ["Risk SKUs", "Retail supplier SKUs out of stock now (no live stock incl. CB) or with WoC ≤ 3 weeks; top 500 per country ranked by GMV since 1 Jul 2026. Stock = live Namshi retail stock in the country's own warehouse + CB (KSA sold from the UAE warehouse). Live price / live markdown = the live listing with the most stock (markdown = 1 − offer ÷ normal price). Live PC1 = (live price − unit cost) ÷ live price; live prov PC1 uses the provisional cost (ageing_cost sku_cost / sku_prov_cost). Live days = days with the product live (looker.live_days). WoC = stock ÷ (units in the last 30 days ÷ live days in those 30 days × 7); “No sales in L30D” when nothing sold. SKU config chips: green = live in the country now."],
   ["Overall", "All countries (KSA, UAE, other GCC); assortment / stock / inventory are KSA + UAE."],
 ];
 function renderGlossary() {
@@ -704,7 +706,7 @@ const chip = (lbl, dl) => `<span class="chip ${dl ? dl.cls : ""}" title="vs ${lb
 // ---------- state ----------
 const state = { region: "ALL", align: "lfl", range: "td", view: "daily", hide: [], zoom: null, expand: null, f: Object.fromEntries(DIMS.map(dm => [dm.key, []])),
   drill: { date: null, period: "day", dim: "cat", sort: "gmv" },
-  sku: { c: null, sort: "rk", q: "", n: 60 },
+  sku: { c: null, sort: "rk", q: "", n: 60, risk: "all" },
   tab: "trend", mtd: { cut: "cat", period: null, groups: ["sales", "traffic", "assort", "health"], sort: "gmv:v", dir: -1, all: false, v: 2 } };
 try {
   const sv = JSON.parse(localStorage.getItem("ondBeauty") || "{}");
@@ -1215,15 +1217,16 @@ document.getElementById("mtd").addEventListener("input", e => {
   const q = document.getElementById("mq"); q.focus(); q.setSelectionRange(pos, pos);
 });
 
-// ---------- Top SKU performance: top 500 retail supplier SKUs per country by MTD GMV (sql/top_skus.sql) ----------
+// ---------- Risk SKUs: retail supplier SKUs out of stock or with WoC <= 3, top 500 per country by GMV since 1 Jul (sql/risk_skus.sql) ----------
 let SKUS = null, SKUS_ERR = null;
 function loadSkus() {
   if (SKUS || SKUS_ERR) return;
-  fetch("data/skus.txt").then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+  fetch("data/risk.txt").then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
     .then(d => { SKUS = d; if (state.tab === "sku") renderSkus(); })
     .catch(e => { SKUS_ERR = e.message; if (state.tab === "sku") renderSkus(); });
 }
-const SKU_SORT = { rk: "Rank (MTD GMV)", vly: "vs LY", oos: "OOS loss", woc: "WoC", st: "Stock" };
+const SKU_SORT = { rk: "GMV since 1 Jul", g: "MTD GMV", vly: "vs LY", oos: "OOS loss MTD", woc: "Lowest WoC", st: "Stock" };
+const RISK_F = { all: "All at risk", oos: "Out of stock", woc: "WoC ≤ 3" };
 const skuStock = r => r.st + (r.sc || 0);   // own warehouse + CB (KSA sold from the UAE warehouse)
 const skuWoc = r => r.u30 ? skuStock(r) / (r.u30 / Math.max(1, r.l30 || 30) * 7) : null;
 function skuPasses(r) {
@@ -1245,8 +1248,11 @@ function renderSkus() {
   if (!SKUS) { box.innerHTML = `<p class="loading">${SKUS_ERR ? `The SKU data could not be loaded (${esc(SKUS_ERR)}).` : "Loading top SKUs…"}</p>`; loadSkus(); return; }
   const cur = S.c ? "AED" : "SAR", aed = { kind: "aed" }, pct = { kind: "pct" };
   const q = (S.q || "").trim().toLowerCase();
-  let rows = SKUS.filter(r => r.c === S.c && skuPasses(r) && (!q || [r.ss, r.br, r.ti, r.bc, r.cf].some(x => x && String(x).toLowerCase().includes(q))));
-  const key = { rk: r => -r.rk, vly: r => r.ly ? r.g / r.ly - 1 : -Infinity, oos: r => r.oo, woc: r => skuWoc(r) ?? -1, st: skuStock }[S.sort] || (r => -r.rk);
+  const isOos = r => skuStock(r) <= 0;
+  if (!RISK_F[S.risk]) S.risk = "all";
+  if (!SKU_SORT[S.sort]) S.sort = "rk";
+  let rows = SKUS.filter(r => r.c === S.c && skuPasses(r) && (S.risk === "all" || (S.risk === "oos") === isOos(r)) && (!q || [r.ss, r.br, r.ti, r.bc, r.cf].some(x => x && String(x).toLowerCase().includes(q))));
+  const key = { rk: r => -r.rk, g: r => r.g, vly: r => r.ly ? r.g / r.ly - 1 : -Infinity, oos: r => r.oo, woc: r => isOos(r) ? 1 : -(skuWoc(r) ?? 99), st: skuStock }[S.sort] || (r => -r.rk);
   rows.sort((a, b) => key(b) - key(a));
   const shown = rows.slice(0, S.n);
   const vly = r => delta(METRICS[0], r.g, r.ly);
@@ -1260,18 +1266,20 @@ function renderSkus() {
     return `<article class="card">
       <div class="ch">
         <div class="ph"><div><b>${esc((r.br || "?").slice(0, 2))}</b>${r.im ? `<a href="${esc(r.im)}" target="_blank" rel="noopener">Image ↗</a>` : "No image"}</div></div>
-        <div style="min-width:0"><span class="rk">#${r.rk} in ${S.c ? "UAE" : "KSA"}</span><p class="tt" title="${esc(r.ti || "")}">${esc(r.ti || r.ss)}</p><span class="bb">${esc(r.br || "")} · ${esc(r.su || r.ca || "")}</span></div>
+        <div style="min-width:0"><span class="rk">#${r.rk} at risk in ${S.c ? "UAE" : "KSA"}</span><p class="tt" title="${esc(r.ti || "")}">${esc(r.ti || r.ss)}</p><span class="bb">${esc(r.br || "")} · ${esc(r.su || r.ca || "")}</span></div>
       </div>
       <div class="ids">
         <span>Supplier SKU</span><code>${esc(r.ss)}</code>
         <span>SKU config</span><div class="cfg">${cfgs || "–"}</div>
         <span>Barcode</span><code>${esc(r.bc || "–")}</code>
       </div>
-      <div class="pills"><span class="pl ${r.lv ? "up" : "down"}">${r.lv ? "Live" : "Not live"}</span>${S.c === 0 ? `<span class="pl ${r.cb ? "up" : ""}">${r.cb ? "CB to KSA" : "Not CB"}</span>` : ""}<span class="pl">${r.lm} live day${r.lm === 1 ? "" : "s"} MTD</span></div>
+      <div class="pills">${isOos(r) ? `<span class="pl down">Out of stock</span>` : `<span class="pl warn">WoC ${w == null ? "–" : w.toFixed(1)} wk</span>`}<span class="pl ${r.lv ? "up" : "down"}">${r.lv ? "Live" : "Not live"}</span>${S.c === 0 ? `<span class="pl ${r.cb ? "up" : ""}">${r.cb ? "CB to KSA" : "Not CB"}</span>` : ""}<span class="pl">${r.lm} live day${r.lm === 1 ? "" : "s"} MTD</span></div>
       <div class="kv">
-        <div class="big"><span>MTD GMV</span><b>${fmt(aed, r.g, true)}</b></div>
-        ${kv("LY GMV", r.ly ? fmt(aed, r.ly, true) : "–")}${kv("vs LY", dl ? dl.txt : r.ly ? "–" : "new", dl?.cls || "")}
-        ${kv("MTD ASP", r.u ? fmt({ kind: "aed2" }, r.g / r.u) : "–")}${kv("Units MTD", r.u)}
+        <div class="big"><span>GMV since 1 Jul</span><b>${fmt(aed, r.gh, true)}</b></div>
+        ${kv("MTD GMV", fmt(aed, r.g, true))}${kv("LY GMV", r.ly ? fmt(aed, r.ly, true) : "–")}
+        ${kv("vs LY", dl ? dl.txt : r.ly ? "–" : "new", dl?.cls || "")}
+        ${kv("MTD ASP", r.u ? fmt({ kind: "aed2" }, r.g / r.u) : "–")}
+        ${kv("Units MTD", r.u)}${kv("Units L30D", r.u30)}
         ${kv("Stock", r.sc ? `${Math.round(r.st).toLocaleString("en-US")} + ${Math.round(r.sc).toLocaleString("en-US")} CB` : Math.round(r.st).toLocaleString("en-US"))}${kv("WoC (L30D)", w == null ? "No sales in L30D" : w.toFixed(1) + " wk")}
         ${kv(`Live price (${cur})`, r.op != null ? Math.round(r.op).toLocaleString("en-US") : "–")}${kv("Live markdown", fmt(pct, md))}
         ${kv("Live PC1", fmt(pct, lp1), lp1 < 0 ? "down" : "")}${kv("Live prov PC1", fmt(pct, lpp), lpp < 0 ? "down" : "")}
@@ -1280,11 +1288,12 @@ function renderSkus() {
       </div>
     </article>`;
   };
-  const per = range(START, lastActual);
+  const all = SKUS.filter(r => r.c === S.c);
   box.innerHTML = `<div class="sh">
-      <div><h2>Top ${rows.length === SKUS.filter(r => r.c === S.c).length ? rows.length : `${rows.length} of ${SKUS.filter(r => r.c === S.c).length}`} retail SKUs · ${S.c ? "UAE" : "KSA"}</h2>
-        <p class="fsum">Ranked by MTD GMV (${fmtD(per[0])} – ${fmtD(lastActual)}) per country, retail only, by supplier SKU · LY on LFL dates · stock, price and live status on ${fmtD(lastActual)}${active("season") ? " · the season filter is not applied here" : ""}</p></div>
+      <div><h2>Retail SKUs at risk · ${S.c ? "UAE" : "KSA"} · ${rows.length} shown</h2>
+        <p class="fsum">At risk = out of stock now (no live stock incl. CB) or WoC ≤ 3 weeks · top 500 per country ranked by GMV since 1 Jul 2026 · ${all.filter(isOos).length} out of stock, ${all.length - all.filter(isOos).length} with WoC ≤ 3 · stock, price and live status on ${fmtD(lastActual)}${active("season") ? " · the season filter is not applied here" : ""}</p></div>
       <div class="sctl">
+        <div class="seg" id="skr">${Object.entries(RISK_F).map(([k, l]) => `<button data-v="${k}" aria-pressed="${S.risk === k}">${l}</button>`).join("")}</div>
         <div class="seg" id="skc"><button data-v="0" aria-pressed="${S.c === 0}">KSA</button><button data-v="1" aria-pressed="${S.c === 1}">UAE</button></div>
         <label class="fsum" for="sks">Sort</label><select id="sks" class="seg" style="padding:5px 8px;font:inherit;font-size:13px;color:var(--fg)">${Object.entries(SKU_SORT).map(([k, l]) => `<option value="${k}" ${S.sort === k ? "selected" : ""}>${l}</option>`).join("")}</select>
         <input type="search" id="skq" placeholder="Search SKU, config, barcode, brand" value="${esc(S.q || "")}" autocomplete="off">
@@ -1296,6 +1305,7 @@ document.getElementById("skus").addEventListener("click", e => {
   const bt = e.target.closest("button"); if (!bt) return;
   if (bt.id === "skmore") { state.sku.n += 60; renderSkus(); return; }
   if (bt.closest("#skc")) { state.sku.c = +bt.dataset.v; state.sku.n = 60; save(); renderSkus(); }
+  if (bt.closest("#skr")) { state.sku.risk = bt.dataset.v; state.sku.n = 60; save(); renderSkus(); }
 });
 document.getElementById("skus").addEventListener("change", e => { if (e.target.id === "sks") { state.sku.sort = e.target.value; state.sku.n = 60; save(); renderSkus(); } });
 document.getElementById("skus").addEventListener("input", e => {
