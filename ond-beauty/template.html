@@ -602,7 +602,7 @@ const GLOSS_TERMS = [
   ["Contrib. vs LY", "(Row TY − row LY) ÷ total LY, in pp. Rows add up to the total's % change vs LY, so the most negative rows drove the drop."],
   ["Share", "The row's GMV ÷ total GMV."],
   ["Projection", "Summary tiles: full-month target / LY / LLY × the MTD achievement against it."],
-  ["Risk SKUs", "Retail supplier SKUs out of stock now (no live stock incl. CB) or with WoC ≤ 3 weeks; top 500 per country ranked by GMV since 1 Jul 2026. Share of brand = the SKU's GMV since 1 Jul ÷ its brand's Beauty GMV since 1 Jul in the country (retail + MP). Stock = live Namshi retail stock in the country's own warehouse + CB (KSA sold from the UAE warehouse). Live price / live markdown = the live listing with the most stock (markdown = 1 − offer ÷ normal price). Live PC1 = (live price − unit cost) ÷ live price; live prov PC1 uses the provisional cost (ageing_cost sku_cost / sku_prov_cost). Live days = days with the product live (looker.live_days). WoC = stock ÷ (units in the last 30 days ÷ live days in those 30 days × 7); “No sales in L30D” when nothing sold. SKU config chips: green = live in the country now."],
+  ["Risk SKUs", "Retail products (configs linked by a shared supplier SKU or barcode count as one product, so a live duplicate config covers its twin) out of stock now (no live stock incl. CB) or with WoC ≤ 3 weeks; top 500 per country ranked by GMV since 1 Jul 2026. Share of brand = the SKU's GMV since 1 Jul ÷ its brand's Beauty GMV since 1 Jul in the country (retail + MP). Stock = live Namshi retail stock in the country's own warehouse + CB (KSA sold from the UAE warehouse). Live price / live markdown = the live listing with the most stock (markdown = 1 − offer ÷ normal price). Live PC1 = (live price − unit cost) ÷ live price; live prov PC1 uses the provisional cost (ageing_cost sku_cost / sku_prov_cost). Live days = days with the product live (looker.live_days). WoC = stock ÷ (units in the last 30 days ÷ live days in those 30 days × 7); “No sales in L30D” when nothing sold. SKU config chips: green = live in the country now."],
   ["Overall", "All countries (KSA, UAE, other GCC); assortment / stock / inventory are KSA + UAE."],
 ];
 function renderGlossary() {
@@ -1270,7 +1270,7 @@ function renderSkus() {
         <div style="min-width:0"><span class="rk">#${r.rk} at risk in ${S.c ? "UAE" : "KSA"}</span><p class="tt" title="${esc(r.ti || "")}">${esc(r.ti || r.ss)}</p><span class="bb">${esc(r.br || "")} · ${esc(r.su || r.ca || "")}</span></div>
       </div>
       <div class="ids">
-        <span>Supplier SKU</span><code>${esc(r.ss)}</code>
+        <span>Supplier SKU${(r.ss || "").includes(",") ? "s" : ""}</span><code>${esc(r.ss)}</code>
         <span>SKU config</span><div class="cfg">${cfgs || "–"}</div>
         <span>Barcode</span><code>${esc(r.bc || "–")}</code>
       </div>

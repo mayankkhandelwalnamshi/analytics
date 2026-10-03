@@ -5,7 +5,7 @@
 -- Universe: products with GMV since {H} (1 Jul 2026); ranked by that GMV, top 500 risk SKUs per country.
 -- Parameters: {FROM} = 1st of the month, {TO} = yesterday, {LY_DATES} = LY LFL dates of {FROM}..{TO} (sql/lfl_mapping.sql),
 --             {L30} = {TO} - 29 days, {H} = 2026-07-01.
--- Product = item_d supplier_sku (the sku when blank); Beauty, business model retail, no samples & GWP.
+-- Product = configs linked by supplier_sku or barcode (see ids below); Beauty, business model retail, no samples & GWP.
 -- Sales scope as sql/daily_beauty_cube.sql (Namshi marketplaces, gmv_inc_vat > 0).
 --   gmv / u / rev / pc1 / ppc1   MTD;  ly = GMV on the LY LFL dates
 --   co / pco = unit cost / provisional cost (ageing_cost sku_cost / sku_prov_cost on {TO}) of the sku whose live price is
@@ -16,14 +16,28 @@
 --   (sc = CB stock for KSA); live = any live listing with stock; cb = KSA listing live from the UAE warehouse;
 --   op / np = offer / normal price of the live listing with the most stock (else the primary listing);
 --   cfgs = the product's sku_configs with 1 when live in the country on {TO};  oos = OOS GMV loss MTD
-WITH it AS (
-  SELECT sku, ANY_VALUE(sku_config) cfg, IFNULL(ANY_VALUE(supplier_sku), sku) ssku, ANY_VALUE(brand_code) brand,
+WITH it0 AS (
+  SELECT sku, ANY_VALUE(sku_config) cfg, ANY_VALUE(supplier_sku) sup, ANY_VALUE(global_barcode) gb, ANY_VALUE(brand_code) brand,
     ANY_VALUE(category) cat, ANY_VALUE(sub_category) sub, ANY_VALUE(product_title) title, ANY_VALUE(image_url_1) img,
     COALESCE(ANY_VALUE(global_barcode), ANY_VALUE(pbarcode_canonical), ANY_VALUE(partner_barcode)) bc
   FROM `noonbinamshi.custom_views.item_d`
   WHERE business_unit = 'beauty' AND business_model = 'retail' AND IFNULL(inventory_type, '') <> 'samples & gwp'
   GROUP BY 1
 ),
+-- One product = configs linked by a shared supplier_sku or barcode (global_barcode, or the barcode digits inside the
+-- supplier SKU, e.g. CHA5060542727532), so a duplicate config of the same item counts as the same product.
+ids0 AS (
+  SELECT DISTINCT cfg, id FROM it0, UNNEST([cfg, sup, gb, REGEXP_EXTRACT(sup, r'(\d{8,14})$')]) id
+  WHERE id IS NOT NULL AND (id = cfg OR LENGTH(id) >= 8)
+),
+-- an id shared by more than 10 configs is a placeholder (e.g. one supplier_sku on 500+ configs), not a product link
+ids AS (SELECT * FROM ids0 WHERE id IN (SELECT id FROM ids0 GROUP BY id HAVING COUNT(DISTINCT cfg) <= 10)),
+k0 AS (SELECT cfg, MIN(id) k FROM ids GROUP BY 1),
+i1 AS (SELECT id, MIN(k) k FROM ids JOIN k0 USING (cfg) GROUP BY 1),
+k1 AS (SELECT cfg, MIN(k) k FROM ids JOIN i1 USING (id) GROUP BY 1),
+i2 AS (SELECT id, MIN(k) k FROM ids JOIN k1 USING (cfg) GROUP BY 1),
+k2 AS (SELECT cfg, MIN(k) k FROM ids JOIN i2 USING (id) GROUP BY 1),
+it AS (SELECT it0.*, k2.k ssku FROM it0 JOIN k2 USING (cfg)),
 s AS (
   SELECT s.country cc, it.ssku,
     SUM(IF(s.order_date_key BETWEEN '{H}' AND '{TO}', s.gmv_inc_vat, 0)) gh,
@@ -112,11 +126,12 @@ bg AS (
 ),
 info AS (
   SELECT ssku, ANY_VALUE(brand) brand, ANY_VALUE(cat) cat, ANY_VALUE(sub) sub, ANY_VALUE(title) title,
-    ANY_VALUE(img) img, STRING_AGG(DISTINCT bc, ', ') bc, STRING_AGG(DISTINCT cfg, '|') allcfg
+    ANY_VALUE(img) img, STRING_AGG(DISTINCT bc, ', ') bc, STRING_AGG(DISTINCT cfg, '|') allcfg,
+    STRING_AGG(DISTINCT IFNULL(sup, sku), ', ') sups
   FROM it WHERE ssku IN (SELECT ssku FROM top) GROUP BY 1
 )
 SELECT TO_JSON_STRING(STRUCT(
-  IF(t.cc = 'SA', 0, 1) AS c, ROW_NUMBER() OVER (PARTITION BY t.cc ORDER BY t.gh DESC) AS rk, t.ssku AS ss, ROUND(t.gh) AS gh, ROUND(bg.bgh) AS bgh,
+  IF(t.cc = 'SA', 0, 1) AS c, ROW_NUMBER() OVER (PARTITION BY t.cc ORDER BY t.gh DESC) AS rk, i.sups AS ss, ROUND(t.gh) AS gh, ROUND(bg.bgh) AS bgh,
   i.brand AS br, i.cat AS ca, i.sub AS su, i.title AS ti, i.img AS im, i.bc AS bc, IFNULL(pc.cfgs, i.allcfg) AS cf,
   ROUND(t.gmv) AS g, ROUND(t.ly) AS ly, t.u AS u, ROUND(t.rev) AS rv, ROUND(t.pc1) AS p1, ROUND(t.ppc1) AS pp,
   t.u30 AS u30, ROUND(COALESCE(c1.cost, c2.cost), 2) AS co, ROUND(COALESCE(c1.pcost, c2.pcost), 2) AS pco,
