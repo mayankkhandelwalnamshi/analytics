@@ -5,7 +5,8 @@
 -- Universe: products with GMV since {H} (1 Jul 2026) in season carryover / unassigned / namshi noos / brand noos
 -- (beauty_season_mapping; every config of the product must be in one of these); ranked by that GMV, top 500 per country.
 -- Parameters: {FROM} = 1st of the month, {TO} = yesterday, {LY_DATES} = LY LFL dates of {FROM}..{TO} (sql/lfl_mapping.sql),
---             {L30} = {TO} - 29 days, {H} = 2026-07-01.
+--             {L30} = {TO} - 29 days, {H} = 2026-07-01,
+--             {SNAP} = latest psku_sku_mapped date (SELECT MAX(date) ...; today's once it has landed) for live / stock / price.
 -- Product = configs linked by supplier_sku or barcode (see ids below); Beauty, business model retail, no samples & GWP.
 -- Sales scope as sql/daily_beauty_cube.sql (Namshi marketplaces, gmv_inc_vat > 0).
 --   gmv / u / rev / pc1 / ppc1   MTD;  ly = GMV on the LY LFL dates
@@ -67,7 +68,9 @@ p AS (
   SELECT p.country cc, it.ssku, it.cfg, it.sku, p.warehouse_country wh, p.is_live = 1 AND p.stock_net > 0 lv,
     p.stock_net, p.offer_price, p.normal_price, p.is_primary
   FROM `noonbinamshi.assortment_namshi.psku_sku_mapped` p JOIN it USING (sku)
-  WHERE p.date = '{TO}' AND p.country IN ('SA', 'AE') AND p.id_partner = 3001 AND it.ssku IN (SELECT ssku FROM base)
+  -- current status: the latest psku_sku_mapped snapshot (today's when it has landed), not yesterday's
+  WHERE p.date = '{SNAP}'
+    AND p.country IN ('SA', 'AE') AND p.id_partner = 3001 AND it.ssku IN (SELECT ssku FROM base)
 ),
 ps AS (
   -- one stock figure per sku x warehouse (a listing can repeat), counting live listings only
@@ -122,14 +125,13 @@ o AS (
   WHERE o.date BETWEEN '{FROM}' AND '{TO}' AND o.country IN ('SA', 'AE') AND it.ssku IN (SELECT ssku FROM top)
   GROUP BY 1, 2
 ),
--- open purchase orders (Namshi retail partner 3001, Beauty re-order POs: dup / top up / reorder / bsrp titles, 2026 POs whose
--- ETA has passed, excluding POs re-dated to a future ETA): open order qty and open shipment qty per sku and country
+-- open purchase orders (Namshi retail partner 3001, all approved / received 2026 Beauty POs whose ETA has passed, excluding POs
+-- re-dated to a future ETA): open order qty and open shipment qty per sku and country
 po_orders AS (
   SELECT order_nr FROM `noonbinmlook.looker.po_expected_received_union`
   WHERE merch_team = 'beauty' AND LOWER(po_order_status) IN ('received', 'approved')
     AND collection_start_date >= '2026-01-01' AND final_date >= '2026-01-01' AND eta_date < CURRENT_DATE()
     AND (COALESCE(open_order_qty, 0) + COALESCE(open_shipment_qty, 0) + COALESCE(adj_expected_qty, 0) + COALESCE(qty_received, 0) + COALESCE(order_non_shipment_qty, 0)) > 0
-    AND (LOWER(po_title) LIKE '%dup%' OR LOWER(po_title) LIKE '%top up%' OR LOWER(po_title) LIKE '%reorder%' OR LOWER(po_title) LIKE '%bsrp%')
     AND order_nr NOT IN (SELECT order_nr FROM `noonbinmlook.looker.po_expected_received_union` WHERE final_date >= '2026-01-01'
                          GROUP BY order_nr HAVING COUNT(DISTINCT eta_date) > 1 AND MAX(eta_date) > CURRENT_DATE())
   GROUP BY ALL
@@ -169,7 +171,7 @@ info AS (
   FROM it WHERE ssku IN (SELECT ssku FROM top) GROUP BY 1
 )
 SELECT TO_JSON_STRING(STRUCT(
-  IF(t.cc = 'SA', 0, 1) AS c, ROW_NUMBER() OVER (PARTITION BY t.cc ORDER BY t.gh DESC) AS rk, i.sups AS ss, ROUND(t.gh) AS gh, ROUND(bg.bgh) AS bgh,
+  IF(t.cc = 'SA', 0, 1) AS c, '{SNAP}' AS sd, ROW_NUMBER() OVER (PARTITION BY t.cc ORDER BY t.gh DESC) AS rk, i.sups AS ss, ROUND(t.gh) AS gh, ROUND(bg.bgh) AS bgh,
   i.brand AS br, i.seasons AS sn, i.cat AS ca, i.sub AS su, i.title AS ti, i.img AS im, i.bc AS bc, IFNULL(pc.cfgs, i.allcfg) AS cf,
   ROUND(t.gmv) AS g, ROUND(t.ly) AS ly, t.u AS u, ROUND(t.rev) AS rv, ROUND(t.pc1) AS p1, ROUND(t.ppc1) AS pp,
   t.u30 AS u30, ROUND(COALESCE(c1.cost, c2.cost), 2) AS co, ROUND(COALESCE(c1.pcost, c2.pcost), 2) AS pco,
