@@ -98,6 +98,9 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .hint { font-size: 12px; color: var(--muted); margin: 10px 0 0; }
 .panel { position: relative; }
 .panel.wide { grid-column: 1 / -1; }
+h3.sec { grid-column: 1 / -1; margin: 10px 0 -4px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-2); display: flex; align-items: center; gap: 10px; }
+h3.sec::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+h3.sec:first-child { margin-top: 0; }
 .panel.wide .chart { height: 380px; }
 .xp { position: absolute; top: 10px; right: 10px; background: none; border: 1px solid transparent; color: var(--muted); border-radius: 6px; width: 26px; height: 26px; display: grid; place-items: center; cursor: pointer; }
 .xp:hover { border-color: var(--line); color: var(--fg); background: var(--bg); }
@@ -222,7 +225,7 @@ td .up { color: var(--good); } td .down { color: var(--bad); }
     <div class="tscroll"><table id="table"></table></div>
   </details>
 
-  <p class="note">Namshi marketplaces only (namshi, namshi_v2), lines with GMV above zero. LFL date compares each day with its like-for-like day from the LFL mapping (for example Black Friday 2026 vs Black Friday 2025); where the mapping gives an LLY date in the wrong year (30 Sep and 31 Dec) the same calendar date is used. Beauty = products with business unit “beauty”. Brand, category and sub-category come from the product catalogue (item_d); “(none)” means the field is blank there. Target = daily GMV plan for the Beauty pod (planning_dod_merch_brand_category_targets, pod cp_beauty), set by country, brand and category; it follows the Category and Brand filters and is hidden when a Sub-category is selected. Targets are loaded up to 31 Oct 2026 so far. GMV includes VAT and all item statuses (including cancelled and returned). Units = gross items. ASP = GMV ÷ units. MKD % = markdown discount ÷ normal price (AED). PC1 % = PC1 ÷ gross revenue. Prov. PC1 % = provisional PC1 ÷ gross revenue. Overall covers all countries, KSA and UAE included. Ratios are calculated from summed values. Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics. Today is excluded because the day is still in progress.</p>
+  <p class="note">Traffic comes from onsite measures (all platforms; app = iOS + Android): glance views (GVs), add to carts (ATC), search and non-search impressions. ATC / GV = add to carts ÷ glance views. For traffic, very small brand rows on a day (under 5 GVs, no ATC, under 500 impressions) are grouped as “(other brands)” within their category and sub-category, so totals and category filters are exact. Namshi marketplaces only (namshi, namshi_v2), lines with GMV above zero. LFL date compares each day with its like-for-like day from the LFL mapping (for example Black Friday 2026 vs Black Friday 2025); where the mapping gives an LLY date in the wrong year (30 Sep and 31 Dec) the same calendar date is used. Beauty = products with business unit “beauty”. Brand, category and sub-category come from the product catalogue (item_d); “(none)” means the field is blank there. Target = daily GMV plan for the Beauty pod (planning_dod_merch_brand_category_targets, pod cp_beauty), set by country, brand and category; it follows the Category and Brand filters and is hidden when a Sub-category is selected. Targets are loaded up to 31 Oct 2026 so far. GMV includes VAT and all item statuses (including cancelled and returned). Units = gross items. ASP = GMV ÷ units. MKD % = markdown discount ÷ normal price (AED). PC1 % = PC1 ÷ gross revenue. Prov. PC1 % = provisional PC1 ÷ gross revenue. Overall covers all countries, KSA and UAE included. Ratios are calculated from summed values. Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics. Today is excluded because the day is still in progress.</p>
 </div>
 
 <script>
@@ -230,28 +233,40 @@ const META = /*__META__*/null;
 const TGT = /*__TARGETS__*/null;
 const BLOB = "__BLOB__";
 const START = "2026-10-01", END = "2026-12-31";
-const I = Object.fromEntries(META.fields.map((f, i) => [f, i]));
-const NF = META.fields.length, NR = META.n, DIDX = Object.fromEntries(META.dates.map((d, i) => [d, i]));
+// one flat field list across sales and traffic; ACC holds every field per date x country
+const FIELDS = META.sets.flatMap(st => st.fields);
+const I = Object.fromEntries(FIELDS.map((f, i) => [f, i]));
+const NF = FIELDS.length, DIDX = Object.fromEntries(META.dates.map((d, i) => [d, i]));
 const DIMS = [
   { key: "cat",   label: "Category",     all: "All categories" },
   { key: "sub",   label: "Sub-category", all: "All sub-categories" },
   { key: "brand", label: "Brand",        all: "All brands" },
 ];
 const DPOS = { brand: 0, cat: 1, sub: 2 };
-let COL = null, ACC = null, COMBO_GMV = null;
+let SETS = null, ACC = null, COMBO_GMV = null;
 
 async function loadData() {
   const bin = Uint8Array.from(atob(BLOB), ch => ch.charCodeAt(0));
-  const buf = await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
-  const m = [];
-  for (let j = 0; j < NF; j++) m.push(new Int32Array(buf, j * 4 * NR, NR));
-  let o = NF * 4 * NR;
-  const d = new Uint16Array(buf, o, NR); o += 2 * NR;
-  const k = new Uint16Array(buf, o, NR); o += 2 * NR;
-  const c = new Uint8Array(buf, o, NR);
-  COL = { m, d, k, c };
+  const buf = new Uint8Array(await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
+  let o = 0, f0 = 0;
+  SETS = META.sets.map(st => {
+    const n = st.n, m = [];
+    for (let j = 0; j < st.fields.length; j++) {
+      const out = new Uint8Array(4 * n);   // undo the byte planes
+      for (let b = 0; b < 4; b++) { const plane = buf.subarray(o + b * n, o + (b + 1) * n); for (let r = 0; r < n; r++) out[r * 4 + b] = plane[r]; }
+      m.push(new Int32Array(out.buffer)); o += 4 * n;
+    }
+    const d = new Uint16Array(buf.slice(o, o + 2 * n).buffer); o += 2 * n;
+    const k = new Uint16Array(buf.slice(o, o + 2 * n).buffer); o += 2 * n;
+    const c = buf.subarray(o, o + n); o += n;
+    o += (4 - o % 4) % 4;
+    const set = { n, m, d, k, c, f0 };
+    f0 += st.fields.length;
+    return set;
+  });
   COMBO_GMV = new Float64Array(META.combos.length);
-  for (let r = 0; r < NR; r++) COMBO_GMV[k[r]] += m[0][r];
+  const S = SETS[0];
+  for (let r = 0; r < S.n; r++) COMBO_GMV[S.k[r]] += S.m[0][r];
 }
 // allowed[k] = combo k passes every filter (optionally ignoring one dimension, for option lists)
 function allowedMask(skip) {
@@ -264,11 +279,13 @@ function recompute() {
   recomputeTargets();
   const mask = allowedMask(null), nd = META.dates.length;
   ACC = new Float64Array(nd * 3 * NF);
-  const { m, d, k, c } = COL;
-  for (let r = 0; r < NR; r++) {
-    if (!mask[k[r]]) continue;
-    const base = (d[r] * 3 + c[r]) * NF;
-    for (let j = 0; j < NF; j++) ACC[base + j] += m[j][r];
+  for (const { n, m, d, k, c, f0 } of SETS) {
+    const nf = m.length;
+    for (let r = 0; r < n; r++) {
+      if (!mask[k[r]]) continue;
+      const base = (d[r] * 3 + c[r]) * NF + f0;
+      for (let j = 0; j < nf; j++) ACC[base + j] += m[j][r];
+    }
   }
 }
 const filtered = () => DIMS.some(dm => state.f[dm.key].length);
@@ -280,7 +297,15 @@ const METRICS = [
   { key: "mkd",  name: "MKD %",      unit: "",    kind: "pct",   zero: false, lowerBetter: true, calc: a => a[I.np] ? a[I.mkd] / a[I.np] : null },
   { key: "pc1",  name: "PC1 %",      unit: "",    kind: "pct",   zero: false, calc: a => a[I.rev] ? a[I.pc1] / a[I.rev] : null },
   { key: "ppc1", name: "Prov. PC1 %",unit: "",    kind: "pct",   zero: false, calc: a => a[I.rev] ? a[I.ppc1] / a[I.rev] : null },
+  { key: "gv",   name: "Glance views",          section: "traffic", kind: "cnt", zero: true, additive: true, calc: a => a[I.gv] },
+  { key: "atc",  name: "Add to carts",          section: "traffic", kind: "cnt", zero: true, additive: true, calc: a => a[I.atc] },
+  { key: "atcgv",name: "ATC / GV",              section: "traffic", kind: "pct", zero: false, calc: a => a[I.gv] ? a[I.atc] / a[I.gv] : null },
+  { key: "imp",  name: "Impressions",           section: "traffic", kind: "cnt", zero: true, additive: true, calc: a => a[I.si] + a[I.nsi] },
+  { key: "si",   name: "Search impressions",    section: "traffic", kind: "cnt", zero: true, additive: true, calc: a => a[I.si] },
+  { key: "nsi",  name: "Non-search impressions",section: "traffic", kind: "cnt", zero: true, additive: true, calc: a => a[I.nsi] },
+  { key: "aimp", name: "App impressions",       section: "traffic", unit: "iOS + Android", kind: "cnt", zero: true, additive: true, calc: a => a[I.asi] + a[I.ansi] },
 ];
+const SECTIONS = { sales: "Sales", traffic: "Traffic" };
 const SERIES = [
   { id: "ty",  label: "2026 (TY)", color: "var(--s-ty)",  w: 2.5, dash: "" },
   { id: "ly",  label: "LY",        color: "var(--s-ly)",  w: 2,   dash: "" },
@@ -345,6 +370,7 @@ function fmt(m, v, short) {
   if (m.kind === "pct") return (v * 100).toFixed(1) + "%";
   if (m.kind === "aed2") return v.toFixed(1);
   if (m.kind === "int" && !short) return Math.round(v).toLocaleString("en-US");
+  if (m.kind === "cnt" && !short && Math.abs(v) < 1e4) return Math.round(v).toLocaleString("en-US");
   const a = Math.abs(v);
   if (a >= 1e6) return (v / 1e6).toFixed(a >= 1e7 ? 1 : 2) + "M";
   if (a >= 1e3) return (v / 1e3).toFixed(a >= 1e5 ? 0 : 1) + "K";
@@ -547,7 +573,12 @@ function render() {
   grid.innerHTML = "";
   CHARTS.length = 0;
   const built = {};
+  let sec = null;
   for (const m of METRICS) {
+    if ((m.section || "sales") !== sec) {
+      sec = m.section || "sales";
+      const h = document.createElement("h3"); h.className = "sec"; h.textContent = SECTIONS[sec]; grid.appendChild(h);
+    }
     const b = built[m.key] = build(m);
     const tgtOn = hasTarget(m, state.region);
     const el = document.createElement("article");
@@ -561,7 +592,7 @@ function render() {
         </div>
         <button class="xp" data-m="${m.key}" aria-pressed="${state.expand === m.key}" title="${state.expand === m.key ? "Back to grid" : "Expand chart"}" aria-label="${state.expand === m.key ? "Back to grid" : "Expand " + m.name}">${state.expand === m.key ? ICON_SHRINK : ICON_EXPAND}</button>
       </div><div class="chart"></div>`;
-    if (state.expand === m.key) grid.prepend(el); else grid.appendChild(el);
+    grid.appendChild(el);
     const bv = el.querySelector(".bv"), bd = el.querySelector(".bd"), cr1 = el.querySelector(".cr1");
     const header = i => {
       // hovered day, else the latest day with sales
@@ -603,15 +634,21 @@ function breakdown(dim, dates) {
   const ty = new Set(), ly = new Set();
   for (const d of dates) { if (DIDX[d] != null) ty.add(DIDX[d]); const s = DIDX[shift(d, 1, state.align)]; if (s != null) ly.add(s); }
   const mask = allowedMask(null), regs = RIDX[state.region], p = DPOS[dim], out = new Map();
-  const { m, d, k, c } = COL;
-  for (let r = 0; r < NR; r++) {
-    if (!mask[k[r]] || !regs.includes(c[r])) continue;
-    const isT = ty.has(d[r]); if (!isT && !ly.has(d[r])) continue;
-    const key = META.combos[k[r]][p];
-    let a = out.get(key); if (!a) out.set(key, a = [0, 0, 0, 0, 0, 0]);   // tyGmv, lyGmv, tyU, tyRev, tyPc1, tyMkd/np later
-    if (isT) { a[0] += m[I.gmv][r]; a[2] += m[I.u][r]; a[3] += m[I.rev][r]; a[4] += m[I.pc1][r]; } else a[1] += m[I.gmv][r];
-  }
-  return [...out.entries()].map(([i, a]) => ({ name: META.names[dim][i], ty: a[0], ly: a[1], u: a[2], pc1: a[3] ? a[4] / a[3] : null, chg: a[0] - a[1] }));
+  // a: TY gmv, LY gmv, TY units, TY rev, TY pc1, TY gv, LY gv, TY atc
+  SETS.forEach(({ n, m, d, k, c, f0 }, si) => {
+    const col = f => m[I[f] - f0];
+    const g0 = si === 0 ? col("gmv") : col("gv");
+    for (let r = 0; r < n; r++) {
+      if (!mask[k[r]] || !regs.includes(c[r])) continue;
+      const isT = ty.has(d[r]); if (!isT && !ly.has(d[r])) continue;
+      const key = META.combos[k[r]][p];
+      let a = out.get(key); if (!a) out.set(key, a = [0, 0, 0, 0, 0, 0, 0, 0]);
+      if (si === 0) { if (isT) { a[0] += g0[r]; a[2] += col("u")[r]; a[3] += col("rev")[r]; a[4] += col("pc1")[r]; } else a[1] += g0[r]; }
+      else { if (isT) { a[5] += g0[r]; a[7] += col("atc")[r]; } else a[6] += g0[r]; }
+    }
+  });
+  return [...out.entries()].map(([i, a]) => ({ name: META.names[dim][i], ty: a[0], ly: a[1], u: a[2], pc1: a[3] ? a[4] / a[3] : null, chg: a[0] - a[1],
+    gv: a[5], gvLy: a[6], atcgv: a[5] ? a[7] / a[5] : null }));
 }
 function renderDrill() {
   const box = document.getElementById("drill"), D = state.drill;
@@ -621,8 +658,8 @@ function renderDrill() {
   const rows = breakdown(D.dim, dates);
   const tot = rows.reduce((a, r) => a + r.ty, 0), totLy = rows.reduce((a, r) => a + r.ly, 0);
   rows.sort(D.sort === "gmv" ? (a, b) => b.ty - a.ty : D.sort === "up" ? (a, b) => b.chg - a.chg : (a, b) => a.chg - b.chg);
-  const shown = rows.filter(r => r.ty || r.ly).slice(0, 25);
-  const g = { name: "GMV", kind: "aed" }, pctM = { kind: "pct" };
+  const shown = rows.filter(r => r.ty || r.ly || r.gv).slice(0, 25);
+  const g = { name: "GMV", kind: "aed" }, pctM = { kind: "pct" }, cntM = { kind: "cnt" };
   const dimL = DIMS.find(x => x.key === D.dim).label;
   const sel = state.f[D.dim];
   const maxAbs = Math.max(1, ...shown.map(r => Math.abs(r.chg)));
@@ -635,11 +672,11 @@ function renderDrill() {
         <div class="seg" id="dsort"><button data-v="gmv" aria-pressed="${D.sort === "gmv"}">Top GMV</button><button data-v="up" aria-pressed="${D.sort === "up"}">Top gainers</button><button data-v="down" aria-pressed="${D.sort === "down"}">Top decliners</button></div>
         <button class="lnk" id="dclose">Close</button>
       </div></div>
-    <div class="tscroll"><table class="dt"><thead><tr><th>${dimL}</th><th>GMV</th><th>LY</th><th>vs LY</th><th class="bar-h">Change vs LY (AED)</th><th>Share</th><th>Units</th><th>PC1 %</th></tr></thead><tbody>
+    <div class="tscroll"><table class="dt"><thead><tr><th>${dimL}</th><th>GMV</th><th>LY</th><th>vs LY</th><th class="bar-h">Change vs LY (AED)</th><th>Share</th><th>Units</th><th>PC1 %</th><th>GVs</th><th>GVs vs LY</th><th>ATC / GV</th></tr></thead><tbody>
     ${shown.map(r => { const dl = delta(g, r.ty, r.ly), w = Math.abs(r.chg) / maxAbs * 50;
       return `<tr data-v="${esc(r.name)}" class="${sel.includes(r.name) ? "cur" : ""}" title="Filter the dashboard to ${esc(r.name)}"><td class="nm">${esc(r.name)}</td><td>${fmt(g, r.ty)}</td><td>${fmt(g, r.ly)}</td><td><span class="${dl?.cls || ""}">${dl?.txt || (r.ly ? "" : "new")}</span></td>
         <td class="barc"><div class="cbar"><span class="${r.chg >= 0 ? "pos" : "neg"}" style="${r.chg >= 0 ? "left:50%" : "right:50%"};width:${w}%"></span></div><small>${r.chg >= 0 ? "+" : "−"}${fmt(g, Math.abs(r.chg))}</small></td>
-        <td>${tot ? (r.ty / tot * 100).toFixed(1) + "%" : "–"}</td><td>${Math.round(r.u).toLocaleString("en-US")}</td><td>${fmt(pctM, r.pc1)}</td></tr>`; }).join("") || `<tr><td colspan="8">No sales for this selection.</td></tr>`}
+        <td>${tot ? (r.ty / tot * 100).toFixed(1) + "%" : "–"}</td><td>${Math.round(r.u).toLocaleString("en-US")}</td><td>${fmt(pctM, r.pc1)}</td><td>${fmt(cntM, r.gv)}</td><td>${(gd => `<span class="${gd?.cls || ""}">${gd?.txt || "–"}</span>`)(delta(cntM, r.gv, r.gvLy))}</td><td>${fmt(pctM, r.atcgv)}</td></tr>`; }).join("") || `<tr><td colspan="11">No sales for this selection.</td></tr>`}
     </tbody></table></div>
     <p class="fsum">${rows.length > shown.length ? `Top ${shown.length} of ${rows.length}. ` : ""}Click a row to filter the dashboard to it; click again to remove it.</p>`;
 }

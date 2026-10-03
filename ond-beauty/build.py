@@ -3,7 +3,10 @@
 Usage:
     python3 ond-beauty/build.py [bq_result.json ...]
 
+Usage with traffic: python3 ond-beauty/build.py [sales_result.json ...] --traffic [traffic_result.json ...]
+
 Each bq_result.json is the raw BigQuery `jobs.query` response of sql/daily_beauty_cube.sql
+(or sql/daily_traffic_cube.sql after --traffic, merged into data/traffic_raw.json)
 for one date window (rows: d, r). They are merged into data/cube_raw.json ({date: packed rows};
 each record is "c,brand,category,sub_category,gmv,units,mkd,np,rev,pc1,ppc1").
 data/lfl.json maps each OND 2026 date to its [LY, LLY] like-for-like date (sql/lfl_mapping.sql).
@@ -24,11 +27,13 @@ import sys
 
 ROOT = pathlib.Path(__file__).parent
 DATA = ROOT / "data"
-FIELDS = ["gmv", "u", "mkd", "np", "rev", "pc1", "ppc1"]
+SALES_FIELDS = ["gmv", "u", "mkd", "np", "rev", "pc1", "ppc1"]
+TRAFFIC_FIELDS = ["gv", "atc", "si", "nsi", "asi", "ansi"]
+SETS = [("cube_raw.json", SALES_FIELDS), ("traffic_raw.json", TRAFFIC_FIELDS)]
 
 
-def merge(paths):
-    cube_path = DATA / "cube_raw.json"
+def merge(paths, target="cube_raw.json"):
+    cube_path = DATA / target
     days = json.loads(cube_path.read_text()) if cube_path.exists() else {}
     for p in paths:
         raw = json.loads(pathlib.Path(p).read_text())
@@ -39,30 +44,39 @@ def merge(paths):
 
 
 def pack():
-    days = json.loads((DATA / "cube_raw.json").read_text())
-    dates = sorted(days)
+    """Sales and traffic share one date list and one brand/category/sub-category combo list.
+    Each set is stored as columns: int32 per field (as 4 byte planes), then uint16 date, uint16 combo, uint8 country."""
+    sets = [(json.loads((DATA / f).read_text()), fields) for f, fields in SETS]
+    dates = sorted(set().union(*(days for days, _ in sets)))
+    di = {d: i for i, d in enumerate(dates)}
     combo_idx = {}
-    cols = [[] for _ in range(3 + len(FIELDS))]  # d, c, k, metrics...
-    for di, d in enumerate(dates):
-        for rec in days[d].split(";"):
-            v = rec.split(",")
-            key = (v[1], v[2], v[3])
-            if key not in combo_idx:
-                combo_idx[key] = len(combo_idx)
-            cols[0].append(di)
-            cols[1].append(int(v[0]))
-            cols[2].append(combo_idx[key])
-            for j in range(len(FIELDS)):
-                cols[3 + j].append(int(round(float(v[4 + j]))))
+    buf, sizes = b"", []
+    for days, fields in sets:
+        cols = [[] for _ in range(3 + len(fields))]  # d, c, k, metrics...
+        for d in sorted(days):
+            for rec in days[d].split(";"):
+                v = rec.split(",")
+                key = (v[1], v[2], v[3])
+                if key not in combo_idx:
+                    combo_idx[key] = len(combo_idx)
+                cols[0].append(di[d])
+                cols[1].append(int(v[0]))
+                cols[2].append(combo_idx[key])
+                for j in range(len(fields)):
+                    cols[3 + j].append(int(round(float(v[4 + j]))))
+        n = len(cols[0])
+        for j in range(len(fields)):
+            col = struct.pack(f"<{n}i", *cols[3 + j])
+            buf += b"".join(col[k::4] for k in range(4))  # byte planes: compresses ~20% better
+        buf += struct.pack(f"<{n}H", *cols[0]) + struct.pack(f"<{n}H", *cols[2]) + struct.pack(f"<{n}B", *cols[1])
+        buf += b"\0" * (-len(buf) % 4)  # keep the next set's int32 columns aligned
+        sizes.append(n)
     combos = list(combo_idx)
-    n = len(cols[0])
-    buf = b"".join(struct.pack(f"<{n}i", *cols[3 + j]) for j in range(len(FIELDS)))
-    buf += struct.pack(f"<{n}H", *cols[0]) + struct.pack(f"<{n}H", *cols[2]) + struct.pack(f"<{n}B", *cols[1])
+    assert len(combos) < 65536
     names = {key: sorted({c[i] for c in combos}) for i, key in enumerate(["brand", "cat", "sub"])}
     idx = {key: {v: i for i, v in enumerate(names[key])} for key in names}
     meta = {
-        "fields": FIELDS,
-        "n": n,
+        "sets": [{"fields": fields, "n": n} for (_, fields), n in zip(sets, sizes)],
         "dates": dates,
         "names": names,
         "combos": [[idx["brand"][b], idx["cat"][c], idx["sub"][s]] for b, c, s in combos],
@@ -110,7 +124,7 @@ def build():
     out = ROOT / "dist" / "ond_beauty_dashboard.html"
     out.parent.mkdir(exist_ok=True)
     out.write_text(html)
-    print(f"wrote {out} ({len(html) // 1024} KB, {meta['n']} rows, {len(meta['combos'])} combos)")
+    print(f"wrote {out} ({len(html) // 1024} KB, {[x['n'] for x in meta['sets']]} rows, {len(meta['combos'])} combos)")
 
 
 if __name__ == "__main__":
@@ -121,6 +135,10 @@ if __name__ == "__main__":
         (DATA / "targets_raw.json").write_text(json.dumps(
             {r["f"][0]["v"]: r["f"][1]["v"] for r in raw["rows"]}, separators=(",", ":")))
         del args[i:i + 2]
+    if "--traffic" in args:
+        i = args.index("--traffic")
+        merge(args[i + 1:], "traffic_raw.json")
+        args = args[:i]
     if args:
         merge(args)
     build()
