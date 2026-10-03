@@ -51,7 +51,26 @@
 .chart svg { user-select: none; -webkit-user-select: none; }
 body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 14px; line-height: 1.45; }
 .wrap { max-width: 1440px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 48px; }
-header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 24px; }
+header.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; }
+.hl { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; min-width: 0; }
+.hbtns { display: flex; gap: 10px; }
+.pill { font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+.pill:hover { border-color: var(--accent); color: var(--accent); }
+.pill svg { color: var(--accent); }
+.scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35); z-index: 40; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(640px, 100vw); background: var(--surface); z-index: 41; display: flex; flex-direction: column;
+  box-shadow: -12px 0 32px rgba(0, 0, 0, 0.18); border-left: 1px solid var(--line); }
+.drawer[hidden], .scrim[hidden] { display: none; }
+.drh { display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; border-bottom: 1px solid var(--line); }
+.drh h2 { margin: 0; font-size: 19px; }
+.drx { font: inherit; font-size: 24px; line-height: 1; background: none; border: 0; color: var(--fg-2); cursor: pointer; padding: 2px 6px; border-radius: 6px; }
+.drx:hover { background: var(--flat-bg); }
+.drb { overflow-y: auto; padding: 18px 24px 28px; }
+.drl { margin: 0 0 14px; font-size: 15px; line-height: 1.45; }
+.drbox { background: var(--bg); border: 1px dashed var(--line); border-radius: 10px; padding: 14px 18px; }
+.drbox ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 13px; line-height: 1.55; color: var(--fg-2); }
+@media (prefers-reduced-motion: no-preference) { .drawer:not([hidden]) { animation: drin .2s ease-out; } @keyframes drin { from { transform: translateX(24px); opacity: 0; } } }
 h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
 h1 span { color: var(--accent); }
 .meta { color: var(--muted); font-size: 12px; }
@@ -198,10 +217,10 @@ thead tr:first-child th { color: var(--fg-2); }
 td.d { font-family: var(--mono); font-size: 11.5px; }
 td .up { color: var(--good); } td .down { color: var(--bad); }
 details.gloss { margin-top: 12px; }
-.gbody { padding: 0 14px 14px; }
+.gbody { padding: 0; }
 .gbody h4 { margin: 14px 0 6px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
-.gbody .gl { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 6px 28px; font-size: 12.5px; }
-.gbody .gi { display: grid; grid-template-columns: 150px 1fr; gap: 10px; }
+.gbody .gl { display: grid; gap: 8px; font-size: 13px; line-height: 1.5; }
+.gbody .gi { display: grid; grid-template-columns: 170px 1fr; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
 .gbody .gi b { font-weight: 600; }
 .gbody .gi span { color: var(--fg-2); }
 @media (max-width: 500px) { .gbody .gi { grid-template-columns: 1fr; gap: 0; } }
@@ -213,20 +232,28 @@ details.gloss { margin-top: 12px; }
 
 <div class="wrap">
   <header class="top">
-    <h1>OND <span>Beauty</span></h1>
-    <div class="meta" id="meta"></div>
+    <div class="hl"><h1>OND <span>Beauty</span></h1>
+    <div class="meta" id="meta"></div></div>
+    <div class="hbtns">
+      <button class="pill" data-dr="dr-gloss" aria-haspopup="dialog"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.2c1.8-.8 4-.8 6 .6 2-1.4 4.2-1.4 6-.6v9.6c-1.8-.8-4-.8-6 .6-2-1.4-4.2-1.4-6-.6z M8 3.8v9.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Glossary</button>
+      <button class="pill" data-dr="dr-notes" aria-haspopup="dialog"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 7.2v4M8 4.6v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Data Notes</button>
+    </div>
   </header>
+  <div class="scrim" id="scrim" hidden></div>
+  <aside class="drawer" id="dr-gloss" role="dialog" aria-modal="true" aria-labelledby="dr-gloss-h" hidden>
+    <div class="drh"><h2 id="dr-gloss-h">Glossary</h2><button class="drx" aria-label="Close">×</button></div>
+    <div class="drb"><p class="drl">What each metric means and how it is calculated.</p><div class="gbody" id="gbody"></div></div>
+  </aside>
+  <aside class="drawer" id="dr-notes" role="dialog" aria-modal="true" aria-labelledby="dr-notes-h" hidden>
+    <div class="drh"><h2 id="dr-notes-h">Data Notes &amp; Methodology</h2><button class="drx" aria-label="Close">×</button></div>
+    <div class="drb"><p class="drl">Sources, scope and how the numbers are built. Data from 1 Oct; LY and LLY on like-for-like dates. Refreshed <span id="dr-ref"></span>.</p>
+      <div class="drbox"><ul><li>LY = the same metric on the LY LFL dates (stock-type metrics: the LY LFL day).</li><li>Drop Contrib vs LY = (row TY − row LY) ÷ total LY, in pp: the rows add up to the total’s % change vs LY, so the most negative rows drove the drop.</li><li>WoC: a fall vs LY / LLY shows green (fewer weeks of cover), a rise red.</li><li>Share and age-band cells are shaded: darker = higher %, relative to the highest row shown.</li><li>WoC (units) = live retail stock ÷ (retail units sold in the last 30 days ÷ 30 × 7);</li><li>WoC (COGS) = inventory value at cost ÷ (retail COGS of the last 30 days ÷ 30 × 7); units and COGS are business model retail only (sales_metrics cogs).</li><li>MTD performance: every metric for the selected month (or OND to date) by one cut, against target, LY and LLY on the chosen compare dates; orders, AOV and ITO are left out there because orders don’t add up across rows.</li><li>Krithi’s target = LY GMV on LFL dates × 1.25, for every row.</li><li>Health: stock / inventory value shares = the row’s part of the total; age bands = the row’s inventory value at cost by ageing band (namshi_analytics_custom.ageing_cost, sku_config_ageing_detailed, the oldest bucket since 1 Oct 2026; 0-90 = 0-89 days, … 720+), TY only; newness share = new assortment ÷ live assortment (TY: activated since 1 Jul 2026, LY: since 1 Jul 2025 up to the LY day).</li><li>Flow metrics add up the period; assortment, stock and inventory value show the last day of the period only (and the matching LY / LLY day).</li><li>The GMV target splits by country, category, brand, business model and brand type / group / POC (not by sub-category or season).</li><li>Orders by row are exact for country, category, sub-category, brand, business model and season without other filters; otherwise they are estimated from brand-level orders (≈), and rows can add up to more than the total because one order can hold several categories or brands.</li><li>Summary tiles: Platform = all categories on Namshi (same scope: Namshi marketplaces, GMV above zero, no samples &amp; GWP) against the total GMV plan of all pods; it follows the region but not the product filters.</li><li>Beauty follows the region and filters.</li><li>Yesterday is the latest full day (DoD = vs the day before);</li><li>MTD runs from the 1st of that month; the month projection applies the MTD achievement to the full month — e.g. 90% of the MTD target projects 90% of the full-month target — and likewise against LY and LLY (LFL dates).</li><li>Inventory value (cost) = inventory_value_derived from retail_v1.stock_summary_history (Namshi retail partner 3001, live stock, eligible for Namshi); inventory value (retail) = stock × offer price on primary Namshi retail listings in psku_sku_mapped.</li><li>Both cover KSA and UAE and are daily levels.</li><li>Assortment &amp; stock (psku_sku_mapped, KSA and UAE, live listings with stock above zero): live assortment = distinct live supplier SKUs (item_d supplier_sku); retail / MP assortment split it by business model;</li><li>CB assortment = supplier SKUs live in KSA from the UAE warehouse; new assortment = live supplier SKUs activated in that country (item_d activated_at_sa / activated_at_ae) between 1 Jul of that year and the day; live stock = stock_net on primary Namshi retail listings (partner 3001).</li><li>Overall assortment is KSA + UAE added together (a product live in both countries counts twice).</li><li>These are daily levels, so the 7-day and cumulative views and the “Since” chips show the daily average.</li><li>OOS GMV loss = estimated GMV lost to out-of-stock SKUs (looker.out_of_stock_new, oos_gmv_loss), available for KSA and UAE from 1 Jan 2025, so there is no LLY;</li><li>OOS loss / GMV divides it by KSA + UAE GMV.</li><li>Samples &amp; GWP (item_d inventory type) are excluded from every metric.</li><li>Traffic comes from onsite measures (all platforms; app = iOS + Android): glance views (GVs), add to carts (ATC), search and non-search impressions.</li><li>ATC / GV = add to carts ÷ glance views.</li><li>UCR % = units sold ÷ glance views.</li><li>CTR % = glance views ÷ impressions (search + non-search, all platforms).</li><li>For traffic, very small brand rows on a day (under 5 GVs, no ATC, under 500 impressions) are grouped as “(other brands)” within their category and sub-category, so totals and category filters are exact.</li><li>Namshi marketplaces only (namshi, namshi_v2), lines with GMV above zero.</li><li>LFL date compares each day with its like-for-like day from the LFL mapping (for example Black Friday 2026 vs Black Friday 2025); where the mapping gives an LLY date in the wrong year (30 Sep and 31 Dec) the same calendar date is used.</li><li>Beauty = products with business unit “beauty”.</li><li>Brand, category, sub-category and business model come from the product catalogue (item_d);</li><li>“(none)” means the field is blank there.</li><li>Season comes from beauty_season_mapping (by sku_config), brand type from beauty_pestige_mastige_mapping, brand group from brand_group_beauty and brand POC from brand_poc_beauty; missing values are “unassigned”.</li><li>Traffic is kept either by brand or by business model / season, so with a brand filter (brand, type, group or POC) the business model and season filters are not applied to traffic, and traffic cards show “≈”.</li><li>The GMV target follows the category, brand (including brand type, group and POC) and business model filters, and is hidden when a sub-category or season is selected.</li><li>Targets are set by brand, so each brand counts under the business model that holds most of its GMV (Retail or MP).</li><li>Target = daily GMV plan for the Beauty pod (planning_dod_merch_brand_category_targets, pod cp_beauty), set by country, brand and category;</li><li>Targets are loaded up to 31 Oct 2026 so far.</li><li>GMV includes VAT and all item statuses (including cancelled and returned).</li><li>Units = gross items.</li><li>ASP = GMV ÷ units.</li><li>Orders = distinct order numbers holding Beauty items in scope.</li><li>AOV = Beauty GMV ÷ orders.</li><li>ITO = units ÷ orders.</li><li>Orders are exact for all Beauty and for one selected category, sub-category or brand; with several values or brand + category selected they are marked “≈” because an order holding more than one of them counts once per value.</li><li>MKD % = markdown discount ÷ normal price (AED).</li><li>PC1 % = PC1 ÷ gross revenue.</li><li>Prov.</li><li>PC1 % = provisional PC1 ÷ gross revenue.</li><li>Overall covers all countries, KSA and UAE included.</li><li>Ratios are calculated from summed values.</li><li>Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics.</li><li>Today is excluded because the day is still in progress.</li></ul></div></div>
+  </aside>
 
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" id="tab-trend" data-tab="trend">Daily trend</button>
     <button role="tab" aria-selected="false" id="tab-mtd" data-tab="mtd">MTD performance</button>
   </nav>
-
-  <details class="tbl gloss" id="gloss">
-    <summary>Glossary · what each metric means and how it is calculated</summary>
-    <div class="gbody" id="gbody"></div>
-  </details>
-
   <div class="bar">
     <div class="filters" id="filters">
       <div class="dd" data-f="cat"></div>
@@ -284,10 +311,7 @@ details.gloss { margin-top: 12px; }
     <div class="tscroll"><table id="table"></table></div>
   </details>
 
-  <details class="tbl notes">
-    <summary>Notes &amp; definitions</summary>
-    <p class="note" style="padding:0 14px 14px;margin-top:0">LY = the same metric on the LY LFL dates (stock-type metrics: the LY LFL day). Drop Contrib vs LY = (row TY − row LY) ÷ total LY, in pp: the rows add up to the total’s % change vs LY, so the most negative rows drove the drop. WoC: a fall vs LY / LLY shows green (fewer weeks of cover), a rise red. Share and age-band cells are shaded: darker = higher %, relative to the highest row shown. WoC (units) = live retail stock ÷ (retail units sold in the last 30 days ÷ 30 × 7); WoC (COGS) = inventory value at cost ÷ (retail COGS of the last 30 days ÷ 30 × 7); units and COGS are business model retail only (sales_metrics cogs). MTD performance: every metric for the selected month (or OND to date) by one cut, against target, LY and LLY on the chosen compare dates; orders, AOV and ITO are left out there because orders don’t add up across rows. Krithi’s target = LY GMV on LFL dates × 1.25, for every row. Health: stock / inventory value shares = the row’s part of the total; age bands = the row’s inventory value at cost by ageing band (namshi_analytics_custom.ageing_cost, sku_config_ageing_detailed, the oldest bucket since 1 Oct 2026; 0-90 = 0-89 days, … 720+), TY only; newness share = new assortment ÷ live assortment (TY: activated since 1 Jul 2026, LY: since 1 Jul 2025 up to the LY day). Flow metrics add up the period; assortment, stock and inventory value show the last day of the period only (and the matching LY / LLY day). The GMV target splits by country, category, brand, business model and brand type / group / POC (not by sub-category or season). Orders by row are exact for country, category, sub-category, brand, business model and season without other filters; otherwise they are estimated from brand-level orders (≈), and rows can add up to more than the total because one order can hold several categories or brands. Summary tiles: Platform = all categories on Namshi (same scope: Namshi marketplaces, GMV above zero, no samples &amp; GWP) against the total GMV plan of all pods; it follows the region but not the product filters. Beauty follows the region and filters. Yesterday is the latest full day (DoD = vs the day before); MTD runs from the 1st of that month; the month projection applies the MTD achievement to the full month — e.g. 90% of the MTD target projects 90% of the full-month target — and likewise against LY and LLY (LFL dates). Inventory value (cost) = inventory_value_derived from retail_v1.stock_summary_history (Namshi retail partner 3001, live stock, eligible for Namshi); inventory value (retail) = stock × offer price on primary Namshi retail listings in psku_sku_mapped. Both cover KSA and UAE and are daily levels. Assortment &amp; stock (psku_sku_mapped, KSA and UAE, live listings with stock above zero): live assortment = distinct live supplier SKUs (item_d supplier_sku); retail / MP assortment split it by business model; CB assortment = supplier SKUs live in KSA from the UAE warehouse; new assortment = live supplier SKUs activated in that country (item_d activated_at_sa / activated_at_ae) between 1 Jul of that year and the day; live stock = stock_net on primary Namshi retail listings (partner 3001). Overall assortment is KSA + UAE added together (a product live in both countries counts twice). These are daily levels, so the 7-day and cumulative views and the “Since” chips show the daily average. OOS GMV loss = estimated GMV lost to out-of-stock SKUs (looker.out_of_stock_new, oos_gmv_loss), available for KSA and UAE from 1 Jan 2025, so there is no LLY; OOS loss / GMV divides it by KSA + UAE GMV. Samples &amp; GWP (item_d inventory type) are excluded from every metric. Traffic comes from onsite measures (all platforms; app = iOS + Android): glance views (GVs), add to carts (ATC), search and non-search impressions. ATC / GV = add to carts ÷ glance views. UCR % = units sold ÷ glance views. CTR % = glance views ÷ impressions (search + non-search, all platforms). For traffic, very small brand rows on a day (under 5 GVs, no ATC, under 500 impressions) are grouped as “(other brands)” within their category and sub-category, so totals and category filters are exact. Namshi marketplaces only (namshi, namshi_v2), lines with GMV above zero. LFL date compares each day with its like-for-like day from the LFL mapping (for example Black Friday 2026 vs Black Friday 2025); where the mapping gives an LLY date in the wrong year (30 Sep and 31 Dec) the same calendar date is used. Beauty = products with business unit “beauty”. Brand, category, sub-category and business model come from the product catalogue (item_d); “(none)” means the field is blank there. Season comes from beauty_season_mapping (by sku_config), brand type from beauty_pestige_mastige_mapping, brand group from brand_group_beauty and brand POC from brand_poc_beauty; missing values are “unassigned”. Traffic is kept either by brand or by business model / season, so with a brand filter (brand, type, group or POC) the business model and season filters are not applied to traffic, and traffic cards show “≈”. The GMV target follows the category, brand (including brand type, group and POC) and business model filters, and is hidden when a sub-category or season is selected. Targets are set by brand, so each brand counts under the business model that holds most of its GMV (Retail or MP). Target = daily GMV plan for the Beauty pod (planning_dod_merch_brand_category_targets, pod cp_beauty), set by country, brand and category; Targets are loaded up to 31 Oct 2026 so far. GMV includes VAT and all item statuses (including cancelled and returned). Units = gross items. ASP = GMV ÷ units. Orders = distinct order numbers holding Beauty items in scope. AOV = Beauty GMV ÷ orders. ITO = units ÷ orders. Orders are exact for all Beauty and for one selected category, sub-category or brand; with several values or brand + category selected they are marked “≈” because an order holding more than one of them counts once per value. MKD % = markdown discount ÷ normal price (AED). PC1 % = PC1 ÷ gross revenue. Prov. PC1 % = provisional PC1 ÷ gross revenue. Overall covers all countries, KSA and UAE included. Ratios are calculated from summed values. Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics. Today is excluded because the day is still in progress.</p>
-  </details>
+
 </div>
 
 <script>
@@ -1296,6 +1320,22 @@ document.addEventListener("pointerdown", e => { if (openDim && !e.target.closest
 document.addEventListener("keydown", e => { if (e.key === "Escape" && openDim) { const k = openDim; openDim = null; renderFilters(); document.getElementById("dd-" + k)?.focus(); } });
 
 renderGlossary();
+let drOpen = null, drFrom = null;
+function openDrawer(id, from) {
+  closeDrawer(); drOpen = id; drFrom = from;
+  document.getElementById(id).hidden = false; document.getElementById("scrim").hidden = false;
+  document.getElementById("dr-ref").textContent = META.refreshed || "";
+  document.querySelector(`#${id} .drx`).focus();
+}
+function closeDrawer() {
+  if (!drOpen) return;
+  document.getElementById(drOpen).hidden = true; document.getElementById("scrim").hidden = true;
+  drOpen = null; drFrom?.focus();
+}
+document.querySelectorAll(".pill[data-dr]").forEach(bt => bt.addEventListener("click", () => openDrawer(bt.dataset.dr, bt)));
+document.querySelectorAll(".drx").forEach(bt => bt.addEventListener("click", closeDrawer));
+document.getElementById("scrim").addEventListener("click", closeDrawer);
+document.addEventListener("keydown", e => { if (e.key === "Escape" && drOpen) closeDrawer(); });
 loadData().then(() => { recompute(); renderFilters(); render(); }).catch(err => {
   grid.innerHTML = `<p class="loading">The dashboard data could not be loaded (${esc(err.message)}). Open the page in a current version of Chrome, Edge, Safari or Firefox.</p>`;
 });
