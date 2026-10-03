@@ -191,7 +191,7 @@ td .up { color: var(--good); } td .down { color: var(--bad); }
     </div>
     <div class="ctl"><span>Compare</span>
       <div class="seg" id="align">
-        <button id="a-dow" data-v="dow" aria-pressed="true" title="LY = 364 days back, LLY = 728 days back">Same weekday</button>
+        <button id="a-lfl" data-v="lfl" aria-pressed="true" title="Like-for-like event dates from the LFL mapping (e.g. Black Friday vs Black Friday)">LFL date</button>
         <button id="a-date" data-v="date" aria-pressed="false" title="Same calendar date in 2025 and 2024">Same date</button>
       </div>
     </div>
@@ -222,7 +222,7 @@ td .up { color: var(--good); } td .down { color: var(--bad); }
     <div class="tscroll"><table id="table"></table></div>
   </details>
 
-  <p class="note">Beauty = products with business unit “beauty”. Brand, category and sub-category come from the product catalogue (item_d); “(none)” means the field is blank there. Target = daily GMV plan for the Beauty merch team (planning_dod_merch_brand_category_targets), set by country, brand and category; it follows the Category and Brand filters and is hidden when a Sub-category is selected. Targets are loaded up to 30 Sep 2026 so far. GMV is gross (incl. VAT, all item statuses including cancelled and returned). Units = gross items. ASP = GMV ÷ units. MKD % = markdown discount ÷ normal price (AED). PC1 % = PC1 ÷ gross revenue. Prov. PC1 % = provisional PC1 ÷ gross revenue. Overall covers all countries, KSA and UAE included. Ratios are calculated from summed values. Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics. Today is excluded because the day is still in progress.</p>
+  <p class="note">Namshi marketplaces only (namshi, namshi_v2), lines with GMV above zero. LFL date compares each day with its like-for-like day from the LFL mapping (for example Black Friday 2026 vs Black Friday 2025); where the mapping gives an LLY date in the wrong year (30 Sep and 31 Dec) the same calendar date is used. Beauty = products with business unit “beauty”. Brand, category and sub-category come from the product catalogue (item_d); “(none)” means the field is blank there. Target = daily GMV plan for the Beauty pod (planning_dod_merch_brand_category_targets, pod cp_beauty), set by country, brand and category; it follows the Category and Brand filters and is hidden when a Sub-category is selected. Targets are loaded up to 31 Oct 2026 so far. GMV includes VAT and all item statuses (including cancelled and returned). Units = gross items. ASP = GMV ÷ units. MKD % = markdown discount ÷ normal price (AED). PC1 % = PC1 ÷ gross revenue. Prov. PC1 % = provisional PC1 ÷ gross revenue. Overall covers all countries, KSA and UAE included. Ratios are calculated from summed values. Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics. Today is excluded because the day is still in progress.</p>
 </div>
 
 <script>
@@ -298,7 +298,7 @@ const fmtD = s => { const d = new Date(toT(s)); return `${d.getUTCDate()} ${MON[
 const fmtDL = s => { const d = new Date(toT(s)); return `${WD[d.getUTCDay()]} ${d.getUTCDate()} ${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
 const lastActual = META.dates.filter(d => d >= START).pop();
 function shift(s, years, mode) {
-  if (mode === "dow") return toS(toT(s) - years * 364 * DAY);
+  if (mode === "lfl" && META.lfl[s]) return META.lfl[s][years - 1];
   return (+s.slice(0, 4) - years) + s.slice(4);
 }
 function range(a, b) { const out = []; for (let t = toT(a); t <= toT(b); t += DAY) out.push(toS(t)); return out; }
@@ -360,13 +360,14 @@ function delta(m, cur, base) {
 const chip = (lbl, dl) => `<span class="chip ${dl ? dl.cls : ""}" title="vs ${lbl}">${lbl} ${dl ? dl.txt : "–"}</span>`;
 
 // ---------- state ----------
-const state = { region: "ALL", align: "dow", range: "td", view: "daily", hide: [], zoom: null, expand: null, f: { cat: [], sub: [], brand: [] },
+const state = { region: "ALL", align: "lfl", range: "td", view: "daily", hide: [], zoom: null, expand: null, f: { cat: [], sub: [], brand: [] },
   drill: { date: null, period: "day", dim: "cat", sort: "gmv" } };
 try {
   const sv = JSON.parse(localStorage.getItem("ondBeauty") || "{}");
   Object.assign(state, sv, { f: Object.assign(state.f, sv.f || {}), drill: Object.assign(state.drill, sv.drill || {}), zoom: null });
 } catch (e) {}
 for (const dm of DIMS) state.f[dm.key] = (state.f[dm.key] || []).filter(v => META.names[dm.key].includes(v));
+if (!["lfl", "date"].includes(state.align)) state.align = "lfl";
 if (state.drill.date && !(state.drill.date >= START && state.drill.date <= lastActual)) state.drill.date = null;
 function save() { try { localStorage.setItem("ondBeauty", JSON.stringify(state)); } catch (e) {} }
 const VIEW_LBL = { daily: "Day", ma7: "7D avg", cum: "Cumulative" };
@@ -621,7 +622,7 @@ function renderDrill() {
   const maxAbs = Math.max(1, ...shown.map(r => Math.abs(r.chg)));
   box.innerHTML = `<div class="dh">
       <div><h2>What drove ${D.period === "day" ? fmtDL(D.date) : "25 Sep → " + fmtD(D.date)}</h2>
-        <p class="fsum">GMV vs LY (${state.align === "dow" ? "same weekday" : "same date"}) · ${{ ALL: "Overall", KSA: "KSA", UAE: "UAE" }[state.region]} · total ${fmt(g, tot)} ${chip("LY", delta(g, tot, totLy))}</p></div>
+        <p class="fsum">GMV vs LY (${state.align === "lfl" ? "LFL date" : "same date"}) · ${{ ALL: "Overall", KSA: "KSA", UAE: "UAE" }[state.region]} · total ${fmt(g, tot)} ${chip("LY", delta(g, tot, totLy))}</p></div>
       <div class="dctl">
         <div class="seg" id="dperiod"><button data-v="day" aria-pressed="${D.period === "day"}">This day</button><button data-v="ptd" aria-pressed="${D.period === "ptd"}">Since 25 Sep</button></div>
         <div class="seg" id="ddim">${DIMS.map(x => `<button data-v="${x.key}" aria-pressed="${D.dim === x.key}">${x.label}</button>`).join("")}</div>
