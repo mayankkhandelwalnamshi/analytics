@@ -258,7 +258,7 @@ td .up { color: var(--good); } td .down { color: var(--bad); }
   </div>
   <p class="hint tonly">Hover a chart to compare every metric on that day · drag across a chart to zoom · click a day for its brand and category breakdown · click the legend to show or hide a line</p>
 
-  <section class="summary" id="summary" aria-label="GMV summary"></section>
+  <section class="summary tonly" id="summary" aria-label="GMV summary"></section>
 
   <section class="mtd" id="mtd" aria-label="MTD performance by cut"></section>
 
@@ -271,7 +271,7 @@ td .up { color: var(--good); } td .down { color: var(--bad); }
     <div class="tscroll"><table id="table"></table></div>
   </details>
 
-  <p class="note">MTD performance: every metric for the selected month (or OND to date) by one cut, against target, LY and LLY on the chosen compare dates. Flow metrics add up the period; assortment, stock and inventory value show the last day of the period only (and the matching LY / LLY day). The GMV target splits by country, category, brand, business model and brand type / group / POC (not by sub-category or season). Orders by row are exact for country, category, sub-category, brand, business model and season without other filters; otherwise they are estimated from brand-level orders (≈), and rows can add up to more than the total because one order can hold several categories or brands. Summary tiles: Platform = all categories on Namshi (same scope: Namshi marketplaces, GMV above zero, no samples &amp; GWP) against the total GMV plan of all pods; it follows the region but not the product filters. Beauty follows the region and filters. Yesterday is the latest full day (DoD = vs the day before); MTD runs from the 1st of that month; the month projection applies the MTD achievement to the full month — e.g. 90% of the MTD target projects 90% of the full-month target — and likewise against LY and LLY (LFL dates). Inventory value (cost) = inventory_value_derived from retail_v1.stock_summary_history (Namshi retail partner 3001, live stock, eligible for Namshi); inventory value (retail) = stock × offer price on primary Namshi retail listings in psku_sku_mapped. Both cover KSA and UAE and are daily levels. Assortment &amp; stock (psku_sku_mapped, KSA and UAE, live listings with stock above zero): live assortment = distinct live sku_configs; retail / MP assortment split it by business model; CB assortment = configs live in KSA from the UAE warehouse; live stock = stock_net on primary Namshi retail listings (partner 3001). Overall assortment is KSA + UAE added together (a product live in both countries counts twice). These are daily levels, so the 7-day and cumulative views and the “Since” chips show the daily average. OOS GMV loss = estimated GMV lost to out-of-stock SKUs (looker.out_of_stock_new, oos_gmv_loss), available for KSA and UAE from 1 Jan 2025, so there is no LLY; OOS loss / GMV divides it by KSA + UAE GMV. Samples &amp; GWP (item_d inventory type) are excluded from every metric. Traffic comes from onsite measures (all platforms; app = iOS + Android): glance views (GVs), add to carts (ATC), search and non-search impressions. ATC / GV = add to carts ÷ glance views. UCR % = units sold ÷ glance views. CTR % = glance views ÷ impressions (search + non-search, all platforms). For traffic, very small brand rows on a day (under 5 GVs, no ATC, under 500 impressions) are grouped as “(other brands)” within their category and sub-category, so totals and category filters are exact. Namshi marketplaces only (namshi, namshi_v2), lines with GMV above zero. LFL date compares each day with its like-for-like day from the LFL mapping (for example Black Friday 2026 vs Black Friday 2025); where the mapping gives an LLY date in the wrong year (30 Sep and 31 Dec) the same calendar date is used. Beauty = products with business unit “beauty”. Brand, category, sub-category and business model come from the product catalogue (item_d); “(none)” means the field is blank there. Season comes from beauty_season_mapping (by sku_config), brand type from beauty_pestige_mastige_mapping, brand group from brand_group_beauty and brand POC from brand_poc_beauty; missing values are “unassigned”. Traffic is kept either by brand or by business model / season, so with a brand filter (brand, type, group or POC) the business model and season filters are not applied to traffic, and traffic cards show “≈”. The GMV target follows the category, brand (including brand type, group and POC) and business model filters, and is hidden when a sub-category or season is selected. Targets are set by brand, so each brand counts under the business model that holds most of its GMV (Retail or MP). Target = daily GMV plan for the Beauty pod (planning_dod_merch_brand_category_targets, pod cp_beauty), set by country, brand and category; Targets are loaded up to 31 Oct 2026 so far. GMV includes VAT and all item statuses (including cancelled and returned). Units = gross items. ASP = GMV ÷ units. Orders = distinct order numbers holding Beauty items in scope. AOV = Beauty GMV ÷ orders. ITO = units ÷ orders. Orders are exact for all Beauty and for one selected category, sub-category or brand; with several values or brand + category selected they are marked “≈” because an order holding more than one of them counts once per value. MKD % = markdown discount ÷ normal price (AED). PC1 % = PC1 ÷ gross revenue. Prov. PC1 % = provisional PC1 ÷ gross revenue. Overall covers all countries, KSA and UAE included. Ratios are calculated from summed values. Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics. Today is excluded because the day is still in progress.</p>
+  <p class="note">WoC (units) = live retail stock ÷ (retail units sold in the last 30 days ÷ 30 × 7); WoC (COGS) = inventory value at cost ÷ (retail COGS of the last 30 days ÷ 30 × 7); units and COGS are business model retail only (sales_metrics cogs). MTD performance: every metric for the selected month (or OND to date) by one cut, against target, LY and LLY on the chosen compare dates; orders, AOV and ITO are left out there because orders don’t add up across rows. Krithi’s target = LY GMV on LFL dates × 1.25, for every row. Health: stock / inventory value shares = the row’s part of the total; age bands = the row’s inventory value at cost by ageing band (namshi_analytics_custom.ageing_cost, sku_config_ageing_detailed, the oldest bucket since 1 Oct 2026; 0-90 = 0-89 days, … 720+), TY only; newness share = new assortment ÷ live assortment (TY: activated since 1 Jul 2026, LY: since 1 Jul 2025 up to the LY day). Flow metrics add up the period; assortment, stock and inventory value show the last day of the period only (and the matching LY / LLY day). The GMV target splits by country, category, brand, business model and brand type / group / POC (not by sub-category or season). Orders by row are exact for country, category, sub-category, brand, business model and season without other filters; otherwise they are estimated from brand-level orders (≈), and rows can add up to more than the total because one order can hold several categories or brands. Summary tiles: Platform = all categories on Namshi (same scope: Namshi marketplaces, GMV above zero, no samples &amp; GWP) against the total GMV plan of all pods; it follows the region but not the product filters. Beauty follows the region and filters. Yesterday is the latest full day (DoD = vs the day before); MTD runs from the 1st of that month; the month projection applies the MTD achievement to the full month — e.g. 90% of the MTD target projects 90% of the full-month target — and likewise against LY and LLY (LFL dates). Inventory value (cost) = inventory_value_derived from retail_v1.stock_summary_history (Namshi retail partner 3001, live stock, eligible for Namshi); inventory value (retail) = stock × offer price on primary Namshi retail listings in psku_sku_mapped. Both cover KSA and UAE and are daily levels. Assortment &amp; stock (psku_sku_mapped, KSA and UAE, live listings with stock above zero): live assortment = distinct live supplier SKUs (item_d supplier_sku); retail / MP assortment split it by business model; CB assortment = supplier SKUs live in KSA from the UAE warehouse; new assortment = live supplier SKUs activated in that country (item_d activated_at_sa / activated_at_ae) between 1 Jul of that year and the day; live stock = stock_net on primary Namshi retail listings (partner 3001). Overall assortment is KSA + UAE added together (a product live in both countries counts twice). These are daily levels, so the 7-day and cumulative views and the “Since” chips show the daily average. OOS GMV loss = estimated GMV lost to out-of-stock SKUs (looker.out_of_stock_new, oos_gmv_loss), available for KSA and UAE from 1 Jan 2025, so there is no LLY; OOS loss / GMV divides it by KSA + UAE GMV. Samples &amp; GWP (item_d inventory type) are excluded from every metric. Traffic comes from onsite measures (all platforms; app = iOS + Android): glance views (GVs), add to carts (ATC), search and non-search impressions. ATC / GV = add to carts ÷ glance views. UCR % = units sold ÷ glance views. CTR % = glance views ÷ impressions (search + non-search, all platforms). For traffic, very small brand rows on a day (under 5 GVs, no ATC, under 500 impressions) are grouped as “(other brands)” within their category and sub-category, so totals and category filters are exact. Namshi marketplaces only (namshi, namshi_v2), lines with GMV above zero. LFL date compares each day with its like-for-like day from the LFL mapping (for example Black Friday 2026 vs Black Friday 2025); where the mapping gives an LLY date in the wrong year (30 Sep and 31 Dec) the same calendar date is used. Beauty = products with business unit “beauty”. Brand, category, sub-category and business model come from the product catalogue (item_d); “(none)” means the field is blank there. Season comes from beauty_season_mapping (by sku_config), brand type from beauty_pestige_mastige_mapping, brand group from brand_group_beauty and brand POC from brand_poc_beauty; missing values are “unassigned”. Traffic is kept either by brand or by business model / season, so with a brand filter (brand, type, group or POC) the business model and season filters are not applied to traffic, and traffic cards show “≈”. The GMV target follows the category, brand (including brand type, group and POC) and business model filters, and is hidden when a sub-category or season is selected. Targets are set by brand, so each brand counts under the business model that holds most of its GMV (Retail or MP). Target = daily GMV plan for the Beauty pod (planning_dod_merch_brand_category_targets, pod cp_beauty), set by country, brand and category; Targets are loaded up to 31 Oct 2026 so far. GMV includes VAT and all item statuses (including cancelled and returned). Units = gross items. ASP = GMV ÷ units. Orders = distinct order numbers holding Beauty items in scope. AOV = Beauty GMV ÷ orders. ITO = units ÷ orders. Orders are exact for all Beauty and for one selected category, sub-category or brand; with several values or brand + category selected they are marked “≈” because an order holding more than one of them counts once per value. MKD % = markdown discount ÷ normal price (AED). PC1 % = PC1 ÷ gross revenue. Prov. PC1 % = provisional PC1 ÷ gross revenue. Overall covers all countries, KSA and UAE included. Ratios are calculated from summed values. Change vs LY/LLY is % for value metrics and percentage points (pp) for % metrics. Today is excluded because the day is still in progress.</p>
 </div>
 
 <script>
@@ -371,6 +371,21 @@ function recompute() {
     }
   }
   addOrders(mask);
+  trailing30();
+}
+// WoC: the rs set holds retail units / COGS per day; replace them by the sum of the 30 days ending each date
+function trailing30() {
+  const nd = META.dates.length, T = META.dates.map(toT);
+  for (const f of [I.ur30, I.cg30]) for (let c = 0; c < 3; c++) {
+    const day = new Float64Array(nd);
+    for (let x = 0; x < nd; x++) day[x] = ACC[(x * 3 + c) * NF + f];
+    let lo = 0, sum = 0;
+    for (let x = 0; x < nd; x++) {
+      sum += day[x];
+      while (T[x] - T[lo] >= 30 * DAY) sum -= day[lo++];
+      ACC[(x * 3 + c) * NF + f] = sum;
+    }
+  }
 }
 // Distinct orders don't add up across brands or categories, so take the level that matches the filters:
 // none -> all Beauty; category only -> per category; sub-category (+ category) -> per category|sub;
@@ -431,17 +446,26 @@ const METRICS = [
   { key: "aimp", name: "App impressions",       section: "traffic", unit: "iOS + Android", kind: "cnt", zero: true, additive: true, calc: a => a[I.asi] + a[I.ansi] },
   { key: "asi",  name: "App search impressions",     section: "traffic", unit: "iOS + Android", kind: "cnt", zero: true, additive: true, calc: a => a[I.asi] },
   { key: "ansi", name: "App non-search impressions", section: "traffic", unit: "iOS + Android", kind: "cnt", zero: true, additive: true, calc: a => a[I.ansi] },
-  { key: "la",   name: "Live assortment",   section: "assort", unit: "live configs with stock", kind: "cnt", zero: true, level: true, calc: a => a[I.la] },
+  { key: "la",   name: "Live assortment",   section: "assort", unit: "live supplier SKUs with stock", kind: "cnt", zero: true, level: true, calc: a => a[I.la] },
   { key: "lar",  name: "Retail assortment", section: "assort", unit: "business model retail", kind: "cnt", zero: true, level: true, calc: a => a[I.lar] },
   { key: "lam",  name: "MP assortment",     section: "assort", unit: "business model mp", kind: "cnt", zero: true, level: true, calc: a => a[I.lam] },
   { key: "cb",   name: "CB assortment",     section: "assort", unit: "KSA, shipped from UAE", kind: "cnt", zero: true, level: true, calc: a => a[I.cb] },
+  { key: "nw",   name: "New assortment",    section: "assort", unit: "live supplier SKUs activated since 1 Jul", kind: "cnt", zero: true, level: true, calc: a => a[I.nw] },
   { key: "st",   name: "Live stock",        section: "assort", unit: "units · Namshi retail", kind: "cnt", zero: true, level: true, calc: a => a[I.st] },
   { key: "cv",   name: "Inventory value (cost)",   section: "assort", unit: "AED · Namshi retail", kind: "aed", zero: true, level: true, calc: a => a[I.cv] },
   { key: "rv",   name: "Inventory value (retail)", section: "assort", unit: "AED · stock × offer price", kind: "aed", zero: true, level: true, calc: a => a[I.rv] },
+  { key: "woc",  name: "WoC (units)",       section: "assort", unit: "weeks · retail stock ÷ weekly retail units (last 30 days)", kind: "wk", zero: true, level: true, ratio: true, neutral: true, calc: a => a[I.ur30] ? a[I.st] / (a[I.ur30] / 30 * 7) : null },
+  { key: "wocc", name: "WoC (COGS)",        section: "assort", unit: "weeks · inventory value at cost ÷ weekly retail COGS (last 30 days)", kind: "wk", zero: true, level: true, ratio: true, neutral: true, calc: a => a[I.cg30] ? a[I.cv] / (a[I.cg30] / 30 * 7) : null },
   { key: "oos",  name: "OOS GMV loss",   section: "assort", unit: "AED · KSA + UAE", kind: "aed", zero: true, additive: true, lowerBetter: true, cover: OOS_DATES, calc: a => a[I.oos] },
   { key: "oosr", name: "OOS loss / GMV", section: "assort", unit: "KSA + UAE", kind: "pct", zero: true, lowerBetter: true, cover: OOS_DATES, calc: a => a[I.gmvo] ? a[I.oos] / a[I.gmvo] : null },
+  // health: MTD tab only. share = this row's part of the total; ageing bands are this row's mix of inventory value at cost (TY only)
+  { key: "shst", name: "Stock share",                  section: "health", kind: "pct", share: "st", neutral: true, level: true, calc: a => a[I.st] },
+  { key: "shcv", name: "Inventory value (cost) share", section: "health", kind: "pct", share: "cv", neutral: true, level: true, calc: a => a[I.cv] },
+  { key: "shrv", name: "Inventory value (retail) share", section: "health", kind: "pct", share: "rv", neutral: true, level: true, calc: a => a[I.rv] },
+  ...["0-90", "90-180", "180-360", "360-720", "720+"].map((b, i) => ({ key: "ag" + i, name: `Age ${b} days`, section: "health", unit: "share of inventory value at cost", kind: "pct", neutral: i < 2, lowerBetter: i >= 2, level: true, tyOnly: true, calc: a => a[I.cv] ? a[I["ag" + i]] / a[I.cv] : null })),
+  { key: "nwsh", name: "Newness share", section: "health", unit: "new ÷ live assortment · TY since 1 Jul 2026, LY since 1 Jul 2025", kind: "pct", level: true, calc: a => a[I.la] ? a[I.nw] / a[I.la] : null },
 ];
-const SECTIONS = { sales: "Sales", traffic: "Traffic", assort: "Assortment & stock" };
+const SECTIONS = { sales: "Sales", traffic: "Traffic", assort: "Assortment & stock", health: "Health" };
 const SERIES = [
   { id: "ty",  label: "2026 (TY)", color: "var(--s-ty)",  w: 2.5, dash: "" },
   { id: "ly",  label: "LY",        color: "var(--s-ly)",  w: 2,   dash: "" },
@@ -518,6 +542,7 @@ function fmt(m, v, short) {
   if (m.kind === "pct") return (v * 100).toFixed(1) + "%";
   if (m.kind === "aed2") return v.toFixed(1);
   if (m.kind === "num2") return v.toFixed(2);
+  if (m.kind === "wk") return v.toFixed(1);
   if (m.kind === "int" && !short) return Math.round(v).toLocaleString("en-US");
   if (m.kind === "cnt" && !short && Math.abs(v) < 1e4) return Math.round(v).toLocaleString("en-US");
   const a = Math.abs(v);
@@ -530,20 +555,21 @@ function delta(m, cur, base) {
   const d = m.kind === "pct" ? (cur - base) * 100 : (cur / base - 1) * 100;
   const good = m.lowerBetter ? d < 0 : d > 0;
   const txt = (d > 0 ? "+" : d < 0 ? "−" : "±") + Math.abs(d).toFixed(1) + (m.kind === "pct" ? "pp" : "%");
-  return { d, txt, cls: Math.abs(d) < 0.05 ? "" : good ? "up" : "down" };
+  return { d, txt, cls: Math.abs(d) < 0.05 || m.neutral ? "" : good ? "up" : "down" };
 }
 const chip = (lbl, dl) => `<span class="chip ${dl ? dl.cls : ""}" title="vs ${lbl}">${lbl} ${dl ? dl.txt : "–"}</span>`;
 
 // ---------- state ----------
 const state = { region: "ALL", align: "lfl", range: "td", view: "daily", hide: [], zoom: null, expand: null, f: Object.fromEntries(DIMS.map(dm => [dm.key, []])),
   drill: { date: null, period: "day", dim: "cat", sort: "gmv" },
-  tab: "trend", mtd: { cut: "cat", period: null, groups: ["sales", "traffic", "assort"], sort: "gmv:v", dir: -1, all: false } };
+  tab: "trend", mtd: { cut: "cat", period: null, groups: ["sales", "traffic", "assort", "health"], sort: "gmv:v", dir: -1, all: false, v: 2 } };
 try {
   const sv = JSON.parse(localStorage.getItem("ondBeauty") || "{}");
   Object.assign(state, sv, { f: Object.assign(state.f, sv.f || {}), drill: Object.assign(state.drill, sv.drill || {}), mtd: Object.assign(state.mtd, sv.mtd || {}), zoom: null });
 } catch (e) {}
 for (const dm of DIMS) state.f[dm.key] = (state.f[dm.key] || []).filter(v => META.names[dm.key].includes(v));
 if (!["lfl", "date"].includes(state.align)) state.align = "lfl";
+if (state.mtd.v !== 2) Object.assign(state.mtd, { groups: ["sales", "traffic", "assort", "health"], v: 2 });
 if (state.drill.date && !(state.drill.date >= START && state.drill.date <= lastActual)) state.drill.date = null;
 function save() { try { localStorage.setItem("ondBeauty", JSON.stringify(state)); } catch (e) {} }
 const VIEW_LBL = { daily: "Day", ma7: "7D avg", cum: "Cumulative" };
@@ -565,7 +591,7 @@ function seriesVal(m, win, years) {
   if (m.cover && !ds.every(d => m.cover.has(d))) return null;   // no source data for these dates (e.g. OOS before 2025)
   const a = aggMany(ds, state.region);
   let v = val(m, a);
-  if (v != null && m.level && ds.length > 1) v /= ds.length;   // stock-type metrics: daily average over the window
+  if (v != null && m.level && !m.ratio && ds.length > 1) v /= ds.length;   // stock-type metrics: daily average over the window
   if (v != null && state.view === "ma7" && m.additive) v /= win.length;
   return v;
 }
@@ -721,7 +747,7 @@ function render() {
   document.getElementById("meta").innerHTML = `<b>${rl}</b>${fl.length ? " · <b>" + esc(fl.join(" · ")) + "</b>" : " · all Beauty"} · ${fmtD(START)} → ${fmtD(lastActual)} 2026 · latest day <b>${fmtDL(lastActual)}</b> · refreshed ${META.refreshed || ""}`;
   document.body.dataset.tab = state.tab;
   document.querySelectorAll("nav.tabs button").forEach(bt => bt.setAttribute("aria-selected", bt.dataset.tab === state.tab));
-  if (state.tab === "mtd") { renderSummary(); renderMtd(); return; }
+  if (state.tab === "mtd") { renderMtd(); return; }
   const zb = document.getElementById("zoominfo");
   zb.hidden = !state.zoom;
   if (state.zoom) zb.querySelector("span").textContent = `Zoomed to ${fmtD(state.zoom[0])} – ${fmtD(state.zoom[1])}`;
@@ -731,6 +757,7 @@ function render() {
   const built = {};
   let sec = null;
   for (const m of METRICS) {
+    if (m.section === "health") continue;
     if ((m.section || "sales") !== sec) {
       sec = m.section || "sales";
       const h = document.createElement("h3"); h.className = "sec"; h.textContent = SECTIONS[sec]; grid.appendChild(h);
@@ -809,10 +836,11 @@ function renderSummary() {
 
 function renderTable(built) {
   const dates = range(START, lastActual).reverse();
-  let h = `<thead><tr><th></th>${METRICS.map(m => `<th colspan="3">${m.name}</th>`).join("")}</tr><tr><th>Date</th>${METRICS.map(() => `<th>TY</th><th>vs LY</th><th>vs LLY</th>`).join("")}</tr></thead><tbody>`;
+  const TM = METRICS.filter(m => m.section !== "health");
+  let h = `<thead><tr><th></th>${TM.map(m => `<th colspan="3">${m.name}</th>`).join("")}</tr><tr><th>Date</th>${TM.map(() => `<th>TY</th><th>vs LY</th><th>vs LLY</th>`).join("")}</tr></thead><tbody>`;
   for (const d of dates) {
     h += `<tr class="${d === state.drill.date ? "cur" : ""}" data-d="${d}"><td class="d">${fmtDL(d)}</td>`;
-    for (const m of METRICS) {
+    for (const m of TM) {
       const w = windowFor(d), ty = seriesVal(m, w, 0), ly = seriesVal(m, w, 1), lly = seriesVal(m, w, 2);
       const a = delta(m, ty, ly), c = delta(m, ty, lly);
       h += `<td>${fmt(m, ty)}</td><td><span class="${a?.cls || ""}">${a?.txt || "–"}</span></td><td><span class="${c?.cls || ""}">${c?.txt || "–"}</span></td>`;
@@ -844,7 +872,10 @@ function mtdCompute(cut, P) {
     const flow = new Float32Array(nd), lvl = new Float32Array(nd), sh = d => (y ? shift(d, y, state.align) : d);
     for (const d of dates) { const x = DIDX[sh(d)]; if (x != null) flow[x]++; }
     const xl = DIDX[sh(P.to)]; if (xl != null) lvl[xl] = 1;
-    return { flow, lvl, lvlDate: sh(P.to), cover: dates.every(d => OOS_DATES.has(sh(d))) };
+    // WoC: retail units / COGS of the 30 days ending the stock day
+    const w30 = new Float32Array(nd), e = toT(sh(P.to));
+    for (let k = 0; k < 30; k++) { const x = DIDX[toS(e - k * DAY)]; if (x != null) w30[x] = 1; }
+    return { flow, lvl, w30, lvlDate: sh(P.to), cover: dates.every(d => OOS_DATES.has(sh(d))) };
   });
   const dm = DIM[cut];
   const keyOf = cut === "country" ? (k, c) => COUNTRY[c] : (k) => { const v = vidx(dm, META.combos[k]); return v < 0 ? null : META.names[cut][v]; };
@@ -858,12 +889,12 @@ function mtdCompute(cut, P) {
   const get = nm => { let a = rows.get(nm); if (!a) rows.set(nm, a = new Float64Array(3 * NF)); return a; };
   for (const { name, n, m, d, k, c, f0 } of SETS) {
     if (name.startsWith("traf") && name !== tp.use) continue;
-    const mk = name === tp.use ? tmask : mask, nf = m.length, isLvl = name === "asrt" || name === "inv";
+    const mk = name === tp.use ? tmask : mask, nf = m.length, wk = name === "rs" ? "w30" : ["asrt", "inv", "age"].includes(name) ? "lvl" : "flow";
     for (let r = 0; r < n; r++) {
       if (!mk[k[r]] || !regOk[c[r]]) continue;
       let a;
       for (let y = 0; y < 3; y++) {
-        const w = (isLvl ? W[y].lvl : W[y].flow)[d[r]]; if (!w) continue;
+        const w = W[y][wk][d[r]]; if (!w) continue;
         if (a === undefined) { const nm = keyOf(k[r], c[r]); a = nm != null && !PLACEHOLDER.has(nm) ? get(nm) : null; }
         const base = y * NF;
         for (let j = 0; j < nf; j++) { const v = w * m[j][r]; tot[base + f0 + j] += v; if (a) a[base + f0 + j] += v; }
@@ -948,9 +979,15 @@ function renderMtd() {
   const ck = JSON.stringify([M.cut, P, state.f, state.region, state.align]);
   if (MTD_CACHE.key !== ck) MTD_CACHE = { key: ck, res: mtdCompute(M.cut, P) };
   const R = MTD_CACHE.res, cutL = CUTS.find(c => c.key === M.cut).label;
-  const mets = METRICS.filter(m => M.groups.includes(m.section || "sales"));
+  const mets = METRICS.filter(m => M.groups.includes(m.section || "sales") && !m.orders);   // orders don't add up across rows
   const g = METRICS[0];
-  const val = (m, a, y) => { if (m.cover && !R.W[y].cover) return null; const v = m.calc(a.subarray(y * NF, (y + 1) * NF)); return v == null || !isFinite(v) ? null : v; };
+  const val = (m, a, y) => {
+    if ((m.cover && !R.W[y].cover) || (m.tyOnly && y)) return null;
+    const sub = a.subarray(y * NF, (y + 1) * NF);
+    const v = m.share ? (R.tot[y * NF + I[m.share]] ? sub[I[m.share]] / R.tot[y * NF + I[m.share]] : null) : m.calc(sub);
+    return v == null || !isFinite(v) ? null : v;
+  };
+  const dcell = x => ({ s: x?.d, h: `<span class="${x?.cls || ""}">${x?.txt || "–"}</span>` });
   const totG = R.tot[I.gmv];
   // columns: [id, label, metric, getter(row) -> {v (sort), html}]
   const cols = [];
@@ -958,16 +995,22 @@ function renderMtd() {
     cols.push({ m, id: m.key + ":v", lbl: m.level ? "Now" : "MTD", f: r => { const v = val(m, r.a, 0); return { s: v, h: fmt(m, v, true) }; } });
     if (m.key === "gmv") {
       cols.push({ m, id: "gmv:t", lbl: "Target", f: r => ({ s: r.t, h: r.t == null ? "–" : fmt(g, r.t, true) }) });
-      cols.push({ m, id: "gmv:vt", lbl: "vs Tgt", f: r => { const x = delta(g, val(g, r.a, 0), r.t); return { s: x?.d, h: `<span class="${x?.cls || ""}">${x?.txt || "–"}</span>` }; } });
+      cols.push({ m, id: "gmv:vt", lbl: "vs Tgt", f: r => dcell(delta(g, val(g, r.a, 0), r.t)) });
+      // Krithi's target: +25% on LY (LFL dates) at every level
+      const kt = r => { const ly = val(g, r.a, 1); return ly ? ly * 1.25 : null; };
+      cols.push({ m, id: "gmv:k", lbl: "Krithi tgt", f: r => { const v = kt(r); return { s: v, h: fmt(g, v, true) }; } });
+      cols.push({ m, id: "gmv:vk", lbl: "vs Krithi", f: r => dcell(delta(g, val(g, r.a, 0), kt(r))) });
     }
+    if (m.tyOnly) continue;
+    if (m.section === "health") cols.push({ m, id: m.key + ":ly", lbl: "LY", f: r => { const v = val(m, r.a, 1); return { s: v, h: fmt(m, v, true) }; } });
     for (const [y, l] of [[1, "vs LY"], [2, "vs LLY"]])
-      cols.push({ m, id: `${m.key}:${y}`, lbl: l, f: r => { const x = delta(m, val(m, r.a, 0), val(m, r.a, y)); return { s: x?.d, h: `<span class="${x?.cls || ""}">${x?.txt || "–"}</span>` }; } });
+      cols.push({ m, id: `${m.key}:${y}`, lbl: l, f: r => dcell(delta(m, val(m, r.a, 0), val(m, r.a, y))) });
     if (m.key === "gmv") cols.push({ m, id: "gmv:sh", lbl: "Share", f: r => { const v = totG ? r.a[I.gmv] / totG : null; return { s: v, h: v == null ? "–" : (v * 100).toFixed(1) + "%" }; } });
   }
   const tg = R.tgt;
   if (tg?.by) for (const nm of tg.by.keys()) if (!R.rows.has(nm) && !PLACEHOLDER.has(nm)) R.rows.set(nm, new Float64Array(3 * NF));   // target, no sales yet
   let rows = [...R.rows.entries()].map(([name, a]) => ({ name, a, t: tg?.by ? (tg.by.get(name) ?? null) : null }))
-    .filter(r => r.a[I.gmv] || r.a[NF + I.gmv] || r.a[2 * NF + I.gmv] || r.a[I.la] || r.a[I.gv] || r.t);
+    .filter(r => r.a[I.gmv] || r.a[NF + I.gmv] || r.a[2 * NF + I.gmv] || r.a[I.la] || r.a[I.gv] || r.a[I.cv] || r.t);
   const nAll = rows.length, q = (M.q || "").trim().toLowerCase();
   if (q) rows = rows.filter(r => r.name.toLowerCase().includes(q));
   const sc = cols.find(c => c.id === M.sort) || cols[0];
@@ -997,7 +1040,7 @@ function renderMtd() {
     <div class="mtscroll"><table class="mt"><thead><tr><th></th>${groups}</tr><tr><th>${cutL}</th>${sub}</tr></thead>
       <tbody>${tr(totRow, "tot")}${shown.map(r => tr(r)).join("") || `<tr><td colspan="${cols.length + 1}">No ${cutL.toLowerCase()} matches.</td></tr>`}</tbody></table></div>
     <div class="mf"><span class="fsum">${shown.length < rows.length ? `Top ${shown.length} of ${rows.length} · <button class="lnk" id="mall">Show all</button>` : `${rows.length}${q ? ` of ${nAll}` : ""} ${cutL.toLowerCase()} rows`}${M.all && rows.length > 50 ? ` · <button class="lnk" id="mall">Show top 50</button>` : ""} · click a column to sort</span>
-      <span class="fsum">${tg == null ? "No GMV target for this period or filter (targets cover Oct; none by sub-category or season)." : !tg.by ? `Target is shown for the total only: it isn't set by ${cutL.toLowerCase()}.` : M.cut === "bm" ? "Target by business model: each brand's whole target counts under its main model." : ""}</span></div>`;
+      <span class="fsum">Krithi tgt = LY GMV (LFL) × 1.25 · ${tg == null ? "No GMV target for this period or filter (targets cover Oct; none by sub-category or season)." : !tg.by ? `Target is shown for the total only: it isn't set by ${cutL.toLowerCase()}.` : M.cut === "bm" ? "Target by business model: each brand's whole target counts under its main model." : ""}</span></div>`;
 }
 document.getElementById("mtd").addEventListener("click", e => {
   const M = state.mtd, bt = e.target.closest("button"), th = e.target.closest("th[data-c]");
@@ -1030,7 +1073,7 @@ function breakdown(dim, dates) {
   const tmask = tp.skip.size ? allowedMask(tp.skip) : mask;
   // a: TY gmv, LY gmv, TY units, TY rev, TY pc1, TY gv, LY gv, TY atc, TY oos
   for (const { name, n, m, d, k, c, f0 } of SETS) {
-    if (name.startsWith("traf") && name !== tp.use) continue;
+    if ((name.startsWith("traf") && name !== tp.use) || !["sales", "trafA", "trafB", "oos", "asrt"].includes(name)) continue;
     const mk = name === tp.use ? tmask : mask, col = f => m[I[f] - f0];
     const g0 = col({ sales: "gmv", trafA: "gv", trafB: "gv", oos: "oos", asrt: "la" }[name]);
     const cOk = regs;

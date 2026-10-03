@@ -39,8 +39,11 @@ SETS = [("sales", "cube_raw.json", SALES_FIELDS, None),
         ("trafA", "traffic_raw.json", TRAFFIC_FIELDS, "0"),
         ("trafB", "traffic_raw.json", TRAFFIC_FIELDS, "1"),
         ("oos", "oos_raw.json", OOS_FIELDS, None),
-        ("asrt", "assort_raw.json", ["la", "cb", "st"], None),   # Overall = KSA + UAE
-        ("inv", "inv_raw.json", ["cv", "rv"], None)]             # inventory value at cost / retail (sql/daily_inventory_value.sql)
+        ("asrt", "assort_raw.json", ["la", "cb", "st", "nw"], None),   # supplier SKUs; Overall = KSA + UAE (sql/daily_assortment.sql)
+        ("inv", "inv_raw.json", ["cv", "rv"], None),             # inventory value at cost / retail (sql/daily_inventory_value.sql)
+        ("rs", "retail_raw.json", ["ur30", "cg30"], None),       # retail units / COGS per day from 1 Sep (sql/daily_retail_cogs.sql);
+                                                                 # the page turns them into trailing 30-day sums for WoC
+        ("age", "age_raw.json", ["ag0", "ag1", "ag2", "ag3", "ag4"], None)]   # cost value by ageing band, TY (sql/daily_inventory_ageing.sql)
 
 
 def fold_small_oos(recs, threshold=10):
@@ -157,6 +160,7 @@ def pack():
         "combos": [[idx[k][v] for k, v in zip(KEY, c)] for c in combos],
         "lfl": lfl_map(),
         "oosDates": sorted(raw["oos_raw.json"]),
+        "ageDates": sorted(raw["age_raw.json"]),
         "platform": json.loads((DATA / "platform.json").read_text()),   # sql/platform_gmv.sql
         "refreshed": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
