@@ -1,7 +1,8 @@
 -- OND Beauty dashboard: retail supplier SKUs at risk per country (KSA, UAE), one JSON object per product, for the
 -- "Risk SKUs" tab. Billing project: noonprd-nm-analytics-ai.
--- At risk = out of stock now (no live stock, own warehouse + CB, on {TO}) or WoC <= 3 weeks, where
---   WoC = stock / (units sold in the last 30 days / days live in those 30 days * 7) (no WoC when nothing sold in 30 days).
+-- At risk = out of stock now (no live stock, own warehouse + CB, on {TO}) or WoC <= 3 weeks, where WoC is at warehouse level:
+--   WoC = stock in the country's warehouse / (units shipped from that warehouse in the last 30 days / days live in those 30 days * 7)
+--   (sales_metrics.warehouse_country_code; the UAE warehouse's units include KSA CB and GCC orders; no WoC when nothing shipped).
 -- Universe: products with GMV since {H} (1 Jul 2026) in season carryover / unassigned / namshi noos / brand noos
 -- (beauty_season_mapping; every config of the product must be in one of these); ranked by that GMV, top 500 per country.
 -- Parameters: {FROM} = 1st of the month, {TO} = yesterday, {LY_DATES} = LY LFL dates of {FROM}..{TO} (sql/lfl_mapping.sql),
@@ -12,7 +13,7 @@
 --   gmv / u / rev / pc1 / ppc1   MTD;  ly = GMV on the LY LFL dates
 --   co / pco = unit cost / provisional cost (ageing_cost sku_cost / sku_prov_cost on {TO}) of the sku whose live price is
 --   shown, in that country (else the other country, e.g. KSA sold CB from the UAE warehouse)
---   u30 = units sold in the last 30 days; ld30 / ldm = days live (looker.live_days, live_day = 1 on any of the product's skus)
+--   u30 = units sold in the country in the last 30 days; u30w = units shipped from the country's warehouse in the last 30 days; ld30 / ldm = days live (looker.live_days, live_day = 1 on any of the product's skus)
 --         in the last 30 days / MTD
 --   st / sc = stock_net of live Namshi retail listings (partner 3001) on {TO} from the country's own / the other warehouse
 --   (sc = CB stock for KSA); live = any live listing with stock; cb = KSA listing live from the UAE warehouse;
@@ -47,8 +48,9 @@ it AS (
     LOGICAL_AND(season IN ('carryover', 'unassigned', 'namshi noos', 'brand noos')) OVER (PARTITION BY k1.k) ok
   FROM it0 JOIN k1 USING (cfg)
 ),
-s AS (
-  SELECT s.country cc, it.ssku,
+s0 AS (
+  -- sales by sale country x shipping warehouse (warehouse_country_code), all countries so the UAE warehouse keeps its GCC orders
+  SELECT s.country, s.warehouse_country_code wh, it.ssku,
     SUM(IF(s.order_date_key BETWEEN '{H}' AND '{TO}', s.gmv_inc_vat, 0)) gh,
     SUM(IF(s.order_date_key BETWEEN '{FROM}' AND '{TO}', s.gmv_inc_vat, 0)) gmv,
     SUM(IF(s.order_date_key BETWEEN '{FROM}' AND '{TO}', s.items_gross, 0)) u,
@@ -59,7 +61,17 @@ s AS (
     SUM(IF(s.order_date_key BETWEEN '{L30}' AND '{TO}', s.items_gross, 0)) u30
   FROM `noonbinamshi.custom_views.sales_metrics` s JOIN it USING (sku)
   WHERE it.ok AND (s.order_date_key BETWEEN '{H}' AND '{TO}' OR s.order_date_key IN ({LY_DATES}))
-    AND s.marketplace IN ('namshi', 'namshi_v2') AND s.gmv_inc_vat > 0 AND s.country IN ('SA', 'AE')
+    AND s.marketplace IN ('namshi', 'namshi_v2') AND s.gmv_inc_vat > 0
+  GROUP BY 1, 2, 3
+),
+s AS (
+  -- per country: sales of the country (sale rows) + L30D units shipped from the country's warehouse (u30w, for WoC)
+  SELECT cc, ssku, SUM(gh) gh, SUM(gmv) gmv, SUM(u) u, SUM(rev) rev, SUM(pc1) pc1, SUM(ppc1) ppc1, SUM(ly) ly, SUM(u30) u30, SUM(u30w) u30w
+  FROM (
+    SELECT country cc, ssku, gh, gmv, u, rev, pc1, ppc1, ly, u30, 0 u30w FROM s0 WHERE country IN ('SA', 'AE')
+    UNION ALL
+    SELECT wh, ssku, 0, 0, 0, 0, 0, 0, 0, 0, u30 FROM s0 WHERE wh IN ('SA', 'AE')
+  )
   GROUP BY 1, 2
 ),
 base AS (SELECT * FROM s WHERE gh > 0),
@@ -103,13 +115,13 @@ ld AS (
 ),
 r AS (
   SELECT b.*, IFNULL(pc.stock, 0) + IFNULL(pc.stock_cb, 0) AS stk,
-    SAFE_DIVIDE(IFNULL(pc.stock, 0) + IFNULL(pc.stock_cb, 0), b.u30 / GREATEST(IFNULL(ld.ld30, 0), 1) * 7) AS woc
+    SAFE_DIVIDE(IFNULL(pc.stock, 0), b.u30w / GREATEST(IFNULL(ld.ld30, 0), 1) * 7) AS woc
   FROM base b
   LEFT JOIN pc ON pc.cc = b.cc AND pc.ssku = b.ssku
   LEFT JOIN ld ON ld.cc = b.cc AND ld.ssku = b.ssku
 ),
 top AS (
-  SELECT * FROM r WHERE stk <= 0 OR (u30 > 0 AND woc <= 3)
+  SELECT * FROM r WHERE stk <= 0 OR (u30w > 0 AND woc <= 3)
   QUALIFY ROW_NUMBER() OVER (PARTITION BY cc ORDER BY gh DESC) <= 500
 ),
 cost AS (
@@ -174,7 +186,7 @@ SELECT TO_JSON_STRING(STRUCT(
   IF(t.cc = 'SA', 0, 1) AS c, '{SNAP}' AS sd, ROW_NUMBER() OVER (PARTITION BY t.cc ORDER BY t.gh DESC) AS rk, i.sups AS ss, ROUND(t.gh) AS gh, ROUND(bg.bgh) AS bgh,
   i.brand AS br, i.seasons AS sn, i.cat AS ca, i.sub AS su, i.title AS ti, i.img AS im, i.bc AS bc, IFNULL(pc.cfgs, i.allcfg) AS cf,
   ROUND(t.gmv) AS g, ROUND(t.ly) AS ly, t.u AS u, ROUND(t.rev) AS rv, ROUND(t.pc1) AS p1, ROUND(t.ppc1) AS pp,
-  t.u30 AS u30, ROUND(COALESCE(c1.cost, c2.cost), 2) AS co, ROUND(COALESCE(c1.pcost, c2.pcost), 2) AS pco,
+  t.u30 AS u30, t.u30w AS uw, ROUND(COALESCE(c1.cost, c2.cost), 2) AS co, ROUND(COALESCE(c1.pcost, c2.pcost), 2) AS pco,
   IFNULL(pc.stock, 0) AS st, IFNULL(pc.stock_cb, 0) AS sc, IFNULL(pc.live, FALSE) AS lv, IFNULL(pc.cb, FALSE) AS cb, pc.op AS op, pc.np AS np,
   IFNULL(ld.ld30, 0) AS l30, IFNULL(ld.ldm, 0) AS lm, ROUND(IFNULL(o.oos, 0)) AS oo,
   IFNULL(po.ooq, 0) AS oq, IFNULL(po.osq, 0) AS os, IFNULL(po.pq, 0) AS pq)) j

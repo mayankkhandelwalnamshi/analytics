@@ -1,4 +1,4 @@
--- OND Beauty dashboard: daily retail units sold and COGS by country x product combo, for weeks of cover (WoC).
+-- OND Beauty dashboard: daily retail units sold and COGS by warehouse country x product combo, for weeks of cover (WoC).
 -- Billing project: noonprd-nm-analytics-ai. One row per day:  r = "c,brand,category,sub_category,business_model,season,units,cogs;..."
 -- Same scope as sql/daily_beauty_cube.sql (Namshi marketplaces, gmv_inc_vat > 0, Beauty, no samples & GWP), business model
 -- retail only. cogs = sales_metrics.cogs. Run per window ({FROM}/{TO}) from 1 Sep, so the page can take the last 30 days
@@ -21,7 +21,9 @@ beauty AS (
   GROUP BY 1
 ),
 x AS (
-  SELECT s.order_date_key AS d, CASE s.country WHEN 'SA' THEN 0 WHEN 'AE' THEN 1 ELSE 2 END AS c,
+  -- warehouse level: c = the shipping warehouse (warehouse_country_code), so the UAE warehouse's units include KSA
+  -- cross-border and GCC orders, matching the stock / inventory value it holds
+  SELECT s.order_date_key AS d, CASE s.warehouse_country_code WHEN 'SA' THEN 0 WHEN 'AE' THEN 1 ELSE 2 END AS c,
     b.brand, b.cat, b.sub, b.bm, b.season, SUM(s.items_gross) u, SUM(s.cogs) cogs
   FROM `noonbinamshi.custom_views.sales_metrics` s
   JOIN beauty b USING (sku)

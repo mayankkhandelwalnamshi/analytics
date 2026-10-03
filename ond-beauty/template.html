@@ -535,8 +535,8 @@ const METRICS = [
   { key: "st",   name: "Live stock",        section: "assort", unit: "units · Namshi retail", kind: "cnt", zero: true, level: true, calc: a => a[I.st] },
   { key: "cv",   name: "Inventory value (cost)",   section: "assort", unit: "AED · Namshi retail", kind: "aed", zero: true, level: true, calc: a => a[I.cv] },
   { key: "rv",   name: "Inventory value (retail)", section: "assort", unit: "AED · stock × offer price", kind: "aed", zero: true, level: true, calc: a => a[I.rv] },
-  { key: "woc",  name: "WoC (units)",       section: "assort", unit: "weeks · retail stock ÷ weekly retail units (last 30 days)", kind: "wk", zero: true, level: true, ratio: true, lowerBetter: true, calc: a => a[I.ur30] ? a[I.st] / (a[I.ur30] / 30 * 7) : null },
-  { key: "wocc", name: "WoC (COGS)",        section: "assort", unit: "weeks · inventory value at cost ÷ weekly retail COGS (last 30 days)", kind: "wk", zero: true, level: true, ratio: true, lowerBetter: true, calc: a => a[I.cg30] ? a[I.cv] / (a[I.cg30] / 30 * 7) : null },
+  { key: "woc",  name: "WoC (units)",       section: "assort", unit: "weeks · warehouse stock ÷ weekly retail units shipped from the warehouse (last 30 days)", kind: "wk", zero: true, level: true, ratio: true, lowerBetter: true, calc: a => a[I.ur30] ? a[I.st] / (a[I.ur30] / 30 * 7) : null },
+  { key: "wocc", name: "WoC (COGS)",        section: "assort", unit: "weeks · warehouse inventory value at cost ÷ weekly retail COGS shipped from the warehouse (last 30 days)", kind: "wk", zero: true, level: true, ratio: true, lowerBetter: true, calc: a => a[I.cg30] ? a[I.cv] / (a[I.cg30] / 30 * 7) : null },
   { key: "oos",  name: "OOS GMV loss",   section: "assort", unit: "AED · KSA + UAE", kind: "aed", zero: true, additive: true, lowerBetter: true, cover: OOS_DATES, calc: a => a[I.oos] },
   { key: "oosr", name: "OOS loss / GMV", section: "assort", unit: "KSA + UAE", kind: "pct", zero: true, lowerBetter: true, cover: OOS_DATES, calc: a => a[I.gmvo] ? a[I.oos] / a[I.gmvo] : null },
   // health: MTD tab only. share = this row's part of the total; ageing bands are this row's mix of inventory value at cost (TY only)
@@ -576,8 +576,8 @@ const GLOSS = {
   st: "Live stock units on primary Namshi retail listings (partner 3001).",
   cv: "Inventory value at cost (stock_summary_history inventory_value_derived; Namshi retail, live stock, eligible for Namshi).",
   rv: "Inventory value at retail = stock × offer price on primary Namshi retail listings.",
-  woc: "Weeks of cover (units) = live retail stock ÷ (retail units sold in the last 30 days ÷ 30 × 7). Lower = green.",
-  wocc: "Weeks of cover (COGS) = inventory value at cost ÷ (retail COGS of the last 30 days ÷ 30 × 7). Lower = green.",
+  woc: "Weeks of cover (units), warehouse level = live retail stock in the warehouse ÷ (retail units shipped from that warehouse in the last 30 days ÷ 30 × 7). Country = warehouse (sales_metrics.warehouse_country_code): UAE includes units shipped to KSA (CB) and GCC. Lower = green.",
+  wocc: "Weeks of cover (COGS), warehouse level = inventory value at cost in the warehouse ÷ (retail COGS shipped from that warehouse in the last 30 days ÷ 30 × 7). UAE includes KSA CB and GCC orders. Lower = green.",
   oos: "Estimated GMV lost to out-of-stock SKUs (looker.out_of_stock_new), KSA + UAE, from 1 Jan 2025 (no LLY).",
   oosr: "OOS GMV loss ÷ GMV (KSA + UAE).",
   shst: "MTD tab: the row's live stock ÷ total live stock.",
@@ -602,7 +602,7 @@ const GLOSS_TERMS = [
   ["Contrib. vs LY", "(Row TY − row LY) ÷ total LY, in pp. Rows add up to the total's % change vs LY, so the most negative rows drove the drop."],
   ["Share", "The row's GMV ÷ total GMV."],
   ["Projection", "Summary tiles: full-month target / LY / LLY × the MTD achievement against it."],
-  ["Risk SKUs", "Retail products in season carryover, unassigned, namshi noos or brand noos (every config of the product; configs linked by a shared supplier SKU or barcode count as one product, so a live duplicate config covers its twin) out of stock now (no live stock incl. CB) or with WoC ≤ 3 weeks; top 500 per country ranked by GMV since 1 Jul 2026. Open order / open shipment qty = open quantities on approved / received 2026 Beauty POs (Namshi retail, any ETA incl. future-dated; po_expected_received_union). Pending / draft PO qty = open order + open shipment qty on 2026 Beauty POs still in draft or pending approval (not counted in open order qty or forward WoC). Live status, stock, CB and live price come from the latest stock snapshot (today's once it has landed); sales, WoC sales rate, PC1 and OOS run to yesterday. Forward WoC = (stock + open shipment qty) ÷ (units in the last 30 days ÷ live days × 7), shown when something is in shipment. Share of brand = the SKU's GMV since 1 Jul ÷ its brand's Beauty GMV since 1 Jul in the country (retail + MP). Stock = live Namshi retail stock in the country's own warehouse + CB (KSA sold from the UAE warehouse). Live price / live markdown = the live listing with the most stock (markdown = 1 − offer ÷ normal price). Live PC1 = (live price − unit cost) ÷ live price; live prov PC1 uses the provisional cost (ageing_cost sku_cost / sku_prov_cost). Age (live products) = current age of the oldest live config in the country (ageing_cost on the latest day; the other country's when only live via CB). Live days = days with the product live (looker.live_days), MTD and in the last 30 days (L30D); units / live day L30D = units sold in the last 30 days ÷ L30D live days. WoC = stock ÷ (units in the last 30 days ÷ live days in those 30 days × 7); “No sales in L30D” when nothing sold. SKU config chips: green = live in the country now."],
+  ["Risk SKUs", "Retail products in season carryover, unassigned, namshi noos or brand noos (every config of the product; configs linked by a shared supplier SKU or barcode count as one product, so a live duplicate config covers its twin) out of stock now (no live stock incl. CB) or with WoC ≤ 3 weeks; top 500 per country ranked by GMV since 1 Jul 2026. Open order / open shipment qty = open quantities on approved / received 2026 Beauty POs (Namshi retail, any ETA incl. future-dated; po_expected_received_union). Pending / draft PO qty = open order + open shipment qty on 2026 Beauty POs still in draft or pending approval (not counted in open order qty or forward WoC). Live status, stock, CB and live price come from the latest stock snapshot (today's once it has landed); sales, WoC sales rate, PC1 and OOS run to yesterday. Forward WoC = (warehouse stock + open shipment qty) ÷ (units shipped from the warehouse in the last 30 days ÷ live days × 7), shown when something is in shipment. Share of brand = the SKU's GMV since 1 Jul ÷ its brand's Beauty GMV since 1 Jul in the country (retail + MP). Stock = live Namshi retail stock in the country's own warehouse + CB (KSA sold from the UAE warehouse). Live price / live markdown = the live listing with the most stock (markdown = 1 − offer ÷ normal price). Live PC1 = (live price − unit cost) ÷ live price; live prov PC1 uses the provisional cost (ageing_cost sku_cost / sku_prov_cost). Age (live products) = current age of the oldest live config in the country (ageing_cost on the latest day; the other country's when only live via CB). Live days = days with the product live (looker.live_days), MTD and in the last 30 days (L30D); units / live day L30D = units sold in the last 30 days ÷ L30D live days. WoC is at warehouse level: stock in the country's own warehouse ÷ (units shipped from that warehouse in the last 30 days, sales_metrics.warehouse_country_code ÷ live days in those 30 days × 7), so UAE includes units shipped to KSA (CB) and GCC, and KSA CB stock / units sit with the UAE warehouse; “No warehouse sales in L30D” when the warehouse shipped nothing. SKU config chips: green = live in the country now."],
   ["Overall", "All countries (KSA, UAE, other GCC); assortment / stock / inventory are KSA + UAE."],
 ];
 function renderGlossary() {
@@ -1229,9 +1229,11 @@ function loadSkus() {
 const SKU_SORT = { rk: "GMV since 1 Jul", bs: "Share of brand", oq: "Open order qty", os: "Open shipment qty", pq: "Pending / draft PO qty", g: "MTD GMV", vly: "vs LY", oos: "OOS loss MTD", woc: "Lowest WoC", st: "Stock" };
 const RISK_F = { all: "All at risk", oos: "Out of stock", woc: "WoC ≤ 3" };
 const skuStock = r => r.st + (r.sc || 0);   // own warehouse + CB (KSA sold from the UAE warehouse)
-const skuWoc = r => r.u30 ? skuStock(r) / (r.u30 / Math.max(1, r.l30 || 30) * 7) : null;
-// forward WoC: stock + open shipment qty over the same weekly sales rate (shown when something is in shipment)
-const skuFwoc = r => r.u30 && r.os > 0 ? (skuStock(r) + r.os) / (r.u30 / Math.max(1, r.l30 || 30) * 7) : null;
+// WoC at warehouse level: the country's own warehouse stock over the units that warehouse shipped in the last 30 days
+// (uw; the UAE warehouse's units include KSA CB and GCC orders)
+const skuWoc = r => r.uw ? r.st / (r.uw / Math.max(1, r.l30 || 30) * 7) : null;
+// forward WoC: warehouse stock + open shipment qty over the same weekly rate (shown when something is in shipment)
+const skuFwoc = r => r.uw && r.os > 0 ? (r.st + r.os) / (r.uw / Math.max(1, r.l30 || 30) * 7) : null;
 function skuPasses(r) {
   const bi = META.names.brand.indexOf(r.br);
   return DIMS.every(dm => {
@@ -1283,10 +1285,10 @@ function renderSkus() {
         ${kv("MTD GMV", fmt(aed, r.g, true))}${kv("LY GMV", r.ly ? fmt(aed, r.ly, true) : "–")}
         ${kv("vs LY", dl ? dl.txt : r.ly ? "–" : "new", dl?.cls || "")}
         ${kv("MTD ASP", r.u ? fmt({ kind: "aed2" }, r.g / r.u) : "–")}
-        ${kv("Units MTD", r.u)}${kv("Units L30D", r.u30)}
+        ${kv("Units MTD", r.u)}${kv("Units L30D", r.u30)}${kv(`Units L30D · ${S.c === 0 ? "KSA" : "UAE"} warehouse`, r.uw || 0)}
         ${kv("Open order qty", Math.round(r.oq || 0).toLocaleString("en-US"))}${kv("Open shipment qty", Math.round(r.os || 0).toLocaleString("en-US"), r.os > 0 ? "up" : "")}${kv("Pending / draft PO qty", Math.round(r.pq || 0).toLocaleString("en-US"))}
-        ${r.os > 0 ? `<div class="big"><span title="(stock + open shipment qty) ÷ (L30D units ÷ live days × 7)">Forward WoC</span><b class="${fw != null && fw > 3 ? "up" : ""}">${fw == null ? "No sales in L30D" : fw.toFixed(1) + " wk"}</b></div>` : ""}
-        ${kv("Stock", r.sc ? `${Math.round(r.st).toLocaleString("en-US")} + ${Math.round(r.sc).toLocaleString("en-US")} CB` : Math.round(r.st).toLocaleString("en-US"))}${kv("WoC (L30D)", w == null ? "No sales in L30D" : w.toFixed(1) + " wk")}
+        ${r.os > 0 ? `<div class="big"><span title="(warehouse stock + open shipment qty) ÷ (L30D units shipped from the warehouse ÷ live days × 7)">Forward WoC</span><b class="${fw != null && fw > 3 ? "up" : ""}">${fw == null ? "No warehouse sales in L30D" : fw.toFixed(1) + " wk"}</b></div>` : ""}
+        ${kv("Stock", r.sc ? `${Math.round(r.st).toLocaleString("en-US")} + ${Math.round(r.sc).toLocaleString("en-US")} CB` : Math.round(r.st).toLocaleString("en-US"))}${kv("WoC (warehouse, L30D)", w == null ? "No warehouse sales in L30D" : w.toFixed(1) + " wk")}
         ${kv(`Live price (${cur})`, r.op != null ? Math.round(r.op).toLocaleString("en-US") : "–")}${kv("Live markdown", fmt(pct, md))}
         ${kv("Live PC1", fmt(pct, lp1), lp1 < 0 ? "down" : "")}${kv("Live prov PC1", fmt(pct, lpp), lpp < 0 ? "down" : "")}
         ${kv("PC1 MTD", fmt(pct, ratio(r.p1, r.rv)))}${kv("Prov PC1 MTD", fmt(pct, ratio(r.pp, r.rv)))}
