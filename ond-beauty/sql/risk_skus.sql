@@ -125,19 +125,20 @@ o AS (
   WHERE o.date BETWEEN '{FROM}' AND '{TO}' AND o.country IN ('SA', 'AE') AND it.ssku IN (SELECT ssku FROM top)
   GROUP BY 1, 2
 ),
--- open purchase orders (Namshi retail partner 3001, all approved / received 2026 Beauty POs, any ETA):
--- open order qty and open shipment qty per sku and country
+-- open purchase orders (Namshi retail partner 3001, 2026 Beauty POs, any ETA) per sku and country: open order qty and
+-- open shipment qty on approved / received POs; pending qty = open order + open shipment qty on POs still in draft or pending approval
 po_orders AS (
   SELECT order_nr FROM `noonbinmlook.looker.po_expected_received_union`
-  WHERE merch_team = 'beauty' AND LOWER(po_order_status) IN ('received', 'approved')
+  WHERE merch_team = 'beauty' AND LOWER(po_order_status) IN ('received', 'approved', 'pending_approval', 'draft')
     AND collection_start_date >= '2026-01-01' AND final_date >= '2026-01-01'
     AND (COALESCE(open_order_qty, 0) + COALESCE(open_shipment_qty, 0) + COALESCE(adj_expected_qty, 0) + COALESCE(qty_received, 0) + COALESCE(order_non_shipment_qty, 0)) > 0
   GROUP BY ALL
 ),
 po_peru AS (
-  SELECT sku AS zsku, order_nr, country, SUM(open_order_qty) ooq, SUM(open_shipment_qty) osq
+  SELECT sku AS zsku, order_nr, country, LOWER(po_order_status) IN ('received', 'approved') ok,
+    SUM(open_order_qty) ooq, SUM(open_shipment_qty) osq
   FROM `noonbinmlook.looker.po_expected_received_union`
-  WHERE merch_team = 'beauty' AND LOWER(po_order_status) IN ('received', 'approved')
+  WHERE merch_team = 'beauty' AND LOWER(po_order_status) IN ('received', 'approved', 'pending_approval', 'draft')
     AND (COALESCE(open_order_qty, 0) + COALESCE(open_shipment_qty, 0) + COALESCE(adj_expected_qty, 0) + COALESCE(qty_received, 0) + COALESCE(order_non_shipment_qty, 0)) > 0
     AND final_date >= '2026-01-01'
   GROUP BY ALL
@@ -147,7 +148,8 @@ po_lines AS (
   WHERE order_qty > 0 AND id_partner = 3001 AND order_nr IN (SELECT order_nr FROM po_orders)
 ),
 po AS (
-  SELECT pp.country cc, it.ssku, SUM(pp.ooq) ooq, SUM(pp.osq) osq
+  SELECT pp.country cc, it.ssku, SUM(IF(pp.ok, pp.ooq, 0)) ooq, SUM(IF(pp.ok, pp.osq, 0)) osq,
+    SUM(IF(pp.ok, 0, IFNULL(pp.ooq, 0) + IFNULL(pp.osq, 0))) pq
   FROM po_peru pp JOIN po_lines USING (order_nr, zsku) JOIN it ON it.sku = pp.zsku
   WHERE it.ssku IN (SELECT ssku FROM top)
   GROUP BY 1, 2
@@ -175,7 +177,7 @@ SELECT TO_JSON_STRING(STRUCT(
   t.u30 AS u30, ROUND(COALESCE(c1.cost, c2.cost), 2) AS co, ROUND(COALESCE(c1.pcost, c2.pcost), 2) AS pco,
   IFNULL(pc.stock, 0) AS st, IFNULL(pc.stock_cb, 0) AS sc, IFNULL(pc.live, FALSE) AS lv, IFNULL(pc.cb, FALSE) AS cb, pc.op AS op, pc.np AS np,
   IFNULL(ld.ld30, 0) AS l30, IFNULL(ld.ldm, 0) AS lm, ROUND(IFNULL(o.oos, 0)) AS oo,
-  IFNULL(po.ooq, 0) AS oq, IFNULL(po.osq, 0) AS os)) j
+  IFNULL(po.ooq, 0) AS oq, IFNULL(po.osq, 0) AS os, IFNULL(po.pq, 0) AS pq)) j
 FROM top t
 JOIN info i USING (ssku)
 LEFT JOIN bg ON bg.cc = t.cc AND bg.brand = i.brand
