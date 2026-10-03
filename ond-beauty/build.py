@@ -11,8 +11,9 @@ for one date window (rows: d, r). They are merged into data/cube_raw.json ({date
 each record is "c,brand,category,sub_category,gmv,units,mkd,np,rev,pc1,ppc1").
 data/lfl.json maps each OND 2026 date to its [LY, LLY] like-for-like date (sql/lfl_mapping.sql).
 
-The cube is packed as columnar binary (int32 metrics, uint16 date/combo, uint8 country),
-gzip-compressed and base64-embedded into template.html -> dist/ond_beauty_dashboard.html.
+Each dataset is packed as columnar binary (int32 metrics, uint16 date/combo, uint8 country), gzip-compressed and
+written to dist/data/<set>.txt (base64); template.html -> dist/ond_beauty_dashboard.html fetches them. Publish the page
+with the dist/data/*.txt files alongside it.
 
 data/targets_raw.json is the result of sql/targets_beauty.sql ({date: "c,brand,category,gmv;..."}):
 daily GMV targets by country x brand x category. Pass a raw BigQuery result with --targets to refresh it.
@@ -36,7 +37,8 @@ ATTRS = ["btype", "bgroup", "poc"]                      # brand attributes (sql/
 SETS = [("sales", "cube_raw.json", SALES_FIELDS, None),
         ("trafA", "traffic_raw.json", TRAFFIC_FIELDS, "0"),
         ("trafB", "traffic_raw.json", TRAFFIC_FIELDS, "1"),
-        ("oos", "oos_raw.json", OOS_FIELDS, None)]
+        ("oos", "oos_raw.json", OOS_FIELDS, None),
+        ("asrt", "assort_raw.json", ["la", "cb", "st"], None)]   # c = 2 holds KSA + UAE distinct counts
 
 
 def fold_small_oos(recs, threshold=10):
@@ -70,8 +72,9 @@ def pack():
     dates = sorted(set().union(*raw.values()))
     di = {d: i for i, d in enumerate(dates)}
     combo_idx = {}
-    buf, sizes = b"", []
+    bufs, sizes = {}, []
     for name, f, fields, lvl in SETS:
+        buf = b""
         cols = [[] for _ in range(3 + len(fields))]  # d, c, k, metrics...
         for d in sorted(raw[f]):
             recs = raw[f][d].split(";")
@@ -96,7 +99,7 @@ def pack():
             col = struct.pack(f"<{n}i", *cols[3 + j])
             buf += b"".join(col[k::4] for k in range(4))  # byte planes: compresses ~20% better
         buf += struct.pack(f"<{n}H", *cols[0]) + struct.pack(f"<{n}H", *cols[2]) + struct.pack(f"<{n}B", *cols[1])
-        buf += b"\0" * (-len(buf) % 4)  # keep the next set's int32 columns aligned
+        bufs[name] = buf
         sizes.append(n)
     # distinct orders, one block per level (see sql/daily_orders.sql): int32 count, uint16 date, uint16 key, uint8 country
     orders = json.loads((DATA / "orders_raw.json").read_text())
@@ -123,6 +126,7 @@ def pack():
         lambda k: idx["bm"][k],
         lambda k: idx["season"][k],
     ]
+    buf = b""
     for l, rows in enumerate(levels):
         n = len(rows)
         buf += struct.pack(f"<{n}i", *[r[3] for r in rows]) + struct.pack(f"<{n}H", *[r[0] for r in rows])
@@ -151,8 +155,8 @@ def pack():
         "oosDates": sorted(raw["oos_raw.json"]),
         "refreshed": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
-    blob = base64.b64encode(gzip.compress(buf, 9)).decode()
-    return meta, blob
+    bufs["orders"] = buf
+    return meta, bufs
 
 
 def lfl_map():
@@ -183,15 +187,21 @@ def pack_targets():
 
 
 def build():
-    meta, blob = pack()
+    meta, bufs = pack()
     targets = pack_targets()
     html = (ROOT / "template.html").read_text()
     html = html.replace("/*__META__*/null", json.dumps(meta, separators=(",", ":")))
     html = html.replace("/*__TARGETS__*/null", json.dumps(targets, separators=(",", ":")))
-    html = html.replace("__BLOB__", blob)
     out = ROOT / "dist" / "ond_beauty_dashboard.html"
-    out.parent.mkdir(exist_ok=True)
+    (out.parent / "data").mkdir(parents=True, exist_ok=True)
     out.write_text(html)
+    # data files are published next to the page and fetched by it (data/<set>.bin, gzip)
+    # base64 text, because the artifact host serves text but not raw binary files
+    for old in (out.parent / "data").glob("*.bin"):
+        old.unlink()
+    for name, b in bufs.items():
+        (out.parent / "data" / f"{name}.txt").write_text(base64.b64encode(gzip.compress(b, 9)).decode())
+    print("data files:", {n: f"{len(gzip.compress(b, 6)) // 1024} KB" for n, b in bufs.items()})
     print(f"wrote {out} ({len(html) // 1024} KB, {[x['n'] for x in meta['sets']]} rows, {len(meta['combos'])} combos)")
 
 
