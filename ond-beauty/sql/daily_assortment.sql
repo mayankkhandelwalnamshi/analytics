@@ -1,13 +1,13 @@
 -- OND Beauty dashboard: daily live assortment and live stock by country x product combo.
 -- Billing project: noonprd-nm-analytics-ai. One row per day:  r = "c,key,live_cfg,cb_cfg,live_stock;..."
---   c: 0 = KSA, 1 = UAE, 2 = KSA + UAE together (distinct products are counted once across both countries)
+--   c: 0 = KSA, 1 = UAE (Overall on the dashboard = KSA + UAE summed)
 --   key = FARM_FINGERPRINT of brand|category|sub_category|business_model|season (names: sql/assortment_combos.sql)
 -- Source: assortment_namshi.psku_sku_mapped, rows with stock_net > 0, is_live = 1, country in SA / AE,
 -- joined to item_d on sku (Beauty, no samples & GWP). Product attributes are taken at sku_config level.
 --   live_cfg   = distinct live sku_config
 --   cb_cfg     = distinct live sku_config sold in KSA from the UAE warehouse (cross-border)
 --   live_stock = stock_net on primary listings of partner 3001 (Namshi retail)
--- A product sits in exactly one combo, so distinct counts add up across combos (not across countries: c = 2).
+-- A product sits in exactly one combo, so distinct counts add up across combos.
 -- Run per 10-day window ({FROM}/{TO}) for Oct-Dec 2024, Oct-Dec 2025 and 2026-10-01..yesterday.
 WITH season AS (
   SELECT sku_config, MAX(LOWER(season_tag)) AS beauty_season
@@ -41,8 +41,6 @@ p AS (
 ),
 x AS (
   SELECT d, c, k, COUNT(DISTINCT sku_config) la, COUNT(DISTINCT IF(is_cb, sku_config, NULL)) cb, SUM(st) st FROM p GROUP BY 1, 2, 3
-  UNION ALL
-  SELECT d, 2, k, COUNT(DISTINCT sku_config), COUNT(DISTINCT IF(is_cb, sku_config, NULL)), SUM(st) FROM p GROUP BY 1, 3
 )
 SELECT FORMAT_DATE('%F', d) d, STRING_AGG(FORMAT('%d,%x,%d,%d,%d', c, k, la, cb, st), ';') r
 FROM x GROUP BY 1 ORDER BY 1

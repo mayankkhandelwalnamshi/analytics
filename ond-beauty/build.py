@@ -38,7 +38,7 @@ SETS = [("sales", "cube_raw.json", SALES_FIELDS, None),
         ("trafA", "traffic_raw.json", TRAFFIC_FIELDS, "0"),
         ("trafB", "traffic_raw.json", TRAFFIC_FIELDS, "1"),
         ("oos", "oos_raw.json", OOS_FIELDS, None),
-        ("asrt", "assort_raw.json", ["la", "cb", "st"], None)]   # c = 2 holds KSA + UAE distinct counts
+        ("asrt", "assort_raw.json", ["la", "cb", "st"], None)]   # Overall = KSA + UAE
 
 
 def fold_small_oos(recs, threshold=10):
@@ -80,6 +80,8 @@ def pack():
             recs = raw[f][d].split(";")
             if name == "oos":
                 recs = fold_small_oos(recs)
+            if name == "asrt":
+                recs = [r for r in recs if not r.startswith("2,")]   # Overall = KSA + UAE (sum), the union rows are not used
             for rec in recs:
                 v = rec.split(",")
                 if lvl is not None:
