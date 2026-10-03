@@ -114,6 +114,36 @@ o AS (
   WHERE o.date BETWEEN '{FROM}' AND '{TO}' AND o.country IN ('SA', 'AE') AND it.ssku IN (SELECT ssku FROM top)
   GROUP BY 1, 2
 ),
+-- open purchase orders (Namshi retail partner 3001, Beauty re-order POs: dup / top up / reorder / bsrp titles, 2026 POs whose
+-- ETA has passed, excluding POs re-dated to a future ETA): open order qty and open shipment qty per sku and country
+po_orders AS (
+  SELECT order_nr FROM `noonbinmlook.looker.po_expected_received_union`
+  WHERE merch_team = 'beauty' AND LOWER(po_order_status) IN ('received', 'approved')
+    AND collection_start_date >= '2026-01-01' AND final_date >= '2026-01-01' AND eta_date < CURRENT_DATE()
+    AND (COALESCE(open_order_qty, 0) + COALESCE(open_shipment_qty, 0) + COALESCE(adj_expected_qty, 0) + COALESCE(qty_received, 0) + COALESCE(order_non_shipment_qty, 0)) > 0
+    AND (LOWER(po_title) LIKE '%dup%' OR LOWER(po_title) LIKE '%top up%' OR LOWER(po_title) LIKE '%reorder%' OR LOWER(po_title) LIKE '%bsrp%')
+    AND order_nr NOT IN (SELECT order_nr FROM `noonbinmlook.looker.po_expected_received_union` WHERE final_date >= '2026-01-01'
+                         GROUP BY order_nr HAVING COUNT(DISTINCT eta_date) > 1 AND MAX(eta_date) > CURRENT_DATE())
+  GROUP BY ALL
+),
+po_peru AS (
+  SELECT sku AS zsku, order_nr, country, SUM(open_order_qty) ooq, SUM(open_shipment_qty) osq
+  FROM `noonbinmlook.looker.po_expected_received_union`
+  WHERE merch_team = 'beauty' AND LOWER(po_order_status) IN ('received', 'approved')
+    AND (COALESCE(open_order_qty, 0) + COALESCE(open_shipment_qty, 0) + COALESCE(adj_expected_qty, 0) + COALESCE(qty_received, 0) + COALESCE(order_non_shipment_qty, 0)) > 0
+    AND final_date >= '2026-01-01'
+  GROUP BY ALL
+),
+po_lines AS (
+  SELECT DISTINCT order_nr, zsku FROM `noonbinamshi.purchase.po_line`
+  WHERE order_qty > 0 AND id_partner = 3001 AND order_nr IN (SELECT order_nr FROM po_orders)
+),
+po AS (
+  SELECT pp.country cc, it.ssku, SUM(pp.ooq) ooq, SUM(pp.osq) osq
+  FROM po_peru pp JOIN po_lines USING (order_nr, zsku) JOIN it ON it.sku = pp.zsku
+  WHERE it.ssku IN (SELECT ssku FROM top)
+  GROUP BY 1, 2
+),
 bg AS (
   -- brand GMV since {H} in the country, all Beauty business models (for the SKU's share of its brand)
   SELECT s.country cc, i.brand_code brand, SUM(s.gmv_inc_vat) bgh
@@ -136,7 +166,8 @@ SELECT TO_JSON_STRING(STRUCT(
   ROUND(t.gmv) AS g, ROUND(t.ly) AS ly, t.u AS u, ROUND(t.rev) AS rv, ROUND(t.pc1) AS p1, ROUND(t.ppc1) AS pp,
   t.u30 AS u30, ROUND(COALESCE(c1.cost, c2.cost), 2) AS co, ROUND(COALESCE(c1.pcost, c2.pcost), 2) AS pco,
   IFNULL(pc.stock, 0) AS st, IFNULL(pc.stock_cb, 0) AS sc, IFNULL(pc.live, FALSE) AS lv, IFNULL(pc.cb, FALSE) AS cb, pc.op AS op, pc.np AS np,
-  IFNULL(ld.ld30, 0) AS l30, IFNULL(ld.ldm, 0) AS lm, ROUND(IFNULL(o.oos, 0)) AS oo)) j
+  IFNULL(ld.ld30, 0) AS l30, IFNULL(ld.ldm, 0) AS lm, ROUND(IFNULL(o.oos, 0)) AS oo,
+  IFNULL(po.ooq, 0) AS oq, IFNULL(po.osq, 0) AS os)) j
 FROM top t
 JOIN info i USING (ssku)
 LEFT JOIN bg ON bg.cc = t.cc AND bg.brand = i.brand
@@ -145,4 +176,5 @@ LEFT JOIN cost c1 ON c1.cc = t.cc AND c1.sku = pc.psku
 LEFT JOIN cost c2 ON c2.cc <> t.cc AND c2.sku = pc.psku
 LEFT JOIN ld ON ld.cc = t.cc AND ld.ssku = t.ssku
 LEFT JOIN o ON o.cc = t.cc AND o.ssku = t.ssku
+LEFT JOIN po ON po.cc = t.cc AND po.ssku = t.ssku
 ORDER BY t.cc, t.gh DESC
