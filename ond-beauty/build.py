@@ -71,11 +71,39 @@ def pack():
         buf += struct.pack(f"<{n}H", *cols[0]) + struct.pack(f"<{n}H", *cols[2]) + struct.pack(f"<{n}B", *cols[1])
         buf += b"\0" * (-len(buf) % 4)  # keep the next set's int32 columns aligned
         sizes.append(n)
+    # distinct orders, one block per level (see sql/daily_orders.sql): int32 count, uint16 date, uint16 key, uint8 country
+    orders = json.loads((DATA / "orders_raw.json").read_text())
+    levels = [[] for _ in range(5)]
+    for d in sorted(orders):
+        for rec in orders[d].split(";"):
+            l, c, k, n = rec.split(",")
+            l = int(l)
+            if l == 4:
+                key = tuple(k.split("|"))
+                if key not in combo_idx:
+                    combo_idx[key] = len(combo_idx)
+            levels[l].append((di[d], int(c), k, int(n)))
     combos = list(combo_idx)
     assert len(combos) < 65536
     names = {key: sorted({c[i] for c in combos}) for i, key in enumerate(["brand", "cat", "sub"])}
     idx = {key: {v: i for i, v in enumerate(names[key])} for key in names}
+    pairs = sorted({tuple(r[2].split("|")) for r in levels[2]})
+    pair_idx = {p: i for i, p in enumerate(pairs)}
+    keyof = [
+        lambda k: 0,
+        lambda k: idx["cat"][k],
+        lambda k: pair_idx[tuple(k.split("|"))],
+        lambda k: idx["brand"][k],
+        lambda k: combo_idx[tuple(k.split("|"))],
+    ]
+    for l, rows in enumerate(levels):
+        n = len(rows)
+        buf += struct.pack(f"<{n}i", *[r[3] for r in rows]) + struct.pack(f"<{n}H", *[r[0] for r in rows])
+        buf += struct.pack(f"<{n}H", *[keyof[l](r[2]) for r in rows]) + struct.pack(f"<{n}B", *[r[1] for r in rows])
+        buf += b"\0" * (-len(buf) % 4)
     meta = {
+        "ord": [len(rows) for rows in levels],
+        "pairs": [[idx["cat"][c], idx["sub"][s]] for c, s in pairs],
         "sets": [{"fields": fields, "n": n} for (_, fields), n in zip(sets, sizes)],
         "dates": dates,
         "names": names,
