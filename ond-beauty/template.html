@@ -139,8 +139,43 @@ h3.sec:first-child { margin-top: 0; }
 .tile .tn { font-size: 11.5px; color: var(--muted); margin: -6px 0 8px; }
 .tile .tl { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12.5px; color: var(--fg-2); white-space: nowrap; }
 .tile .tl .chip { font-size: 12px; padding: 3px 8px; border-radius: 7px; font-weight: 600; }
-body[data-tab="mtd"] .tonly { display: none !important; }
+body[data-tab="mtd"] .tonly, body[data-tab="sku"] .tonly, body[data-tab="sku"] .nosku { display: none !important; }
 body:not([data-tab="mtd"]) .mtd { display: none; }
+body:not([data-tab="sku"]) .skus { display: none; }
+.skus { margin-top: 18px; }
+.skus .sh { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 16px; align-items: flex-start; margin-bottom: 14px; }
+.skus h2 { margin: 0; font-size: 16px; }
+.skus .sctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.skus input[type=search] { font: inherit; font-size: 13px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg); width: 220px; max-width: 100%; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.card .ch { display: grid; grid-template-columns: 76px 1fr; gap: 12px; align-items: start; }
+.card .ph { width: 76px; height: 76px; border-radius: 10px; background: var(--flat-bg); display: grid; place-items: center; text-align: center; font-size: 11px; color: var(--muted); position: relative; overflow: hidden; }
+.card .ph b { font-size: 22px; color: var(--accent); display: block; line-height: 1; text-transform: uppercase; }
+.card .ph a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.card .ph a:hover { text-decoration: underline; }
+.card .rk { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--accent); }
+.card .tt { font-size: 13px; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 2px 0; }
+.card .bb { font-size: 12px; color: var(--muted); }
+.card .ids { display: grid; grid-template-columns: 92px 1fr; gap: 3px 10px; font-size: 12px; }
+.card .ids span { color: var(--muted); }
+.card .ids code { font-family: var(--mono); font-size: 11.5px; overflow-wrap: anywhere; }
+.card .cfg { display: flex; flex-wrap: wrap; gap: 4px; }
+.card .cfg code { padding: 1px 6px; border-radius: 5px; background: var(--flat-bg); color: var(--muted); }
+.card .cfg code.on { background: var(--good-bg); color: var(--good); font-weight: 600; }
+.card .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.card .pl { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--flat-bg); color: var(--fg-2); }
+.card .pl.up { background: var(--good-bg); color: var(--good); }
+.card .pl.down { background: var(--bad-bg); color: var(--bad); }
+.card .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font-size: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+.card .kv div { display: flex; justify-content: space-between; gap: 8px; min-width: 0; }
+.card .kv span { color: var(--muted); }
+.card .kv span { white-space: nowrap; }
+.card .kv b { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.card .kv b.up { color: var(--good); } .card .kv b.down { color: var(--bad); }
+.card .kv .big { grid-column: 1 / -1; font-size: 13px; }
+.card .kv .big b { font-size: 15px; }
+.skus .more { display: flex; justify-content: center; margin-top: 16px; }
 .mtd { margin-top: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 0 6px; }
 .mtd .mh { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 16px; align-items: flex-start; padding: 0 14px 10px; }
 .mtd h2 { margin: 0; font-size: 16px; }
@@ -253,6 +288,7 @@ details.gloss { margin-top: 12px; }
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" id="tab-trend" data-tab="trend">Daily trend</button>
     <button role="tab" aria-selected="false" id="tab-mtd" data-tab="mtd">MTD performance</button>
+    <button role="tab" aria-selected="false" id="tab-sku" data-tab="sku">Top SKU performance</button>
   </nav>
   <div class="bar">
     <div class="filters" id="filters">
@@ -267,14 +303,14 @@ details.gloss { margin-top: 12px; }
       <button class="lnk" id="freset" disabled>Reset filters</button>
       <span class="fsum" id="fsum"></span>
     </div>
-    <div class="ctl"><span>Region</span>
+    <div class="ctl nosku"><span>Region</span>
       <div class="seg" id="region">
         <button id="r-all" data-v="ALL" aria-pressed="true">Overall</button>
         <button id="r-ksa" data-v="KSA" aria-pressed="false">KSA</button>
         <button id="r-uae" data-v="UAE" aria-pressed="false">UAE</button>
       </div>
     </div>
-    <div class="ctl"><span>Compare</span>
+    <div class="ctl nosku"><span>Compare</span>
       <div class="seg" id="align">
         <button id="a-lfl" data-v="lfl" aria-pressed="true" title="Like-for-like event dates from the LFL mapping (e.g. Black Friday vs Black Friday)">LFL date</button>
         <button id="a-date" data-v="date" aria-pressed="false" title="Same calendar date in 2025 and 2024">Same date</button>
@@ -301,6 +337,8 @@ details.gloss { margin-top: 12px; }
   <section class="summary tonly" id="summary" aria-label="GMV summary"></section>
 
   <section class="mtd" id="mtd" aria-label="MTD performance by cut"></section>
+
+  <section class="skus" id="skus" aria-label="Top SKU performance"></section>
 
   <section class="grid tonly" id="grid"><p class="loading">Loading Beauty sales data…</p></section>
 
@@ -561,6 +599,7 @@ const GLOSS_TERMS = [
   ["Contrib. vs LY", "(Row TY − row LY) ÷ total LY, in pp. Rows add up to the total's % change vs LY, so the most negative rows drove the drop."],
   ["Share", "The row's GMV ÷ total GMV."],
   ["Projection", "Summary tiles: full-month target / LY / LLY × the MTD achievement against it."],
+  ["Top SKU performance", "Top 500 retail supplier SKUs per country by MTD GMV. Stock = live Namshi retail stock in the country's own warehouse + CB (KSA sold from the UAE warehouse). Price / markdown = the live listing with the most stock (markdown = 1 − offer ÷ normal price). PC1 yday = yesterday's PC1 ÷ revenue. Live days = days with the product live (looker.live_days). WoC = stock ÷ (units in the last 30 days ÷ live days in those 30 days × 7); “No sales in L30D” when nothing sold. SKU config chips: green = live in the country now."],
   ["Overall", "All countries (KSA, UAE, other GCC); assortment / stock / inventory are KSA + UAE."],
 ];
 function renderGlossary() {
@@ -665,10 +704,11 @@ const chip = (lbl, dl) => `<span class="chip ${dl ? dl.cls : ""}" title="vs ${lb
 // ---------- state ----------
 const state = { region: "ALL", align: "lfl", range: "td", view: "daily", hide: [], zoom: null, expand: null, f: Object.fromEntries(DIMS.map(dm => [dm.key, []])),
   drill: { date: null, period: "day", dim: "cat", sort: "gmv" },
+  sku: { c: null, sort: "rk", q: "", n: 60 },
   tab: "trend", mtd: { cut: "cat", period: null, groups: ["sales", "traffic", "assort", "health"], sort: "gmv:v", dir: -1, all: false, v: 2 } };
 try {
   const sv = JSON.parse(localStorage.getItem("ondBeauty") || "{}");
-  Object.assign(state, sv, { f: Object.assign(state.f, sv.f || {}), drill: Object.assign(state.drill, sv.drill || {}), mtd: Object.assign(state.mtd, sv.mtd || {}), zoom: null });
+  Object.assign(state, sv, { f: Object.assign(state.f, sv.f || {}), drill: Object.assign(state.drill, sv.drill || {}), mtd: Object.assign(state.mtd, sv.mtd || {}), sku: Object.assign(state.sku, sv.sku || {}, { n: 60 }), zoom: null });
 } catch (e) {}
 for (const dm of DIMS) state.f[dm.key] = (state.f[dm.key] || []).filter(v => META.names[dm.key].includes(v));
 if (!["lfl", "date"].includes(state.align)) state.align = "lfl";
@@ -851,6 +891,7 @@ function render() {
   document.body.dataset.tab = state.tab;
   document.querySelectorAll("nav.tabs button").forEach(bt => bt.setAttribute("aria-selected", bt.dataset.tab === state.tab));
   if (state.tab === "mtd") { renderMtd(); return; }
+  if (state.tab === "sku") { renderSkus(); return; }
   const zb = document.getElementById("zoominfo");
   zb.hidden = !state.zoom;
   if (state.zoom) zb.querySelector("span").textContent = `Zoomed to ${fmtD(state.zoom[0])} – ${fmtD(state.zoom[1])}`;
@@ -1172,6 +1213,93 @@ document.getElementById("mtd").addEventListener("input", e => {
   if (e.target.id !== "mq") return;
   state.mtd.q = e.target.value; const pos = e.target.selectionStart; renderMtd();
   const q = document.getElementById("mq"); q.focus(); q.setSelectionRange(pos, pos);
+});
+
+// ---------- Top SKU performance: top 500 retail supplier SKUs per country by MTD GMV (sql/top_skus.sql) ----------
+let SKUS = null, SKUS_ERR = null;
+function loadSkus() {
+  if (SKUS || SKUS_ERR) return;
+  fetch("data/skus.txt").then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(d => { SKUS = d; if (state.tab === "sku") renderSkus(); })
+    .catch(e => { SKUS_ERR = e.message; if (state.tab === "sku") renderSkus(); });
+}
+const SKU_SORT = { rk: "Rank (MTD GMV)", vly: "vs LY", oos: "OOS loss", woc: "WoC", st: "Stock" };
+const skuStock = r => r.st + (r.sc || 0);   // own warehouse + CB (KSA sold from the UAE warehouse)
+const skuWoc = r => r.u30 ? skuStock(r) / (r.u30 / Math.max(1, r.l30 || 30) * 7) : null;
+function skuPasses(r) {
+  const bi = META.names.brand.indexOf(r.br);
+  return DIMS.every(dm => {
+    const sel = state.f[dm.key]; if (!sel.length) return true;
+    if (dm.key === "cat") return sel.includes(r.ca);
+    if (dm.key === "sub") return sel.includes(r.su);
+    if (dm.key === "brand") return sel.includes(r.br);
+    if (dm.key === "bm") return sel.includes("retail");
+    if (dm.key === "season") return true;   // no season on product level here
+    const a = bi >= 0 ? META.battr[bi][dm.attr] : -1;
+    return sel.includes(a >= 0 ? META.names[dm.key][a] : "unassigned");
+  });
+}
+function renderSkus() {
+  const box = document.getElementById("skus"), S = state.sku;
+  if (S.c == null) S.c = state.region === "UAE" ? 1 : 0;
+  if (!SKUS) { box.innerHTML = `<p class="loading">${SKUS_ERR ? `The SKU data could not be loaded (${esc(SKUS_ERR)}).` : "Loading top SKUs…"}</p>`; loadSkus(); return; }
+  const cur = S.c ? "AED" : "SAR", aed = { kind: "aed" }, pct = { kind: "pct" };
+  const q = (S.q || "").trim().toLowerCase();
+  let rows = SKUS.filter(r => r.c === S.c && skuPasses(r) && (!q || [r.ss, r.br, r.ti, r.bc, r.cf].some(x => x && String(x).toLowerCase().includes(q))));
+  const key = { rk: r => -r.rk, vly: r => r.ly ? r.g / r.ly - 1 : -Infinity, oos: r => r.oo, woc: r => skuWoc(r) ?? -1, st: skuStock }[S.sort] || (r => -r.rk);
+  rows.sort((a, b) => key(b) - key(a));
+  const shown = rows.slice(0, S.n);
+  const vly = r => delta(METRICS[0], r.g, r.ly);
+  const ratio = (n, d) => d ? n / d : null;
+  const card = r => {
+    const w = skuWoc(r), md = r.np && r.op != null ? 1 - r.op / r.np : null, dl = vly(r);
+    const cfgs = (r.cf || "").split("|").filter(Boolean).map(x => { const [k, l] = x.split(":"); return `<code class="${l === "1" ? "on" : ""}" title="${l === "1" ? "Live" : l === "0" ? "Not live" : ""}">${esc(k)}</code>`; }).join("");
+    const kv = (k, v, cls = "") => `<div><span>${k}</span><b class="${cls}">${v}</b></div>`;
+    return `<article class="card">
+      <div class="ch">
+        <div class="ph"><div><b>${esc((r.br || "?").slice(0, 2))}</b>${r.im ? `<a href="${esc(r.im)}" target="_blank" rel="noopener">Image ↗</a>` : "No image"}</div></div>
+        <div style="min-width:0"><span class="rk">#${r.rk} in ${S.c ? "UAE" : "KSA"}</span><p class="tt" title="${esc(r.ti || "")}">${esc(r.ti || r.ss)}</p><span class="bb">${esc(r.br || "")} · ${esc(r.su || r.ca || "")}</span></div>
+      </div>
+      <div class="ids">
+        <span>Supplier SKU</span><code>${esc(r.ss)}</code>
+        <span>SKU config</span><div class="cfg">${cfgs || "–"}</div>
+        <span>Barcode</span><code>${esc(r.bc || "–")}</code>
+      </div>
+      <div class="pills"><span class="pl ${r.lv ? "up" : "down"}">${r.lv ? "Live" : "Not live"}</span>${S.c === 0 ? `<span class="pl ${r.cb ? "up" : ""}">${r.cb ? "CB to KSA" : "Not CB"}</span>` : ""}<span class="pl">${r.lm} live day${r.lm === 1 ? "" : "s"} MTD</span></div>
+      <div class="kv">
+        <div class="big"><span>MTD GMV</span><b>${fmt(aed, r.g, true)}</b></div>
+        ${kv("LY GMV", r.ly ? fmt(aed, r.ly, true) : "–")}${kv("vs LY", dl ? dl.txt : r.ly ? "–" : "new", dl?.cls || "")}
+        ${kv("MTD ASP", r.u ? fmt({ kind: "aed2" }, r.g / r.u) : "–")}${kv("Units MTD", r.u)}
+        ${kv("Stock", r.sc ? `${Math.round(r.st).toLocaleString("en-US")} + ${Math.round(r.sc).toLocaleString("en-US")} CB` : Math.round(r.st).toLocaleString("en-US"))}${kv("WoC (L30D)", w == null ? "No sales in L30D" : w.toFixed(1) + " wk")}
+        ${kv(`Price (${cur})`, r.op != null ? Math.round(r.op).toLocaleString("en-US") : "–")}${kv("Markdown", fmt(pct, md))}
+        ${kv("PC1 yday", fmt(pct, ratio(r.y1, r.yr)))}${kv("Prov PC1 yday", fmt(pct, ratio(r.yp, r.yr)))}
+        ${kv("PC1 MTD", fmt(pct, ratio(r.p1, r.rv)))}${kv("Prov PC1 MTD", fmt(pct, ratio(r.pp, r.rv)))}
+        ${kv("OOS loss MTD", r.oo ? fmt(aed, r.oo, true) : "0", r.oo ? "down" : "")}${kv("Live days MTD", r.lm)}
+      </div>
+    </article>`;
+  };
+  const per = range(START, lastActual);
+  box.innerHTML = `<div class="sh">
+      <div><h2>Top ${rows.length === SKUS.filter(r => r.c === S.c).length ? rows.length : `${rows.length} of ${SKUS.filter(r => r.c === S.c).length}`} retail SKUs · ${S.c ? "UAE" : "KSA"}</h2>
+        <p class="fsum">Ranked by MTD GMV (${fmtD(per[0])} – ${fmtD(lastActual)}) per country, retail only, by supplier SKU · LY on LFL dates · stock, price and live status on ${fmtD(lastActual)}${active("season") ? " · the season filter is not applied here" : ""}</p></div>
+      <div class="sctl">
+        <div class="seg" id="skc"><button data-v="0" aria-pressed="${S.c === 0}">KSA</button><button data-v="1" aria-pressed="${S.c === 1}">UAE</button></div>
+        <label class="fsum" for="sks">Sort</label><select id="sks" class="seg" style="padding:5px 8px;font:inherit;font-size:13px;color:var(--fg)">${Object.entries(SKU_SORT).map(([k, l]) => `<option value="${k}" ${S.sort === k ? "selected" : ""}>${l}</option>`).join("")}</select>
+        <input type="search" id="skq" placeholder="Search SKU, config, barcode, brand" value="${esc(S.q || "")}" autocomplete="off">
+      </div></div>
+    <div class="cards">${shown.map(card).join("") || `<p class="fsum">No SKUs match.</p>`}</div>
+    ${rows.length > shown.length ? `<div class="more"><button class="pill" id="skmore">Show ${Math.min(60, rows.length - shown.length)} more (${shown.length} of ${rows.length})</button></div>` : ""}`;
+}
+document.getElementById("skus").addEventListener("click", e => {
+  const bt = e.target.closest("button"); if (!bt) return;
+  if (bt.id === "skmore") { state.sku.n += 60; renderSkus(); return; }
+  if (bt.closest("#skc")) { state.sku.c = +bt.dataset.v; state.sku.n = 60; save(); renderSkus(); }
+});
+document.getElementById("skus").addEventListener("change", e => { if (e.target.id === "sks") { state.sku.sort = e.target.value; state.sku.n = 60; save(); renderSkus(); } });
+document.getElementById("skus").addEventListener("input", e => {
+  if (e.target.id !== "skq") return;
+  state.sku.q = e.target.value; state.sku.n = 60; const pos = e.target.selectionStart; renderSkus();
+  const q = document.getElementById("skq"); q.focus(); q.setSelectionRange(pos, pos);
 });
 
 // ---------- drill-down: what drove the day ----------

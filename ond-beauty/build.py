@@ -229,6 +229,8 @@ def build():
         old.unlink()
     for name, b in bufs.items():
         (out.parent / "data" / f"{name}.txt").write_text(base64.b64encode(gzip.compress(b, 9)).decode())
+    # top retail SKUs (sql/top_skus.sql): plain JSON, loaded when the Top SKU tab opens
+    (out.parent / "data" / "skus.txt").write_text((DATA / "top_skus.json").read_text())
     print("data files:", {n: f"{len(gzip.compress(b, 6)) // 1024} KB" for n, b in bufs.items()})
     print(f"wrote {out} ({len(html) // 1024} KB, {[x['n'] for x in meta['sets']]} rows, {len(meta['combos'])} combos)")
 
