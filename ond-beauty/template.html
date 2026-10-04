@@ -1266,7 +1266,9 @@ function renderSkus() {
     const w = skuWoc(r), fw = skuFwoc(r), md = r.np && r.op != null ? 1 - r.op / r.np : null, dl = vly(r);
     // live PC1 = (live offer price − unit cost) ÷ live offer price; prov uses the provisional cost
     const lp1 = r.op && r.co != null ? (r.op - r.co) / r.op : null, lpp = r.op && r.pco != null ? (r.op - r.pco) / r.op : null;
-    const cfgs = (r.cf || "").split("|").filter(Boolean).map(x => { const [k, l] = x.split(":"); return `<code class="${l === "1" ? "on" : ""}" title="${l === "1" ? "Live" : l === "0" ? "Not live" : ""}">${esc(k)}</code>`; }).join("");
+    // live product: show only its live configs (not-live duplicates hidden); otherwise all configs
+    const cfAll = (r.cf || "").split("|").filter(Boolean), cfLive = cfAll.filter(x => x.endsWith(":1"));
+    const cfgs = (r.lv && cfLive.length ? cfLive : cfAll).map(x => { const [k, l] = x.split(":"); return `<code class="${l === "1" ? "on" : ""}" title="${l === "1" ? "Live" : l === "0" ? "Not live" : ""}">${esc(k)}</code>`; }).join("");
     const kv = (k, v, cls = "") => `<div><span>${k}</span><b class="${cls}">${v}</b></div>`;
     return `<article class="card">
       <div class="ch">
