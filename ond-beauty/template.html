@@ -1207,7 +1207,6 @@ function renderMtd() {
     if (CONTRIB.has(m.key)) {
       // contribution to the total change vs LY: (row TY - row LY) / total LY, in pp; rows add up to the total's % change
       const ch = r => { const t = val(m, r.a, 0), l = val(m, r.a, 1); return t == null && l == null ? null : (t || 0) - (l || 0); };
-      if (m.key === "gmv") cols.push({ m, id: "gmv:d", lbl: "Δ vs LY", f: r => { const v = ch(r); return { s: v, h: v == null ? "–" : `<span class="${v > 0 ? "up" : v < 0 ? "down" : ""}">${v > 0 ? "+" : v < 0 ? "−" : ""}${fmt(m, Math.abs(v), true)}</span>` }; } });
       cols.push({ m, id: m.key + ":c", lbl: "Contrib. vs LY", f: r => { const v = ch(r), b = val(m, R.tot, 1); const x = v == null || !b ? null : v / b * 100;
         return { s: x, h: x == null ? "–" : `<span class="${x > 0.005 ? "up" : x < -0.005 ? "down" : ""}" title="Share of the total change vs LY">${x > 0 ? "+" : x < 0 ? "−" : "±"}${Math.abs(x).toFixed(2)}pp</span>` }; } });
     }
