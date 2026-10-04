@@ -1,4 +1,4 @@
-<title>OND Beauty Dashboard</title>
+<title>Beauty Pulse - OND</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap">
@@ -629,6 +629,7 @@ const GLOSS = {
   nwsh: "New assortment ÷ live assortment. TY: activated since 1 Jul 2026; LY: since 1 Jul 2025 up to the LY day.",
 };
 const GLOSS_TERMS = [
+  ["Cohort", "LFL cohort of each date from the LFL mapping table (MS, BAU 1, BAU 2, PD, Pre 11.11, 11.11 Day, Post 11.11, Black Friday Week / Pre / Day / Post / Ext). The Cohort cut sums the period's TY dates in each cohort and compares them with their own LFL LY / LLY dates, so a cohort row is like-for-like. The same cohort in different months (e.g. MS) adds up in OND to date. Stock-type metrics (assortment, stock, inventory, WoC, health) show on the cohort of the period's last day only."],
   ["TY / LY / LLY", "This year (2026), last year (2025) and the year before (2024)."],
   ["LFL date", "Like-for-like date from the LFL mapping (e.g. Black Friday vs Black Friday). “Same date” compares the same calendar date."],
   ["MTD", "Month to date: 1st of the month to the latest full day (yesterday). Flow metrics are summed over the period."],
@@ -1039,7 +1040,9 @@ function renderTable(built) {
 
 const CONTRIB = new Set(["gmv", "units", "gv"]);   // metrics with a contribution-to-change column
 // ---------- MTD performance: every metric by one cut (country, category, brand, ...) vs target, LY and LLY ----------
-const CUTS = [{ key: "country", label: "Country" }, ...DIMS.map(dm => ({ key: dm.key, label: dm.label }))];
+const CUTS = [{ key: "country", label: "Country" }, { key: "cohort", label: "Cohort" }, ...DIMS.map(dm => ({ key: dm.key, label: dm.label }))];
+// LFL cohort of a TY date (MS, BAU 1, PD, Black Friday ...); a cohort row compares its TY dates with their LFL LY / LLY dates
+const cohortOf = d => { const c = META.cohort?.[d]; return c ? c.replace(/_/g, " ") : null; };
 const COUNTRY = ["KSA", "UAE", "Other GCC"];
 function mtdPeriods() {
   const out = [];
@@ -1065,7 +1068,14 @@ function mtdCompute(cut, P) {
     return { flow, lvl, w30, lvlDate: sh(P.to), cover: dates.every(d => OOS_DATES.has(sh(d))) };
   });
   const dm = DIM[cut];
-  const keyOf = cut === "country" ? (k, c) => COUNTRY[c] : (k) => { const v = vidx(dm, META.combos[k]); return v < 0 ? null : META.names[cut][v]; };
+  const keyOf = cut === "country" ? (k, c) => COUNTRY[c] : cut === "cohort" ? () => null : (k) => { const v = vidx(dm, META.combos[k]); return v < 0 ? null : META.names[cut][v]; };
+  // cohort cut: the row depends on the date, not the product. coh[y][x] = cohort of the TY date whose year-y LFL date is x;
+  // stock-type sets (assortment, inventory, WoC) sit with the cohort of the period's last day
+  let coh = null, cohEnd = null;
+  if (cut === "cohort") {
+    coh = [0, 1, 2].map(y => { const o = new Array(nd).fill(null); for (const d of dates) { const x = DIDX[y ? shift(d, y, state.align) : d]; if (x != null && o[x] == null) o[x] = cohortOf(d); } return o; });
+    cohEnd = cohortOf(P.to);
+  }
   // traffic is kept by brand (trafB) or by business model / season (trafA): pick the one the cut needs
   let tp;
   if (dm?.brandish) tp = { use: "trafB", skip: new Set(["bm", "season"]), exact: !active("bm") && !active("season") };
@@ -1082,7 +1092,8 @@ function mtdCompute(cut, P) {
       let a;
       for (let y = 0; y < 3; y++) {
         const w = W[y][wk][d[r]]; if (!w) continue;
-        if (a === undefined) { const nm = keyOf(k[r], c[r]); a = nm != null && !PLACEHOLDER.has(nm) ? get(nm) : null; }
+        if (coh) { const nm = wk === "flow" ? coh[y][d[r]] : cohEnd; a = nm ? get(nm) : null; }
+        else if (a === undefined) { const nm = keyOf(k[r], c[r]); a = nm != null && !PLACEHOLDER.has(nm) ? get(nm) : null; }
         const base = y * NF;
         for (let j = 0; j < nf; j++) { const v = w * m[j][r]; tot[base + f0 + j] += v; if (a) a[base + f0 + j] += v; }
         if (name === "sales" && c[r] < 2) { tot[base + I.gmvo] += w * m[0][r]; if (a) a[base + I.gmvo] += w * m[0][r]; }
@@ -1104,6 +1115,7 @@ function mtdOrders(cut, rows, tot, W, mask, regOk, keyOf, get) {
   const sel = k => state.f[k].length ? new Set(state.f[k]) : null;
   const brandOk = b => DIMS.filter(x => x.brandish && active(x.key)).every(x => state.f[x.key].includes(x.pos != null ? META.names.brand[b] : META.names[x.key][META.battr[b][x.attr]]));
   let lvl = null, nameOf, exact = true;
+  if (cut === "cohort") return false;   // orders by row aren't shown in the tables; the total above stays exact
   if (cut === "country" && !on.length) { lvl = 0; nameOf = () => null; }
   else if (cut === "cat" && only(["cat"])) { lvl = 1; const s = sel("cat"); nameOf = k => (!s || s.has(META.names.cat[k])) ? META.names.cat[k] : undefined; }
   else if (cut === "sub" && only(["cat", "sub"])) { lvl = 2; const sc = sel("cat"), ss = sel("sub");
@@ -1148,7 +1160,7 @@ function mtdTargets(cut, dates, regOk) {
   for (const d of dates) { if (!tdi.has(d)) return null; dset.add(tdi.get(d)); }
   const ok = targetFilter(), R = TGT.rows, by = new Map(), bIdx = Object.fromEntries(META.names.brand.map((b, i) => [b, i]));
   const attrOf = (bn, a) => { const b = bIdx[bn]; return b != null && META.battr[b][a] >= 0 ? META.names[["btype", "bgroup", "poc"][a]][META.battr[b][a]] : "unassigned"; };
-  const nameOf = { country: i => COUNTRY[R[i + 1]], cat: i => TGT.cat[R[i + 3]], brand: i => TGT.brand[R[i + 2]], bm: i => TGT.bm[R[i + 2]],
+  const nameOf = { country: i => COUNTRY[R[i + 1]], cohort: i => cohortOf(TGT.dates[R[i]]), cat: i => TGT.cat[R[i + 3]], brand: i => TGT.brand[R[i + 2]], bm: i => TGT.bm[R[i + 2]],
     btype: i => attrOf(TGT.brand[R[i + 2]], 0), bgroup: i => attrOf(TGT.brand[R[i + 2]], 1), poc: i => attrOf(TGT.brand[R[i + 2]], 2) }[cut];
   let total = 0;
   for (let i = 0; i < R.length; i += 5) {
@@ -1238,7 +1250,7 @@ function renderMtd() {
     <div class="mtscroll"><table class="mt"><thead><tr><th></th>${groups}</tr><tr><th>${cutL}</th>${sub}</tr></thead>
       <tbody>${tr(totRow, "tot")}${shown.map(r => tr(r)).join("") || `<tr><td colspan="${cols.length + 1}">No ${cutL.toLowerCase()} matches.</td></tr>`}</tbody></table></div>
     <div class="mf"><span class="fsum">${shown.length < rows.length ? `Top ${shown.length} of ${rows.length} · <button class="lnk" id="mall">Show all</button>` : `${rows.length}${q ? ` of ${nAll}` : ""} ${cutL.toLowerCase()} rows`}${M.all && rows.length > 50 ? ` · <button class="lnk" id="mall">Show top 50</button>` : ""} · click a column to sort</span>
-      <span class="fsum">${`Krithi tgt = LY GMV (LFL) × 1.25 · ${tg == null ? "No GMV target for this period or filter (targets cover Oct; none by sub-category or season)." : !tg.by ? `Target is shown for the total only: it isn't set by ${cutL.toLowerCase()}.` : M.cut === "bm" ? "Target by business model: each brand's whole target counts under its main model." : ""}`}</span></div>`;
+      <span class="fsum">${`Krithi tgt = LY GMV (LFL) × 1.25 · ${tg == null ? "No GMV target for this period or filter (targets cover Oct; none by sub-category or season)." : !tg.by ? `Target is shown for the total only: it isn't set by ${cutL.toLowerCase()}.` : M.cut === "bm" ? "Target by business model: each brand's whole target counts under its main model." : M.cut === "cohort" ? "Cohort rows compare their TY dates with their own LFL dates; stock-type metrics sit on the cohort of the last day." : ""}`}</span></div>`;
 }
 document.getElementById("mtd").addEventListener("click", e => {
   const M = state.mtd, bt = e.target.closest("button"), th = e.target.closest("th[data-c]");
@@ -1260,7 +1272,7 @@ document.getElementById("mtd").addEventListener("input", e => {
 // ---------- RCA: why GMV is up or down vs LY for the period (built from the MTD engine, no extra data) ----------
 // GMV = glance views x conversion (units / GV) x ASP; the change vs LY is split into the three with a log-mean (LMDI)
 // weight so the effects add up exactly to the GMV change. Without traffic the split is units (volume) x ASP.
-const RCA_CUTS = ["country", "cat", "sub", "brand", "bm", "btype", "bgroup", "season"];
+const RCA_CUTS = ["country", "cohort", "cat", "sub", "brand", "bm", "btype", "bgroup", "season"];
 const RCA_EFF = { tr: "Traffic", cv: "Conversion", vol: "Volume", asp: "ASP" };
 const rcaLow = k => k === "asp" ? "ASP" : RCA_EFF[k].toLowerCase();
 let RCA_CACHE = new Map();

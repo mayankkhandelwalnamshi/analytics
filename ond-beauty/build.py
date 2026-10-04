@@ -159,6 +159,7 @@ def pack():
         "battr": battr,
         "combos": [[idx[k][v] for k, v in zip(KEY, c)] for c in combos],
         "lfl": lfl_map(),
+        "cohort": json.loads((DATA / "lfl_cohort.json").read_text()),   # TY date -> LFL cohort (sql/lfl_cohort.sql)
         "oosDates": sorted(raw["oos_raw.json"]),
         "ageDates": sorted(raw["age_raw.json"]),
         "platform": json.loads((DATA / "platform.json").read_text()),   # sql/platform_gmv.sql
