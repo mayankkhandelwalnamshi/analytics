@@ -410,7 +410,7 @@ const START = "2026-10-01", END = "2026-12-31";
 // ord = distinct orders (filled per filter state); gmvo = GMV in KSA + UAE only, the countries OOS loss covers
 // both traffic levels (trafA / trafB) fill the same traffic fields, so field names are de-duplicated
 // lar / lam = live assortment of retail / marketplace products (split from la by business model)
-const FIELDS = [...new Set(META.sets.flatMap(st => st.fields)), "ord", "gmvo", "lar", "lam"];
+const FIELDS = [...new Set(META.sets.flatMap(st => st.fields)), "ord", "gmvo", "lar", "lam", "lnn", "lbn", "lco"];
 const OOS_DATES = new Set(META.oosDates);
 const I = Object.fromEntries(FIELDS.map((f, i) => [f, i]));
 const NF = FIELDS.length, DIDX = Object.fromEntries(META.dates.map((d, i) => [d, i]));
@@ -428,6 +428,9 @@ const DIMS = [
 const DIM = Object.fromEntries(DIMS.map(dm => [dm.key, dm]));
 const PLACEHOLDER = new Set(["*", "(other brands)"]);   // grouping rows, never offered as filter values
 const BM_NAME = META.names.bm;
+// live assortment of the season-share health metrics: combo season -> field
+const SEASON_F = { "namshi noos": "lnn", "brand noos": "lbn", carryover: "lco" };
+const SEASON_FI = combo => { const f = SEASON_F[META.names.season[META.combos[combo][4]]]; return f ? I[f] : -1; };
 const vidx = (dm, cb) => dm.pos != null ? cb[dm.pos] : META.battr[cb[0]][dm.attr];
 let SETS = null, ORD = null, ACC = null, COMBO_GMV = null, ORD_EXACT = true, TRAF_EXACT = true;
 const active = k => state.f[k].length > 0;
@@ -495,7 +498,8 @@ function recompute() {
       if (!mk[k[r]]) continue;
       const base = (d[r] * 3 + c[r]) * NF + f0;
       for (let j = 0; j < nf; j++) ACC[base + j] += m[j][r];
-      if (name === "asrt") { const bm = BM_NAME[META.combos[k[r]][3]]; if (bm === "retail") ACC[base - f0 + I.lar] += m[0][r]; else if (bm === "mp") ACC[base - f0 + I.lam] += m[0][r]; }
+      if (name === "asrt") { const bm = BM_NAME[META.combos[k[r]][3]]; if (bm === "retail") ACC[base - f0 + I.lar] += m[0][r]; else if (bm === "mp") ACC[base - f0 + I.lam] += m[0][r];
+        const sf = SEASON_FI(k[r]); if (sf >= 0) ACC[base - f0 + sf] += m[0][r]; }
     }
   }
   addOrders(mask);
@@ -591,6 +595,9 @@ const METRICS = [
   { key: "shcv", name: "Inventory value (cost) share", section: "health", kind: "pct", share: "cv", neutral: true, shade: true, level: true, calc: a => a[I.cv] },
   { key: "shrv", name: "Inventory value (retail) share", section: "health", kind: "pct", share: "rv", neutral: true, shade: true, level: true, calc: a => a[I.rv] },
   ...["0-90", "90-180", "180-360", "360-720", "720+"].map((b, i) => ({ key: "ag" + i, name: `Age ${b} days`, section: "health", unit: "share of inventory value at cost", kind: "pct", neutral: i < 2, lowerBetter: i >= 2, level: true, tyOnly: true, shade: true, calc: a => a[I.cv] ? a[I["ag" + i]] / a[I.cv] : null })),
+  { key: "nnsh", name: "Namshi NOOS share", section: "health", unit: "namshi noos ÷ live assortment (supplier SKUs)", kind: "pct", level: true, calc: a => a[I.la] ? a[I.lnn] / a[I.la] : null },
+  { key: "bnsh", name: "Brand NOOS share",  section: "health", unit: "brand noos ÷ live assortment (supplier SKUs)", kind: "pct", level: true, calc: a => a[I.la] ? a[I.lbn] / a[I.la] : null },
+  { key: "cosh", name: "Carryover share",   section: "health", unit: "carryover ÷ live assortment (supplier SKUs)", kind: "pct", level: true, calc: a => a[I.la] ? a[I.lco] / a[I.la] : null },
   { key: "nwsh", name: "Newness share", section: "health", unit: "new ÷ live assortment · TY since 1 Jul 2026, LY since 1 Jul 2025", kind: "pct", level: true, calc: a => a[I.la] ? a[I.nw] / a[I.la] : null },
 ];
 // glossary: definition and calculation of every metric and term (rendered in the Glossary panel at the top)
@@ -635,6 +642,9 @@ const GLOSS = {
   ag2: "Share of the row's inventory value at cost aged 180-359 days.",
   ag3: "Share of the row's inventory value at cost aged 360-719 days.",
   ag4: "Share of the row's inventory value at cost aged 720+ days.",
+  nnsh: "Live supplier SKUs in season namshi noos ÷ live assortment, on the last day of the period (LY: the LY LFL day). Season from beauty_season_mapping; non-Namshi partners are season mp.",
+  bnsh: "Live supplier SKUs in season brand noos ÷ live assortment, on the last day of the period (LY: the LY LFL day).",
+  cosh: "Live supplier SKUs in season carryover ÷ live assortment, on the last day of the period (LY: the LY LFL day).",
   nwsh: "New assortment ÷ live assortment. TY: activated since 1 Jul 2026; LY: since 1 Jul 2025 up to the LY day.",
 };
 const GLOSS_TERMS = [
@@ -1109,7 +1119,8 @@ function mtdCompute(cut, P) {
         for (let j = 0; j < nf; j++) { const v = w * m[j][r]; tot[base + f0 + j] += v; if (a) a[base + f0 + j] += v; }
         if (name === "sales" && c[r] < 2) { tot[base + I.gmvo] += w * m[0][r]; if (a) a[base + I.gmvo] += w * m[0][r]; }
         if (name === "asrt") { const bm = BM_NAME[META.combos[k[r]][3]], fi = bm === "retail" ? I.lar : bm === "mp" ? I.lam : -1;
-          if (fi >= 0) { tot[base + fi] += w * m[0][r]; if (a) a[base + fi] += w * m[0][r]; } }
+          if (fi >= 0) { tot[base + fi] += w * m[0][r]; if (a) a[base + fi] += w * m[0][r]; }
+          const sf = SEASON_FI(k[r]); if (sf >= 0) { tot[base + sf] += w * m[0][r]; if (a) a[base + sf] += w * m[0][r]; } }
       }
     }
   }
