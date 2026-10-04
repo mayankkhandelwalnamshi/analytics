@@ -1576,7 +1576,11 @@ function renderSkus() {
     const lp1 = r.op && r.co != null ? (r.op - r.co) / r.op : null, lpp = r.op && r.pco != null ? (r.op - r.pco) / r.op : null;
     // live product: show only its live configs (not-live duplicates hidden); otherwise all configs
     const cfAll = (r.cf || "").split("|").filter(Boolean), cfLive = cfAll.filter(x => x.endsWith(":1"));
-    const cfgs = (r.lv && cfLive.length ? cfLive : cfAll).map(x => { const [k, l] = x.split(":"); return `<code class="${l === "1" ? "on" : ""}" title="${l === "1" ? "Live" : l === "0" ? "Not live" : ""}">${esc(k)}</code>`; }).join("");
+    const shown = r.lv && cfLive.length ? cfLive : cfAll;
+    // supplier SKU / barcode: one per shown config (MAX(supplier_sku) of the config in item_d, sql/risk_skus_cfg.sql)
+    const uniq = a => [...new Set(a.filter(Boolean))].join(", ");
+    const ssShown = r.cm ? uniq(shown.map(x => r.cm[x.split(":")[0]]?.[0])) || r.ss : r.ss, bcShown = r.cm ? uniq(shown.map(x => r.cm[x.split(":")[0]]?.[1])) || r.bc : r.bc;
+    const cfgs = shown.map(x => { const [k, l] = x.split(":"); return `<code class="${l === "1" ? "on" : ""}" title="${l === "1" ? "Live" : l === "0" ? "Not live" : ""}">${esc(k)}</code>`; }).join("");
     const kv = (k, v, cls = "") => `<div><span>${k}</span><b class="${cls}">${v}</b></div>`;
     return `<article class="card">
       <div class="ch">
@@ -1584,9 +1588,9 @@ function renderSkus() {
         <div style="min-width:0"><span class="rk">#${r.rk} at risk in ${S.c ? "UAE" : "KSA"}</span><p class="tt" title="${esc(r.ti || "")}">${esc(r.ti || r.ss)}</p><span class="bb">${esc(r.br || "")} · ${esc(r.su || r.ca || "")}</span></div>
       </div>
       <div class="ids">
-        <span>Supplier SKU${(r.ss || "").includes(",") ? "s" : ""}</span><code>${esc(r.ss)}</code>
+        <span>Supplier SKU${(ssShown || "").includes(",") ? "s" : ""}</span><code>${esc(ssShown || "–")}</code>
         <span>SKU config</span><div class="cfg">${cfgs || "–"}</div>
-        <span>Barcode</span><code>${esc(r.bc || "–")}</code>
+        <span>Barcode${(bcShown || "").includes(",") ? "s" : ""}</span><code>${esc(bcShown || "–")}</code>
       </div>
       <div class="pills">${isOos(r) ? `<span class="pl down">Out of stock</span>` : `<span class="pl warn">WoC ${w == null ? "–" : w.toFixed(1)} wk</span>`}${r.os > 0 ? `<span class="pl up">${Math.round(r.os)} in shipment</span>` : r.oq > 0 ? `<span class="pl">${Math.round(r.oq)} on order</span>` : r.pq > 0 ? `<span class="pl" title="Open qty on POs still in draft / pending approval">${Math.round(r.pq)} on pending PO</span>` : ""}<span class="pl ${r.lv ? "up" : "down"}">${r.lv ? "Live" : "Not live"}</span><span class="pl" title="Beauty season">${esc(r.sn || "unassigned")}</span>${r.lv && r.ag != null ? `<span class="pl" title="Current age of the live config (ageing_cost, sku_config_ageing_in_months / sku_config_ageing_detailed, latest day)">Age ${Math.round(r.ag)} mo · ${esc((r.ab || "").replace(/^[a-z]\./, ""))} days</span>` : ""}${S.c === 0 ? `<span class="pl ${r.cb ? "up" : ""}">${r.cb ? "CB to KSA" : "Not CB"}</span>` : ""}<span class="pl">${r.lm} live day${r.lm === 1 ? "" : "s"} MTD</span></div>
       <div class="kv">

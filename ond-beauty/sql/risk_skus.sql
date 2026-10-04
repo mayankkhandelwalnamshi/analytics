@@ -18,6 +18,7 @@
 --   st / sc = stock_net of live Namshi retail listings (partner 3001) on {TO} from the country's own / the other warehouse
 --   (sc = CB stock for KSA); live = any live listing with stock; cb = KSA listing live from the UAE warehouse;
 --   op / np = offer / normal price of the live listing with the most stock (else the primary listing);
+--   (supplier SKU / barcode per config on the cards: sql/risk_skus_cfg.sql, MAX(supplier_sku) per sku_config)
 --   cfgs = the product's sku_configs with 1 when live in the country on {TO};  oos = OOS GMV loss MTD
 WITH season AS (
   SELECT sku_config, MAX(LOWER(season_tag)) AS beauty_season
