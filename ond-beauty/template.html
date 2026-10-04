@@ -140,9 +140,44 @@ h3.sec:first-child { margin-top: 0; }
 .tile .tn { font-size: 11.5px; color: var(--muted); margin: -6px 0 8px; }
 .tile .tl { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12.5px; color: var(--fg-2); white-space: nowrap; }
 .tile .tl .chip { font-size: 12px; padding: 3px 8px; border-radius: 7px; font-weight: 600; }
-body[data-tab="mtd"] .tonly, body[data-tab="sku"] .tonly, body[data-tab="sku"] .nosku { display: none !important; }
+body[data-tab="mtd"] .tonly, body[data-tab="rca"] .tonly, body[data-tab="sku"] .tonly, body[data-tab="sku"] .nosku { display: none !important; }
 body:not([data-tab="mtd"]) .mtd { display: none; }
 body:not([data-tab="sku"]) .skus { display: none; }
+body:not([data-tab="rca"]) .rca { display: none; }
+.rca { margin-top: 18px; display: grid; gap: 14px; }
+.rca .rp { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; min-width: 0; }
+.rca .mh { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 16px; align-items: flex-start; padding-bottom: 12px; }
+.rca h2 { margin: 0; font-size: 16px; } .rca h3 { margin: 0 0 4px; font-size: 14px; }
+.rca .mctl { display: flex; flex-wrap: wrap; gap: 8px; } .rca .seg { flex-wrap: wrap; }
+.rca .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 14px; }
+.rca .tiles { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.rca .tile .tv { font-size: 24px; margin: 4px 0 8px; }
+.rca .tile .tl { flex-wrap: wrap; white-space: normal; gap: 4px; }
+.rca .bars { display: grid; gap: 10px; margin-top: 14px; }
+.rca .br { display: grid; grid-template-columns: 96px 1fr 112px; gap: 10px; align-items: center; font-size: 13px; }
+.rca .br.tot { border-top: 1px solid var(--line); padding-top: 10px; font-weight: 600; }
+.rca .bt { position: relative; height: 18px; background: linear-gradient(var(--line), var(--line)) 50% 0 / 1px 100% no-repeat; }
+.rca .bt i { position: absolute; top: 2px; bottom: 2px; border-radius: 4px; min-width: 2px; }
+.rca .bt i.pos { background: var(--good); } .rca .bt i.neg { background: var(--bad); }
+.rca .bv { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 12.5px; }
+.rca .bv small { display: block; color: var(--muted); font-size: 11px; }
+.rca .up { color: var(--good); } .rca .down { color: var(--bad); }
+.rca .chip.up { color: var(--good); } .rca .chip.down { color: var(--bad); }
+.rca .fnd { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; font-size: 13px; line-height: 1.45; }
+.rca .fnd li { display: grid; grid-template-columns: 20px 1fr; gap: 6px; }
+.rca .fnd i { font-style: normal; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; margin-top: 1px; background: var(--flat-bg); color: var(--fg-2); }
+.rca .fnd .good i { background: var(--good-bg); color: var(--good); } .rca .fnd .bad i { background: var(--bad-bg); color: var(--bad); }
+.rca .fnd .warn i { background: var(--warn-bg); color: var(--warn); }
+.rca h4.wk { margin: 0 0 8px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+.rca .wl { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.rca .wl li { border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; display: grid; gap: 5px; font-size: 13px; min-width: 0; }
+.rca .wl .rh { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.rca .wl .rh b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
+.rca .wl .rh > span:nth-child(2) { font-family: var(--mono); font-weight: 600; }
+.rca .wl .why { font-size: 12px; color: var(--fg-2); } .rca .wl .ef { display: flex; flex-wrap: wrap; gap: 4px; }
+.rca .mf { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; padding: 8px 14px 4px; }
+.rca .mt thead tr:nth-child(2) th { cursor: default; }
+@media (max-width: 560px) { .rca .br { grid-template-columns: 78px 1fr 92px; } }
 .skus { margin-top: 18px; }
 .skus .sh { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 16px; align-items: flex-start; margin-bottom: 14px; }
 .skus h2 { margin: 0; font-size: 16px; }
@@ -292,6 +327,7 @@ details.gloss { margin-top: 12px; }
     <button role="tab" aria-selected="true" id="tab-trend" data-tab="trend">Daily trend</button>
     <button role="tab" aria-selected="false" id="tab-mtd" data-tab="mtd">MTD performance</button>
     <button role="tab" aria-selected="false" id="tab-sku" data-tab="sku">Risk SKUs</button>
+    <button role="tab" aria-selected="false" id="tab-rca" data-tab="rca">RCA</button>
   </nav>
   <div class="bar">
     <div class="filters" id="filters">
@@ -342,6 +378,8 @@ details.gloss { margin-top: 12px; }
   <section class="mtd" id="mtd" aria-label="MTD performance by cut"></section>
 
   <section class="skus" id="skus" aria-label="Retail SKUs at risk"></section>
+
+  <section class="rca" id="rca" aria-label="Root cause analysis of MTD GMV"></section>
 
   <section class="grid tonly" id="grid"><p class="loading">Loading Beauty sales data…</p></section>
 
@@ -708,10 +746,10 @@ const chip = (lbl, dl) => `<span class="chip ${dl ? dl.cls : ""}" title="vs ${lb
 const state = { region: "ALL", align: "lfl", range: "td", view: "daily", hide: [], zoom: null, expand: null, f: Object.fromEntries(DIMS.map(dm => [dm.key, []])),
   drill: { date: null, period: "day", dim: "cat", sort: "gmv" },
   sku: { c: null, sort: "rk", q: "", n: 60, risk: "all" },
-  tab: "trend", mtd: { cut: "cat", period: null, groups: ["sales", "traffic", "assort", "health"], sort: "gmv:v", dir: -1, all: false, v: 2 } };
+  tab: "trend", rca: { period: null, cut: "cat", all: false }, mtd: { cut: "cat", period: null, groups: ["sales", "traffic", "assort", "health"], sort: "gmv:v", dir: -1, all: false, v: 2 } };
 try {
   const sv = JSON.parse(localStorage.getItem("ondBeauty") || "{}");
-  Object.assign(state, sv, { f: Object.assign(state.f, sv.f || {}), drill: Object.assign(state.drill, sv.drill || {}), mtd: Object.assign(state.mtd, sv.mtd || {}), sku: Object.assign(state.sku, sv.sku || {}, { n: 60 }), zoom: null });
+  Object.assign(state, sv, { f: Object.assign(state.f, sv.f || {}), drill: Object.assign(state.drill, sv.drill || {}), mtd: Object.assign(state.mtd, sv.mtd || {}), sku: Object.assign(state.sku, sv.sku || {}, { n: 60 }), rca: Object.assign(state.rca, sv.rca || {}), zoom: null });
 } catch (e) {}
 for (const dm of DIMS) state.f[dm.key] = (state.f[dm.key] || []).filter(v => META.names[dm.key].includes(v));
 if (!["lfl", "date"].includes(state.align)) state.align = "lfl";
@@ -895,6 +933,7 @@ function render() {
   document.querySelectorAll("nav.tabs button").forEach(bt => bt.setAttribute("aria-selected", bt.dataset.tab === state.tab));
   if (state.tab === "mtd") { renderMtd(); return; }
   if (state.tab === "sku") { renderSkus(); return; }
+  if (state.tab === "rca") { renderRca(); return; }
   const zb = document.getElementById("zoominfo");
   zb.hidden = !state.zoom;
   if (state.zoom) zb.querySelector("span").textContent = `Zoomed to ${fmtD(state.zoom[0])} – ${fmtD(state.zoom[1])}`;
@@ -1216,6 +1255,189 @@ document.getElementById("mtd").addEventListener("input", e => {
   if (e.target.id !== "mq") return;
   state.mtd.q = e.target.value; const pos = e.target.selectionStart; renderMtd();
   const q = document.getElementById("mq"); q.focus(); q.setSelectionRange(pos, pos);
+});
+
+// ---------- RCA: why GMV is up or down vs LY for the period (built from the MTD engine, no extra data) ----------
+// GMV = glance views x conversion (units / GV) x ASP; the change vs LY is split into the three with a log-mean (LMDI)
+// weight so the effects add up exactly to the GMV change. Without traffic the split is units (volume) x ASP.
+const RCA_CUTS = ["country", "cat", "sub", "brand", "bm", "btype", "bgroup", "season"];
+const RCA_EFF = { tr: "Traffic", cv: "Conversion", vol: "Volume", asp: "ASP" };
+const rcaLow = k => k === "asp" ? "ASP" : RCA_EFF[k].toLowerCase();
+let RCA_CACHE = new Map();
+function rcaData(cut, P) {
+  const k = JSON.stringify([cut, P, state.f, state.region, state.align]);
+  if (!RCA_CACHE.has(k)) { if (RCA_CACHE.size > 16) RCA_CACHE = new Map(); RCA_CACHE.set(k, mtdCompute(cut, P)); }
+  return RCA_CACHE.get(k);
+}
+const lmean = (a, b) => Math.abs(a - b) < 1e-9 ? a : (a - b) / (Math.log(a) - Math.log(b));
+function rcaRow(name, a, R, t) {
+  const g = i => a[i], l = i => a[NF + i];
+  const G0 = g(I.gmv), G1 = l(I.gmv), U0 = g(I.u), U1 = l(I.u), V0 = g(I.gv), V1 = l(I.gv);
+  const o = { name, G0, G1, dG: G0 - G1, pct: G1 > 0 ? G0 / G1 - 1 : null, t, kind: G1 <= 0 && G0 > 0 ? "new" : G1 > 0 && G0 <= 0 ? "lost" : "" };
+  if (G0 > 0 && G1 > 0 && U0 > 0 && U1 > 0) {
+    const w = lmean(G0, G1);
+    o.asp = w * Math.log((G0 / U0) / (G1 / U1));
+    if (V0 > 0 && V1 > 0) { o.tr = w * Math.log(V0 / V1); o.cv = w * Math.log((U0 / V0) / (U1 / V1)); }
+    else o.vol = w * Math.log(U0 / U1);
+  }
+  const effs = ["tr", "cv", "vol", "asp"].filter(k => o[k] != null);
+  // main driver: the largest effect pushing in the direction of the change
+  o.main = effs.length ? effs.reduce((b, k) => (Math.sign(o[k]) === Math.sign(o.dG) && Math.abs(o[k]) > Math.abs(o[b] ?? 0) ? k : b), null) : null;
+  o.gvp = V1 > 0 ? V0 / V1 - 1 : null; o.ucr = V0 > 0 && V1 > 0 ? U0 / V0 - U1 / V1 : null; o.ucr0 = V0 > 0 ? U0 / V0 : null;
+  o.up = U1 > 0 ? U0 / U1 - 1 : null; o.aspp = U0 > 0 && U1 > 0 ? (G0 / U0) / (G1 / U1) - 1 : null;
+  o.mkd = g(I.np) && l(I.np) ? g(I.mkd) / g(I.np) - l(I.mkd) / l(I.np) : null;
+  o.pc1 = g(I.rev) && l(I.rev) ? g(I.pc1) / g(I.rev) - l(I.pc1) / l(I.rev) : null;
+  o.la0 = g(I.la); o.la = l(I.la) ? g(I.la) / l(I.la) - 1 : null;
+  if (R.W[0].cover) { o.oosA = g(I.oos); o.oos0 = g(I.gmvo) ? g(I.oos) / g(I.gmvo) : null; }
+  if (R.W[0].cover && R.W[1].cover && o.oos0 != null && l(I.gmvo)) o.oosd = o.oos0 - l(I.oos) / l(I.gmvo);
+  o.woc = g(I.ur30) ? g(I.st) / (g(I.ur30) / 30 * 7) : null;
+  o.vt = t ? G0 / t - 1 : null;
+  return o;
+}
+function rcaRows(R) {
+  return [...R.rows.entries()].filter(([n]) => !PLACEHOLDER.has(n))
+    .map(([n, a]) => rcaRow(n, a, R, R.tgt?.by ? (R.tgt.by.get(n) ?? null) : null)).filter(o => o.G0 || o.G1);
+}
+function renderRca() {
+  const box = document.getElementById("rca"), S = state.rca, periods = mtdPeriods(), G = METRICS[0];
+  if (!periods.some(p => p.id === S.period)) S.period = periods.filter(p => p.id !== "ond").pop().id;
+  if (!RCA_CUTS.includes(S.cut)) S.cut = "cat";
+  const P = periods.find(p => p.id === S.period);
+  const RT = rcaData("country", P), T = rcaRow("Total", RT.tot, RT, RT.tgt ? RT.tgt.total : null);
+  const RC = rcaData("cat", P), RB = rcaData("brand", P), RX = rcaData(S.cut, P);
+  const cats = rcaRows(RC), brands = rcaRows(RB), rows = rcaRows(RX), ctry = rcaRows(RT);
+  const lyG = T.G1 || 0, cutL = CUTS.find(c => c.key === S.cut).label;
+  const aed = v => v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "") + fmt(G, Math.abs(v), true);
+  const pc = (v, d = 1) => v == null || !isFinite(v) ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v * 100).toFixed(d) + "%";
+  const pp = (v, d = 1) => v == null || !isFinite(v) ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v * 100).toFixed(d) + "pp";
+  const cls = (v, lowerBetter) => v == null || Math.abs(v) < 1e-9 ? "" : (v > 0) !== !!lowerBetter ? "up" : "down";
+  const contrib = o => lyG ? o.dG / lyG : null;
+  const effTxt = o => ["tr", "cv", "vol", "asp"].filter(k => o[k] != null).map(k => `<span class="chip ${cls(o[k])}" title="${RCA_EFF[k]} effect on GMV vs LY">${RCA_EFF[k]} ${aed(o[k])}</span>`).join(" ");
+  const why = o => {
+    if (o.kind === "new") return "new vs LY (no LY GMV)";
+    if (o.kind === "lost") return "no GMV this period";
+    const bits = [];
+    if (o.gvp != null) bits.push(`views ${pc(o.gvp, 0)}`);
+    if (o.ucr != null) bits.push(`conversion ${pp(o.ucr, 2)}`);
+    if (o.gvp == null && o.up != null) bits.push(`units ${pc(o.up, 0)}`);
+    if (o.aspp != null) bits.push(`ASP ${pc(o.aspp, 0)}`);
+    return (o.main ? `<b>${rcaLow(o.main)}-led</b> · ` : "") + bits.join(" · ");
+  };
+  const flags = o => {
+    const f = [];
+    if (o.oosd != null && o.oosd > 0.005 && o.oosA > 1000) f.push(["down", `OOS loss ${(o.oos0 * 100).toFixed(1)}% of GMV (${pp(o.oosd)})`]);
+    if (o.la != null && Math.abs(o.la) >= 0.1) f.push([o.la < 0 ? "down" : "up", `assortment ${pc(o.la, 0)}`]);
+    if (o.mkd != null && Math.abs(o.mkd) >= 0.03) f.push(["", `markdown ${pp(o.mkd)}`]);
+    if (o.woc != null && o.woc < 4 && o.G0 > 0) f.push(["down", `WoC ${o.woc.toFixed(1)} wk`]);
+    if (o.vt != null) f.push([o.vt >= 0 ? "up" : "down", `vs target ${pc(o.vt, 0)}`]);
+    return f.map(([c, t]) => `<span class="chip ${c}">${t}</span>`).join(" ");
+  };
+  const names = (L, n) => L.slice(0, n).map(o => `<b>${esc(o.name)}</b> (${aed(o.dG)})`).join(", ");
+  const by = (L, k, dir = -1) => L.filter(o => o[k] != null && isFinite(o[k])).sort((a, b) => dir * (a[k] - b[k]));
+
+  // ---- findings: plain-language bullets, most material first ----
+  const F = [];   // [severity good|bad|warn|info, html]
+  const dir = T.dG >= 0 ? "up" : "down";
+  const effs = ["tr", "cv", "vol", "asp"].filter(k => T[k] != null);
+  F.push([T.dG >= 0 ? "good" : "bad", `GMV is <b>${dir} ${T.pct == null ? "" : Math.abs(T.pct * 100).toFixed(1) + "%"}</b> vs LY (${aed(T.dG)}${T.vt != null ? `; ${pc(T.vt)} vs target` : ""}${T.G1 ? `; ${pc(T.G0 / (T.G1 * 1.25) - 1)} vs Krithi tgt` : ""}). `
+    + (effs.length ? `Split of the change: ${effs.map(k => `${rcaLow(k)} ${aed(T[k])}`).join(", ")}.` : "")]);
+  if (T.tr != null && T.cv != null) {
+    const s = (T.tr >= 0 ? "more" : "fewer") + " product views (" + pc(T.gvp, 1) + ")", c = (T.cv >= 0 ? "better" : "weaker") + " conversion (" + pp(T.ucr, 2) + " units per GV)";
+    F.push([T.tr + T.cv >= 0 ? "info" : "warn", `Demand: ${s} with ${c}${Math.sign(T.tr) !== Math.sign(T.cv) ? " — the two pull in opposite directions" : ""}. ASP ${pc(T.aspp)}${T.mkd != null ? ` with markdown ${pp(T.mkd)}` : ""}.`]);
+  }
+  const up = rows => by(rows.filter(o => o.dG > 0), "dG", -1), dn = rows => by(rows.filter(o => o.dG < 0), "dG", 1);
+  if (ctry.length > 1) F.push(["info", `By country: ${by(ctry, "dG", -1).map(o => `<b>${esc(o.name)}</b> ${aed(o.dG)} (${pc(o.pct, 0)})`).join(" · ")}.`]);
+  const cu = up(cats), cd = dn(cats), bu = up(brands), bd = dn(brands);
+  if (cu.length) F.push(["good", `Working — categories: ${cu.slice(0, 3).map(o => `<b>${esc(o.name)}</b> ${aed(o.dG)}${o.main ? ` (${rcaLow(o.main)})` : ""}`).join(", ")}.`]);
+  if (cd.length) F.push(["bad", `Not working — categories: ${cd.slice(0, 3).map(o => `<b>${esc(o.name)}</b> ${aed(o.dG)}${o.main ? ` (${rcaLow(o.main)})` : ""}`).join(", ")}.`]);
+  if (bu.length) F.push(["good", `Brands driving growth: ${names(bu, 5)}.`]);
+  if (bd.length) F.push(["bad", `Brands dragging: ${names(bd, 5)}.`]);
+  // issues
+  const conv = brands.filter(o => o.tr > 0 && o.cv < 0 && o.G1 > lyG * 0.003).sort((a, b) => a.cv - b.cv);
+  if (conv.length) F.push(["warn", `Traffic up but not converting: ${conv.slice(0, 4).map(o => `<b>${esc(o.name)}</b> (views ${pc(o.gvp, 0)}, conversion effect ${aed(o.cv)})`).join(", ")} — check price, content, availability of top sizes / shades.`]);
+  const trl = brands.filter(o => o.tr < 0 && o.G1 > lyG * 0.003).sort((a, b) => a.tr - b.tr);
+  if (trl.length) F.push(["warn", `Losing visibility (traffic effect): ${trl.slice(0, 4).map(o => `<b>${esc(o.name)}</b> ${aed(o.tr)} (views ${pc(o.gvp, 0)})`).join(", ")} — check ranking, campaigns and assortment depth.`]);
+  if (T.oos0 != null) {
+    const top = by(brands.filter(o => o.oosA > 0), "oosA", -1);
+    F.push([T.oosd != null && T.oosd > 0.002 ? "bad" : "info", `Stock-outs cost ${fmt(G, T.oosA, true)} AED (${(T.oos0 * 100).toFixed(1)}% of KSA + UAE GMV${T.oosd != null ? `, ${pp(T.oosd)} vs LY` : ""}). Largest OOS loss: ${top.slice(0, 4).map(o => `<b>${esc(o.name)}</b> ${fmt(G, o.oosA, true)}`).join(", ")}.`]);
+  }
+  if (T.la != null) {
+    const cl = by(cats.filter(o => o.la != null && o.la < -0.05 && o.dG < 0), "la", 1);
+    F.push([T.la < -0.03 ? "warn" : "info", `Live assortment ${pc(T.la)} vs LY (${Math.round(T.la0).toLocaleString("en-US")} supplier SKUs live)${cl.length ? `; shrinking where GMV is down: ${cl.slice(0, 3).map(o => `<b>${esc(o.name)}</b> ${pc(o.la, 0)}`).join(", ")}` : ""}.`]);
+  }
+  if (T.mkd != null && Math.abs(T.mkd) >= 0.01) F.push([T.mkd > 0 ? "warn" : "info", `Markdown ${pp(T.mkd)} vs LY${T.pc1 != null ? `; PC1 ${pp(T.pc1)}` : ""} — ${T.mkd > 0 ? (T.aspp < 0 ? "growth is partly bought with discount (ASP down)" : "deeper discount without an ASP drop (mix to premium)") : "less discount" + (T.cv < 0 ? ", which may be weighing on conversion" : "")}.`]);
+  else if (T.pc1 != null && Math.abs(T.pc1) >= 0.01) F.push([T.pc1 > 0 ? "good" : "warn", `PC1 ${pp(T.pc1)} vs LY.`]);
+  const low = cats.filter(o => o.woc != null && o.woc < 4 && o.G0 > T.G0 * 0.02), high = cats.filter(o => o.woc != null && o.woc > 26 && o.G0 > T.G0 * 0.02);
+  if (low.length) F.push(["warn", `Low cover (retail WoC &lt; 4 weeks): ${low.map(o => `<b>${esc(o.name)}</b> ${o.woc.toFixed(1)} wk`).join(", ")} — stock-out risk, see the Risk SKUs tab.`]);
+  if (high.length) F.push(["info", `High cover (WoC &gt; 26 weeks): ${high.map(o => `<b>${esc(o.name)}</b> ${o.woc.toFixed(1)} wk`).join(", ")} — room to push sell-through.`]);
+  const gap = brands.filter(o => o.t > 0 && o.G0 < o.t).sort((a, b) => (a.G0 - a.t) - (b.G0 - b.t));
+  if (gap.length) F.push(["bad", `Biggest gaps to target: ${gap.slice(0, 5).map(o => `<b>${esc(o.name)}</b> ${aed(o.G0 - o.t)} (${pc(o.vt, 0)})`).join(", ")}.`]);
+  const lost = brands.filter(o => o.kind === "lost" && o.G1 > lyG * 0.002).sort((a, b) => b.G1 - a.G1), nw = brands.filter(o => o.kind === "new").sort((a, b) => b.G0 - a.G0);
+  if (lost.length) F.push(["bad", `Brands with LY sales but none this period: ${lost.slice(0, 5).map(o => `<b>${esc(o.name)}</b> (LY ${fmt(G, o.G1, true)})`).join(", ")}.`]);
+  if (nw.length) F.push(["good", `New since LY: ${nw.slice(0, 5).map(o => `<b>${esc(o.name)}</b> ${fmt(G, o.G0, true)}`).join(", ")}.`]);
+
+  // ---- tiles ----
+  const tile = (h, v, sub, chips) => `<div class="tile"><h3>${h}</h3><div class="tv">${v}</div>${sub ? `<div class="tn">${sub}</div>` : ""}<div class="tl">${chips}</div></div>`;
+  const ch = (l, v, txt, lowerBetter) => `<span class="chip ${cls(v, lowerBetter)}">${l} ${txt}</span>`;
+  const a0 = RT.tot, a1 = RT.tot.subarray(NF, 2 * NF);
+  const tiles = [
+    tile("GMV", fmt(G, T.G0, true), `LY ${fmt(G, T.G1, true)}`, ch("vs LY", T.pct, pc(T.pct)) + (T.vt != null ? ch("vs Tgt", T.vt, pc(T.vt)) : "")),
+    tile("Glance views", fmt({ kind: "cnt" }, a0[I.gv], true), RT.tp.exact ? "" : "≈ traffic not split by every filter", ch("vs LY", T.gvp, pc(T.gvp))),
+    tile("Conversion", T.ucr0 == null ? "–" : (T.ucr0 * 100).toFixed(2) + "%", "units ÷ glance views", ch("vs LY", T.ucr, pp(T.ucr, 2))),
+    tile("ASP", fmt({ kind: "aed2" }, a0[I.u] ? a0[I.gmv] / a0[I.u] : null), "AED", ch("vs LY", T.aspp, pc(T.aspp))),
+    tile("Units", fmt({ kind: "int" }, a0[I.u], true), "", ch("vs LY", T.up, pc(T.up))),
+    tile("OOS loss / GMV", T.oos0 == null ? "–" : (T.oos0 * 100).toFixed(1) + "%", T.oosA != null ? `${fmt(G, T.oosA, true)} AED` : "", T.oosd != null ? ch("vs LY", T.oosd, pp(T.oosd), true) : ""),
+    tile("Live assortment", T.la0 ? Math.round(T.la0).toLocaleString("en-US") : "–", "supplier SKUs", ch("vs LY", T.la, pc(T.la))),
+    tile("Markdown", a0[I.np] ? (a0[I.mkd] / a0[I.np] * 100).toFixed(1) + "%" : "–", "", ch("vs LY", T.mkd, pp(T.mkd), true)),
+    tile("PC1", a0[I.rev] ? (a0[I.pc1] / a0[I.rev] * 100).toFixed(1) + "%" : "–", "", ch("vs LY", T.pc1, pp(T.pc1))),
+  ].join("");
+
+  // ---- GMV change split (diverging bars around zero) ----
+  const parts = [...effs.map(k => [RCA_EFF[k], T[k], `${RCA_EFF[k]} effect: ${k === "tr" ? "change in glance views" : k === "cv" ? "change in units per glance view" : k === "vol" ? "change in units" : "change in GMV per unit"}, valued at LY→TY GMV`]), ["Total change", T.dG, "TY GMV − LY GMV"]];
+  const mx = Math.max(1, ...parts.map(p => Math.abs(p[1] || 0)));
+  const bars = parts.map(([l, v, tt], i) => { const w = Math.abs(v || 0) / mx * 50;
+    return `<div class="br${i === parts.length - 1 ? " tot" : ""}" title="${esc(tt)}: ${aed(v)} AED${lyG ? ` (${pp((v || 0) / lyG, 1)} of LY GMV)` : ""}"><span class="bl">${l}</span><span class="bt"><i class="${v >= 0 ? "pos" : "neg"}" style="${v >= 0 ? "left:50%" : `left:${50 - w}%`};width:${w}%"></i></span><span class="bv ${cls(v)}">${aed(v)}<small>${lyG ? pp((v || 0) / lyG, 1) : ""}</small></span></div>`; }).join("");
+
+  // ---- working / not working for the chosen cut ----
+  const item = o => `<li><div class="rh"><b title="${esc(o.name)}">${esc(o.name)}</b><span class="${cls(o.dG)}">${aed(o.dG)}</span><span class="fsum">${o.pct == null ? (o.kind === "new" ? "new" : "") : pc(o.pct, 0)} · ${pp(contrib(o), 2)}</span></div>
+    <div class="why">${why(o)}</div><div class="ef">${effTxt(o)} ${flags(o)}</div></li>`;
+  const W = up(rows).slice(0, 8), N = dn(rows).slice(0, 8);
+  // ---- driver table ----
+  const tbl = by(rows, "dG", -1).sort((a, b) => Math.abs(b.dG) - Math.abs(a.dG)), shown = S.all ? tbl : tbl.slice(0, 25);
+  const td = (v, c = "") => `<td class="${c}">${v}</td>`;
+  const trow = (o, c = "") => `<tr class="${c}"><td title="${esc(o.name)}">${esc(o.name)}</td>${td(fmt(G, o.G0, true))}${td(fmt(G, o.G1, true))}${td(`<span class="${cls(o.dG)}">${aed(o.dG)}</span>`)}${td(`<span class="${cls(o.pct)}">${pc(o.pct)}</span>`)}${td(`<span class="${cls(contrib(o))}">${pp(contrib(o), 2)}</span>`)}`
+    + `${td(`<span class="${cls(o.tr ?? o.vol)}">${aed(o.tr ?? o.vol)}</span>`, "g0")}${td(`<span class="${cls(o.cv)}">${aed(o.cv)}</span>`)}${td(`<span class="${cls(o.asp)}">${aed(o.asp)}</span>`)}${td(o.main ? RCA_EFF[o.main] : o.kind || "–")}`
+    + `${td(`<span class="${cls(o.gvp)}">${pc(o.gvp)}</span>`, "g0")}${td(`<span class="${cls(o.ucr)}">${pp(o.ucr, 2)}</span>`)}${td(`<span class="${cls(o.aspp)}">${pc(o.aspp)}</span>`)}${td(pp(o.mkd))}`
+    + `${td(o.oos0 == null ? "–" : (o.oos0 * 100).toFixed(1) + "%", "g0")}${td(`<span class="${cls(o.oosd, true)}">${pp(o.oosd)}</span>`)}${td(`<span class="${cls(o.la)}">${pc(o.la)}</span>`)}${td(o.woc == null ? "–" : o.woc.toFixed(1))}${td(`<span class="${cls(o.vt)}">${pc(o.vt)}</span>`, "g0")}</tr>`;
+  const seg = (k, opts, cur) => `<div class="seg" data-k="${k}">${opts.map(o => `<button data-v="${o.v}" aria-pressed="${o.v === cur}">${o.l}</button>`).join("")}</div>`;
+  const ly = shift(P.from, 1, state.align), lyE = shift(P.to, 1, state.align);
+  const ic = { good: "▲", bad: "▼", warn: "!", info: "•" };
+  box.innerHTML = `<div class="rp"><div class="mh">
+      <div><h2>Why is ${P.id === "ond" ? "OND to date" : MON[+P.from.slice(5, 7) - 1] + " MTD"} GMV ${dir} ${T.pct == null ? "" : Math.abs(T.pct * 100).toFixed(1) + "%"} vs LY?</h2>
+        <p class="fsum">${fmtD(P.from)} – ${fmtD(P.to)} 2026 vs LY ${fmtD(ly)} – ${fmtD(lyE)} ${ly.slice(0, 4)} (${state.align === "lfl" ? "LFL dates" : "same dates"}) · ${{ ALL: "Overall", KSA: "KSA", UAE: "UAE" }[state.region]}${filtered() ? " · filtered" : ""} · auto-generated from the dashboard data; follows the filters above</p></div>
+      <div class="mctl">${seg("period", periods.map(p => ({ v: p.id, l: p.label })), S.period)}</div></div>
+    <div class="tiles">${tiles}</div></div>
+    <div class="two">
+      <div class="rp"><h3>What changed GMV vs LY</h3><p class="fsum">GMV = glance views × conversion (units per view) × ASP. Each bar is that factor's share of the AED change; they add up to the total.</p><div class="bars">${bars}</div></div>
+      <div class="rp"><h3>What the data says</h3><ul class="fnd">${F.map(([s, h]) => `<li class="${s}"><i>${ic[s]}</i><span>${h}</span></li>`).join("")}</ul></div>
+    </div>
+    <div class="rp"><div class="mh" style="padding:0 0 10px"><h3 style="margin:0">Working / not working by ${cutL.toLowerCase()}</h3><div class="mctl">${seg("cut", RCA_CUTS.map(k => ({ v: k, l: CUTS.find(c => c.key === k).label })), S.cut)}</div></div>
+      ${RX.tp.exact ? "" : `<p class="fsum">≈ Traffic is kept by brand or by business model / season, so some filters are not applied to traffic in this cut.</p>`}
+      <div class="two"><div><h4 class="wk up">Working · biggest gains vs LY</h4><ul class="wl">${W.map(item).join("") || "<li>No row is up vs LY.</li>"}</ul></div>
+        <div><h4 class="wk down">Not working · biggest drops vs LY</h4><ul class="wl">${N.map(item).join("") || "<li>No row is down vs LY.</li>"}</ul></div></div></div>
+    <div class="rp" style="padding:14px 0 6px"><div class="mh" style="padding:0 14px 10px"><h3 style="margin:0">Driver table by ${cutL.toLowerCase()}</h3><span class="fsum">sorted by size of the GMV change · AED effects add up to Δ vs LY</span></div>
+      <div class="mtscroll"><table class="mt"><thead><tr><th></th><th class="g0" colspan="5">GMV</th><th class="g0" colspan="4">GMV change split (AED)</th><th class="g0" colspan="4">Demand &amp; price</th><th class="g0" colspan="4">Availability</th><th class="g0">Plan</th></tr>
+        <tr><th>${cutL}</th><th>MTD</th><th>LY</th><th>Δ vs LY</th><th>vs LY</th><th>Contrib.</th><th class="g0">${T.tr != null ? "Traffic" : "Volume"}</th><th>Conversion</th><th>ASP</th><th>Main driver</th><th class="g0">Views</th><th>Conv.</th><th>ASP</th><th>MKD</th><th class="g0">OOS / GMV</th><th>OOS Δ</th><th>Assort.</th><th>WoC</th><th class="g0">vs Tgt</th></tr></thead>
+        <tbody>${trow(T, "tot")}${shown.map(trow).join("")}</tbody></table></div>
+      <div class="mf"><span class="fsum">${tbl.length > 25 ? `${shown.length} of ${tbl.length} · <button class="lnk" id="rall">${S.all ? "Show top 25" : "Show all"}</button>` : `${tbl.length} rows`}</span><span class="fsum">Views / conversion / ASP / assortment = % or pp vs LY · MKD, OOS Δ in pp · WoC = retail weeks of cover now</span></div></div>`;
+}
+document.getElementById("rca").addEventListener("click", e => {
+  const S = state.rca, bt = e.target.closest("button");
+  if (!bt) return;
+  if (bt.id === "rall") S.all = !S.all;
+  else if (bt.parentElement?.dataset.k) { S[bt.parentElement.dataset.k] = bt.dataset.v; S.all = false; }
+  else return;
+  save(); renderRca();
 });
 
 // ---------- Risk SKUs: retail supplier SKUs out of stock or with WoC <= 3, top 500 per country by GMV since 1 Jul (sql/risk_skus.sql) ----------
