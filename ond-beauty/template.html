@@ -234,6 +234,15 @@ body:not([data-tab="rca"]) .rca { display: none; }
 .mt tr.tot td { font-weight: 700; background: var(--flat-bg); }
 .mt tr.tot td:first-child { background: var(--flat-bg); }
 .mt td.na { color: var(--muted); }
+.mtd .crumbs { padding: 0 14px 10px; font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.mtd .crumbs b { color: var(--accent); }
+.mt td .dn { font: inherit; font-weight: 600; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mt td .dn:hover { color: var(--accent); text-decoration: underline; }
+.dmenu { position: absolute; z-index: 50; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px; box-shadow: 0 8px 24px rgba(0,0,0,.18); display: grid; min-width: 180px; }
+.dmenu .dmh { font-size: 11px; color: var(--muted); padding: 4px 8px 6px; text-transform: uppercase; letter-spacing: .05em; }
+.dmenu .dmh b { color: var(--fg); text-transform: none; letter-spacing: 0; }
+.dmenu button { font: inherit; font-size: 13px; text-align: left; background: none; border: 0; color: var(--fg); padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+.dmenu button:hover, .dmenu button:focus-visible { background: var(--accent-soft); color: var(--accent); }
 .mtd .mf { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; padding: 8px 14px 4px; }
 .drill { margin-top: 18px; background: var(--surface); border: 1px solid var(--accent); border-radius: 10px; padding: 14px; min-width: 0; }
 .dh { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 16px; align-items: flex-start; margin-bottom: 10px; }
@@ -629,6 +638,7 @@ const GLOSS = {
   nwsh: "New assortment ÷ live assortment. TY: activated since 1 Jul 2026; LY: since 1 Jul 2025 up to the LY day.",
 };
 const GLOSS_TERMS = [
+  ["Drill-down (MTD performance)", "Click any row name to break it down by another cut, e.g. Country: UAE → Brand POC: Sammy → by brand, from any level to any level. Each step pins that row (country, cohort or any filter dimension) on top of the filters above; the Total row is then the drilled slice, so the rows explain its change vs LY (Contrib. vs LY adds up to the slice's % change). The breadcrumb steps back to any level; ✕ clear returns to the full view."],
   ["Cohort", "LFL cohort of each date from the LFL mapping table (MS, BAU 1, BAU 2, PD, Pre 11.11, 11.11 Day, Post 11.11, Black Friday Week / Pre / Day / Post / Ext). The Cohort cut sums the period's TY dates in each cohort and compares them with their own LFL LY / LLY dates, so a cohort row is like-for-like. The same cohort in different months (e.g. MS) adds up in OND to date. Stock-type metrics (assortment, stock, inventory, WoC, health) show on the cohort of the period's last day only."],
   ["TY / LY / LLY", "This year (2026), last year (2025) and the year before (2024)."],
   ["LFL date", "Like-for-like date from the LFL mapping (e.g. Black Friday vs Black Friday). “Same date” compares the same calendar date."],
@@ -673,7 +683,7 @@ function shift(s, years, mode) {
 function range(a, b) { const out = []; for (let t = toT(a); t <= toT(b); t += DAY) out.push(toS(t)); return out; }
 
 // ---------- aggregation ----------
-const RIDX = { KSA: [0], UAE: [1], ALL: [0, 1, 2] };
+const RIDX = { KSA: [0], UAE: [1], GCC: [2], ALL: [0, 1, 2] };
 function agg(d, region) {
   const di = DIDX[d]; if (di == null) return null;
   const acc = new Array(NF).fill(0);
@@ -747,7 +757,7 @@ const chip = (lbl, dl) => `<span class="chip ${dl ? dl.cls : ""}" title="vs ${lb
 const state = { region: "ALL", align: "lfl", range: "td", view: "daily", hide: [], zoom: null, expand: null, f: Object.fromEntries(DIMS.map(dm => [dm.key, []])),
   drill: { date: null, period: "day", dim: "cat", sort: "gmv" },
   sku: { c: null, sort: "rk", q: "", n: 60, risk: "all" },
-  tab: "trend", rca: { period: null, cut: "cat", all: false }, mtd: { cut: "cat", period: null, groups: ["sales", "traffic", "assort", "health"], sort: "gmv:v", dir: -1, all: false, v: 2 } };
+  tab: "trend", rca: { period: null, cut: "cat", all: false }, mtd: { cut: "cat", period: null, groups: ["sales", "traffic", "assort", "health"], sort: "gmv:v", dir: -1, all: false, v: 2, drill: [] } };
 try {
   const sv = JSON.parse(localStorage.getItem("ondBeauty") || "{}");
   Object.assign(state, sv, { f: Object.assign(state.f, sv.f || {}), drill: Object.assign(state.drill, sv.drill || {}), mtd: Object.assign(state.mtd, sv.mtd || {}), sku: Object.assign(state.sku, sv.sku || {}, { n: 60 }), rca: Object.assign(state.rca, sv.rca || {}), zoom: null });
@@ -1056,7 +1066,7 @@ function mtdPeriods() {
 }
 let MTD_CACHE = { key: null, res: null };
 function mtdCompute(cut, P) {
-  const nd = META.dates.length, dates = range(P.from, P.to), regs = RIDX[state.region], regOk = [0, 1, 2].map(c => regs.includes(c));
+  const nd = META.dates.length, dates = range(P.from, P.to).filter(d => !P.coh || cohortOf(d) === P.coh), regs = RIDX[state.region], regOk = [0, 1, 2].map(c => regs.includes(c));
   // weight of each data date in TY / LY / LLY: flow metrics sum the period, stock-type metrics take its last day
   const W = [0, 1, 2].map(y => {
     const flow = new Float32Array(nd), lvl = new Float32Array(nd), sh = d => (y ? shift(d, y, state.align) : d);
@@ -1170,13 +1180,31 @@ function mtdTargets(cut, dates, regOk) {
   }
   return { total, by: nameOf ? by : null };
 }
+// Drill-down: M.drill = [{cut, v}] - each step pins one row of a cut (country, cohort or any filter dimension) and the
+// table then breaks that slice down by the next cut. The steps are applied as temporary filters while computing.
+const REGION_OF = { KSA: "KSA", UAE: "UAE", "Other GCC": "GCC" };
+function withDrill(path, P, fn) {
+  const f0 = state.f, r0 = state.region;
+  let Pd = P;
+  state.f = Object.fromEntries(Object.entries(f0).map(([k, v]) => [k, [...v]]));
+  try {
+    for (const { cut, v } of path) {
+      if (cut === "country") state.region = REGION_OF[v] || state.region;
+      else if (cut === "cohort") Pd = { ...Pd, coh: v };
+      else if (state.f[cut]) state.f[cut] = [v];
+    }
+    return fn(Pd);
+  } finally { state.f = f0; state.region = r0; }
+}
+const cutLabel = k => CUTS.find(c => c.key === k)?.label || k;
 function renderMtd() {
   const box = document.getElementById("mtd"), M = state.mtd, periods = mtdPeriods();
   if (!CUTS.some(c => c.key === M.cut)) M.cut = "cat";
   if (!periods.some(p => p.id === M.period)) M.period = periods.filter(p => p.id !== "ond").pop().id;
   const P = periods.find(p => p.id === M.period);
-  const ck = JSON.stringify([M.cut, P, state.f, state.region, state.align]);
-  if (MTD_CACHE.key !== ck) MTD_CACHE = { key: ck, res: mtdCompute(M.cut, P) };
+  M.drill = (M.drill || []).filter(x => CUTS.some(c => c.key === x.cut));
+  const ck = JSON.stringify([M.cut, P, state.f, state.region, state.align, M.drill]);
+  if (MTD_CACHE.key !== ck) MTD_CACHE = { key: ck, res: withDrill(M.drill, P, Pd => mtdCompute(M.cut, Pd)) };
   const R = MTD_CACHE.res, cutL = CUTS.find(c => c.key === M.cut).label;
   const mets = METRICS.filter(m => M.groups.includes(m.section || "sales") && !m.orders);   // orders don't add up across rows
   const g = METRICS[0];
@@ -1223,7 +1251,7 @@ function renderMtd() {
   const si = cols.indexOf(sc);
   rows.sort((a, b) => { const x = a.cells[si].s, y = b.cells[si].s; if (x == null) return y == null ? 0 : 1; if (y == null) return -1; return M.dir * (x - y); });
   const shown = M.all ? rows : rows.slice(0, 50);
-  const totRow = { name: "Total", a: R.tot, t: tg ? tg.total : null };
+  const totRow = { name: M.drill.length ? `Total · ${M.drill.map(x => x.v).join(" › ")}` : "Total", a: R.tot, t: tg ? tg.total : null };
   totRow.cells = cols.map(c => c.f(totRow));
   const approx = m => (m.orders && !R.ordExact) || ((m.section === "traffic" || m.key === "ucr") && !R.tp.exact)
     ? ` <small class="approx" title="${m.orders ? "Orders by row are estimated from brand-level orders" : "Traffic is kept by brand or by business model / season, so some filters are not applied to traffic here"}">≈</small>` : "";
@@ -1233,7 +1261,7 @@ function renderMtd() {
   // shaded columns (shares, ageing): darker = higher %, scaled to the highest row shown
   const cmax = cols.map((c, i) => c.shade ? Math.max(0, ...shown.map(r => r.cells[i].s ?? 0)) : 0);
   const shadeOf = (i, v, tot) => !cols[i].shade || tot || v == null || !cmax[i] ? "" : ` style="background:color-mix(in srgb, var(--accent) ${Math.round(v / cmax[i] * 42)}%, transparent)"`;
-  const tr = (r, cls) => `<tr class="${cls || ""}"><td title="${esc(r.name)}">${esc(r.name)}</td>${r.cells.map((x, i) => `<td class="${i === 0 || cols[i - 1].m !== cols[i].m ? "g0" : ""}"${shadeOf(i, x.s, cls === "tot")}>${x.h}</td>`).join("")}</tr>`;
+  const tr = (r, cls) => `<tr class="${cls || ""}"><td title="${cls === "tot" ? "" : `Drill into ${esc(r.name)}`}">${cls === "tot" ? esc(r.name) : `<button class="dn" data-dn="${esc(r.name)}">${esc(r.name)}</button>`}</td>${r.cells.map((x, i) => `<td class="${i === 0 || cols[i - 1].m !== cols[i].m ? "g0" : ""}"${shadeOf(i, x.s, cls === "tot")}>${x.h}</td>`).join("")}</tr>`;
   const ly = shift(P.from, 1, state.align), lyE = shift(P.to, 1, state.align), lly = shift(P.from, 2, state.align), llyE = shift(P.to, 2, state.align);
   const seg = (k, opts, cur) => `<div class="seg" data-k="${k}">${opts.map(o => `<button data-v="${o.v}" aria-pressed="${o.v === cur}">${o.l}</button>`).join("")}</div>`;
   box.innerHTML = `<div class="mh">
@@ -1246,13 +1274,40 @@ function renderMtd() {
       <div class="mctl"><div class="seg" data-k="groups">${Object.entries(SECTIONS).map(([k, l]) => `<button data-v="${k}" aria-pressed="${M.groups.includes(k)}">${l}</button>`).join("")}</div>
         <input type="search" id="mq" placeholder="Search ${cutL.toLowerCase()}" value="${esc(M.q || "")}" autocomplete="off"></div>
     </div>
+    <div class="crumbs"><span class="fsum">Drill:</span> <button class="lnk" data-crumb="0">All${M.drill.length ? "" : ` by ${cutL.toLowerCase()}`}</button>${M.drill.map((x, i) => ` › <button class="lnk" data-crumb="${i + 1}" title="Back to this level">${cutLabel(x.cut)}: <b>${esc(x.v)}</b></button>`).join("")}${M.drill.length ? ` › <span class="fsum">by ${cutL.toLowerCase()}</span> <button class="lnk" data-crumb="0" title="Clear the drill-down">✕ clear</button>` : ` <span class="fsum">· click a row name to drill into it by another cut</span>`}</div>
     <div class="mtscroll"><table class="mt"><thead><tr><th></th>${groups}</tr><tr><th>${cutL}</th>${sub}</tr></thead>
       <tbody>${tr(totRow, "tot")}${shown.map(r => tr(r)).join("") || `<tr><td colspan="${cols.length + 1}">No ${cutL.toLowerCase()} matches.</td></tr>`}</tbody></table></div>
     <div class="mf"><span class="fsum">${shown.length < rows.length ? `Top ${shown.length} of ${rows.length} · <button class="lnk" id="mall">Show all</button>` : `${rows.length}${q ? ` of ${nAll}` : ""} ${cutL.toLowerCase()} rows`}${M.all && rows.length > 50 ? ` · <button class="lnk" id="mall">Show top 50</button>` : ""} · click a column to sort</span>
       <span class="fsum">${`Krithi tgt = LY GMV (LFL) × 1.25 · ${tg == null ? "No GMV target for this period or filter (targets cover Oct; none by sub-category or season)." : !tg.by ? `Target is shown for the total only: it isn't set by ${cutL.toLowerCase()}.` : M.cut === "bm" ? "Target by business model: each brand's whole target counts under its main model." : M.cut === "cohort" ? "Cohort rows compare their TY dates with their own LFL dates; stock-type metrics sit on the cohort of the last day." : ""}`}</span></div>`;
 }
+// drill menu: pick the cut to break the clicked row into
+function drillMenu(btn) {
+  const M = state.mtd, v = btn.dataset.dn, used = new Set([...M.drill.map(x => x.cut), M.cut]);
+  document.getElementById("dmenu")?.remove();
+  const opts = CUTS.filter(c => !used.has(c.key));
+  const m = document.createElement("div");
+  m.id = "dmenu"; m.className = "dmenu"; m.setAttribute("role", "menu");
+  m.innerHTML = `<div class="dmh">Drill <b>${esc(v)}</b> into</div>` + opts.map(c => `<button role="menuitem" data-to="${c.key}">${c.label}</button>`).join("");
+  document.body.appendChild(m);
+  const r = btn.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
+  m.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + scrollX + "px";
+  m.style.top = (r.bottom + h + 8 > innerHeight ? r.top - h - 4 : r.bottom + 4) + scrollY + "px";
+  m.addEventListener("click", ev => {
+    const b = ev.target.closest("button[data-to]"); if (!b) return;
+    M.drill = [...M.drill, { cut: M.cut, v }]; M.cut = b.dataset.to; M.q = ""; M.all = false;
+    m.remove(); save(); renderMtd();
+  });
+  setTimeout(() => document.addEventListener("click", function off(ev) { if (!m.contains(ev.target)) { m.remove(); document.removeEventListener("click", off); } }), 0);
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape") document.getElementById("dmenu")?.remove(); });
 document.getElementById("mtd").addEventListener("click", e => {
   const M = state.mtd, bt = e.target.closest("button"), th = e.target.closest("th[data-c]");
+  if (bt?.dataset.dn != null) { drillMenu(bt); return; }
+  if (bt?.dataset.crumb != null) {
+    const i = +bt.dataset.crumb;
+    if (i < M.drill.length) { M.cut = M.drill[i].cut; M.drill = M.drill.slice(0, i); M.q = ""; M.all = false; save(); renderMtd(); }
+    return;
+  }
   if (th) { if (M.sort === th.dataset.c) M.dir = -M.dir; else { M.sort = th.dataset.c; M.dir = -1; } }
   else if (bt?.id === "mall") M.all = !M.all;
   else if (bt?.parentElement?.dataset.k) {
