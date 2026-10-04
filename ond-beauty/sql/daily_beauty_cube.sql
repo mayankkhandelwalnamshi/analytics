@@ -5,7 +5,7 @@
 -- 2025-10-01..2025-11-15, 2025-11-16..2025-12-31, 2026-10-01..yesterday.
 -- Scope: Namshi marketplaces (namshi, namshi_v2), gmv_inc_vat > 0, Beauty business unit, no samples & GWP.
 -- Combo key = brand, category, sub_category, business_model (item_d) and beauty season
--- (beauty_season_mapping on sku_config, 'unassigned' when missing). Brand type / group / POC are brand
+-- (beauty_season_mapping on sku_config, 'unassigned' when missing; 'mp' when the partner is not Namshi retail, item_d id_partner <> 3001). Brand type / group / POC are brand
 -- attributes and are mapped on the page from sql/brand_attributes.sql.
 WITH season AS (
   SELECT sku_config, MAX(LOWER(season_tag)) AS beauty_season
@@ -17,7 +17,7 @@ beauty AS (
     IFNULL(ANY_VALUE(i.category), '(none)')       AS cat,
     IFNULL(ANY_VALUE(i.sub_category), '(none)')   AS sub,
     IFNULL(ANY_VALUE(i.business_model), '(none)') AS bm,
-    IFNULL(ANY_VALUE(se.beauty_season), 'unassigned') AS season
+    IF(IFNULL(ANY_VALUE(i.id_partner), 0) <> 3001, 'mp', IFNULL(ANY_VALUE(se.beauty_season), 'unassigned')) AS season   -- non-Namshi partner = mp
   FROM `noonbinamshi.custom_views.item_d` i
   LEFT JOIN season se USING (sku_config)
   WHERE i.business_unit = 'beauty'

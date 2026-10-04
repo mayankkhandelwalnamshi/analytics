@@ -13,7 +13,7 @@ beauty AS (
     IFNULL(ANY_VALUE(i.category), '(none)')       AS cat,
     IFNULL(ANY_VALUE(i.sub_category), '(none)')   AS sub,
     IFNULL(ANY_VALUE(i.business_model), '(none)') AS bm,
-    IFNULL(ANY_VALUE(se.beauty_season), 'unassigned') AS season
+    IF(IFNULL(ANY_VALUE(i.id_partner), 0) <> 3001, 'mp', IFNULL(ANY_VALUE(se.beauty_season), 'unassigned')) AS season   -- non-Namshi partner = mp
   FROM `noonbinamshi.custom_views.item_d` i
   LEFT JOIN season se USING (sku_config)
   WHERE i.business_unit = 'beauty' AND i.business_model = 'retail'

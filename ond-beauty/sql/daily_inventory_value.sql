@@ -14,7 +14,7 @@ cfg AS (
   SELECT i.sku_config,
     FARM_FINGERPRINT(CONCAT(IFNULL(ANY_VALUE(i.brand_code), '(none)'), '|', IFNULL(ANY_VALUE(i.category), '(none)'), '|',
       IFNULL(ANY_VALUE(i.sub_category), '(none)'), '|', IFNULL(ANY_VALUE(i.business_model), '(none)'), '|',
-      IFNULL(ANY_VALUE(se.beauty_season), 'unassigned'))) AS k
+      IF(LOGICAL_OR(i.id_partner = 3001), IFNULL(ANY_VALUE(se.beauty_season), 'unassigned'), 'mp'))) AS k
   FROM `noonbinamshi.custom_views.item_d` i
   LEFT JOIN season se USING (sku_config)
   WHERE i.business_unit = 'beauty' AND IFNULL(i.inventory_type, '') <> 'samples & gwp'
