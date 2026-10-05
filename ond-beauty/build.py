@@ -15,6 +15,10 @@ Each dataset is packed as columnar binary (int32 metrics, uint16 date/combo, uin
 written to dist/data/<set>.txt (base64); template.html -> dist/ond_beauty_dashboard.html fetches them. Publish the page
 with the dist/data/*.txt files alongside it.
 
+data/ssku_raw.json holds sql/mtd_ssku.sql for the current month to date ({period, from, to, align: "lfl", rows: ["v|..."],
+info: {supplier_sku: [brand, cat, sub, bm, season, title]}}); it becomes dist/data/ssku.txt for the MTD tab's Supplier SKU cut.
+Re-run it with the month's dates on every refresh, or the cut only covers the old period.
+
 data/targets_raw.json is the result of sql/targets_beauty.sql ({date: "c,brand,category,gmv;..."}):
 daily GMV targets by country x brand x category. Pass a raw BigQuery result with --targets to refresh it.
 """
@@ -118,6 +122,12 @@ def pack():
             if l == 4:
                 continue  # brand x category x ... level: too large; mixed filters are estimated on the page
             levels[l].append((di[d], int(c), k, int(n)))
+    # supplier-SKU month-to-date rows for the MTD tab (sql/mtd_ssku.sql): their combos join the shared combo list
+    ss_raw = json.loads((DATA / "ssku_raw.json").read_text())
+    ss_names = sorted(ss_raw["info"])
+    ss_i = {v: i for i, v in enumerate(ss_names)}
+    for v in ss_raw["info"].values():
+        combo_idx.setdefault(tuple(v[:5]), len(combo_idx))
     combos = list(combo_idx)
     assert len(combos) < 65536
     names = {key: sorted({c[i] for c in combos}) for i, key in enumerate(KEY)}
@@ -166,6 +176,16 @@ def pack():
         "refreshed": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
     bufs["orders"] = buf
+    # supplier SKUs: JSON, fetched when the MTD tab is cut by supplier SKU
+    flat = []
+    for r in ss_raw["rows"]:
+        _, c, ss, *ys = r.split("|")
+        flat += [int(c), ss_i[ss]] + [int(round(float(x))) for y in ys for x in y.split(",")]
+    bufs["ssku"] = json.dumps({"names": ss_names, "titles": [ss_raw["info"][n][5] for n in ss_names],
+                               "k": [combo_idx[tuple(ss_raw["info"][n][:5])] for n in ss_names],
+                               "fields": ["gmv", "u", "mkd", "np", "rev", "pc1", "ppc1", "gv", "atc", "si", "nsi"], "rows": flat},
+                              separators=(",", ":")).encode()
+    meta["ssku"] = {"from": ss_raw["from"], "to": ss_raw["to"], "align": ss_raw["align"], "n": len(ss_raw["rows"])}
     return meta, bufs
 
 

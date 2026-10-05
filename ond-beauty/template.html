@@ -235,6 +235,7 @@ body:not([data-tab="rca"]) .rca { display: none; }
 .mt tr.tot td:first-child { background: var(--flat-bg); }
 .mt td.na { color: var(--muted); }
 .dd[hidden] { display: none; }
+.mt.ss th:first-child, .mt.ss td:first-child { max-width: 380px; }
 .pacc { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--fg); padding: 16px; width: min(440px, calc(100vw - 32px)); box-shadow: 0 12px 32px rgba(0,0,0,.25); }
 .pacc::backdrop { background: rgba(0,0,0,.35); }
 .pacc h3 { margin: 0 0 4px; font-size: 15px; }
@@ -1154,7 +1155,17 @@ function renderTable(built) {
 
 const CONTRIB = new Set(["gmv", "units", "gv"]);   // metrics with a contribution-to-change column
 // ---------- MTD performance: every metric by one cut (country, category, brand, ...) vs target, LY and LLY ----------
-const CUTS = [{ key: "country", label: "Country" }, { key: "cohort", label: "Cohort" }, ...DIMS.map(dm => ({ key: dm.key, label: dm.label }))];
+const CUTS = [{ key: "country", label: "Country" }, { key: "cohort", label: "Cohort" }, ...DIMS.map(dm => ({ key: dm.key, label: dm.label })), { key: "ssku", label: "Supplier SKU" }];
+// supplier-SKU rows (sql/mtd_ssku.sql): one month to date, TY / LY / LLY on LFL dates; fetched the first time the cut is used
+let SSKU = null, SSKU_LOADING = false;
+function loadSsku() {
+  if (SSKU || SSKU_LOADING) return;
+  SSKU_LOADING = true;
+  fetchBin("ssku").then(b => { SSKU = JSON.parse(new TextDecoder().decode(b)); MTD_CACHE = { key: null, res: null }; renderMtd(); })
+    .catch(err => { SSKU = { err: String(err) }; renderMtd(); });
+}
+// supplier-SKU rows cover META.ssku's month to date only, without cohort and with LFL compare dates
+const sskuFits = P => META.ssku && P.from === META.ssku.from && P.to === META.ssku.to && !P.coh && state.align === "lfl";
 // LFL cohort of a TY date (MS, BAU 1, PD, Black Friday ...); a cohort row compares its TY dates with their LFL LY / LLY dates
 const cohortOf = d => { const c = META.cohort?.[d]; return c ? c.replace(/_/g, " ") : null; };
 const COUNTRY = ["KSA", "UAE", "Other GCC"];
@@ -1182,7 +1193,7 @@ function mtdCompute(cut, P) {
     return { flow, lvl, w30, lvlDate: sh(P.to), cover: dates.every(d => OOS_DATES.has(sh(d))) };
   });
   const dm = DIM[cut];
-  const keyOf = cut === "country" ? (k, c) => COUNTRY[c] : cut === "cohort" ? () => null : (k) => { const v = vidx(dm, META.combos[k]); return v < 0 ? null : META.names[cut][v]; };
+  const keyOf = cut === "country" ? (k, c) => COUNTRY[c] : cut === "cohort" || cut === "ssku" ? () => null : (k) => { const v = vidx(dm, META.combos[k]); return v < 0 ? null : META.names[cut][v]; };
   // cohort cut: the row depends on the date, not the product. coh[y][x] = cohort of the TY date whose year-y LFL date is x;
   // stock-type sets (assortment, inventory, WoC) sit with the cohort of the period's last day
   let coh = null, cohEnd = null;
@@ -1215,6 +1226,16 @@ function mtdCompute(cut, P) {
           if (fi >= 0) { tot[base + fi] += w * m[0][r]; if (a) a[base + fi] += w * m[0][r]; }
           const sf = SEASON_FI(k[r]); if (sf >= 0) { tot[base + sf] += w * m[0][r]; if (a) a[base + sf] += w * m[0][r]; } }
       }
+    }
+  }
+  if (cut === "ssku" && SSKU?.rows && sskuFits(P)) {
+    // rows = supplier SKUs passing the filters (and drill steps) in the selected region; totals stay the dashboard's own
+    const F = SSKU.fields.map(f => I[f]), nf = F.length, w = 2 + 3 * nf, R0 = SSKU.rows;
+    for (let o = 0; o < R0.length; o += w) {
+      const c = R0[o], si = R0[o + 1];
+      if (!regOk[c] || !mask[SSKU.k[si]]) continue;
+      const nm = SSKU.titles[si] ? `${SSKU.names[si]} (${SSKU.titles[si]})` : SSKU.names[si], a = get(nm);
+      for (let y = 0; y < 3; y++) for (let j = 0; j < nf; j++) a[y * NF + F[j]] += R0[o + 2 + y * nf + j];
     }
   }
   const ordExact = mtdOrders(cut, rows, tot, W, mask, regOk, keyOf, get);
@@ -1305,16 +1326,26 @@ function withDrill(path, P, fn) {
   } finally { state.f = f0; state.region = r0; }
 }
 const cutLabel = k => CUTS.find(c => c.key === k)?.label || k;
+function sskuNote(P) {
+  if (!SSKU) return "Loading supplier SKUs…";
+  if (SSKU.err) return `Couldn't load supplier SKUs (${esc(SSKU.err)}).`;
+  if (!META.ssku || P.from !== META.ssku.from || P.to !== META.ssku.to) return `Supplier SKUs are loaded for ${fmtD(META.ssku.from)} – ${fmtD(META.ssku.to)} only: pick that month.`;
+  if (P.coh) return "Supplier SKUs aren't split by cohort: drill from another cut.";
+  if (state.align !== "lfl") return "Supplier SKUs compare on LFL dates only: switch Compare to LFL date.";
+  return "Supplier SKU (max product title) · SKUs with GMV in any year or 20+ glance views this month · sales and traffic only · rows don't add up to the total exactly (small traffic-only SKUs left out).";
+}
 function renderMtd() {
   const box = document.getElementById("mtd"), M = state.mtd, periods = mtdPeriods();
   if (!cuts().some(c => c.key === M.cut)) M.cut = "cat";
   if (!periods.some(p => p.id === M.period)) M.period = periods.filter(p => p.id !== "ond").pop().id;
   const P = periods.find(p => p.id === M.period);
+  if (M.cut === "ssku" && !SSKU) loadSsku();
   M.drill = (M.drill || []).filter(x => cuts().some(c => c.key === x.cut));
   const ck = JSON.stringify([M.cut, P, state.f, state.region, state.align, M.drill]);
   if (MTD_CACHE.key !== ck) MTD_CACHE = { key: ck, res: withDrill(M.drill, P, Pd => mtdCompute(M.cut, Pd)) };
   const R = MTD_CACHE.res, cutL = CUTS.find(c => c.key === M.cut).label;
-  const mets = METRICS.filter(m => M.groups.includes(m.section || "sales") && !m.orders);   // orders don't add up across rows
+  const mets = METRICS.filter(m => M.groups.includes(m.section || "sales") && !m.orders)   // orders don't add up across rows
+    .filter(m => M.cut !== "ssku" || (["sales", "traffic"].includes(m.section || "sales") && !["aimp", "asi", "ansi"].includes(m.key)));   // supplier SKUs: sales and traffic only
   const g = METRICS[0];
   const val = (m, a, y) => {
     if ((m.cover && !R.W[y].cover) || (m.tyOnly && y)) return null;
@@ -1377,7 +1408,8 @@ function renderMtd() {
   // shaded columns (shares, ageing): darker = higher %, scaled to the highest row shown
   const cmax = cols.map((c, i) => c.shade ? Math.max(0, ...shown.map(r => r.cells[i].s ?? 0)) : 0);
   const shadeOf = (i, v, tot) => !cols[i].shade || tot || v == null || !cmax[i] ? "" : ` style="background:color-mix(in srgb, var(--accent) ${Math.round(v / cmax[i] * 42)}%, transparent)"`;
-  const tr = (r, cls) => `<tr class="${cls || ""}"><td title="${cls === "tot" ? "" : `Drill into ${esc(r.name)}`}">${cls === "tot" ? esc(r.name) : `<button class="dn" data-dn="${esc(r.name)}">${esc(r.name)}</button>`}</td>${r.cells.map((x, i) => `<td class="${i === 0 || cols[i - 1].m !== cols[i].m ? "g0" : ""}${cols[i].hl ? " mblk" : ""}${cols[i].hl === 2 ? " mblke" : ""}"${shadeOf(i, x.s, cls === "tot")}>${x.h}</td>`).join("")}</tr>`;
+  const ss = M.cut === "ssku";   // supplier SKUs are the finest level: no drill from them
+  const tr = (r, cls) => `<tr class="${cls || ""}"><td title="${cls === "tot" ? "" : ss ? esc(r.name) : `Drill into ${esc(r.name)}`}">${cls === "tot" || ss ? esc(r.name) : `<button class="dn" data-dn="${esc(r.name)}">${esc(r.name)}</button>`}</td>${r.cells.map((x, i) => `<td class="${i === 0 || cols[i - 1].m !== cols[i].m ? "g0" : ""}${cols[i].hl ? " mblk" : ""}${cols[i].hl === 2 ? " mblke" : ""}"${shadeOf(i, x.s, cls === "tot")}>${x.h}</td>`).join("")}</tr>`;
   const ly = shift(P.from, 1, state.align), lyE = shift(P.to, 1, state.align), lly = shift(P.from, 2, state.align), llyE = shift(P.to, 2, state.align);
   const seg = (k, opts, cur) => `<div class="seg" data-k="${k}">${opts.map(o => `<button data-v="${o.v}" aria-pressed="${o.v === cur}">${o.l}</button>`).join("")}</div>`;
   box.innerHTML = `<div class="mh">
@@ -1391,9 +1423,10 @@ function renderMtd() {
         <input type="search" id="mq" placeholder="Search ${cutL.toLowerCase()}" value="${esc(M.q || "")}" autocomplete="off"></div>
     </div>
     <div class="crumbs"><span class="fsum">Drill:</span> <button class="lnk" data-crumb="0">All${M.drill.length ? "" : ` by ${cutL.toLowerCase()}`}</button>${M.drill.map((x, i) => ` › <button class="lnk" data-crumb="${i + 1}" title="Back to this level">${cutLabel(x.cut)}: <b>${esc(x.v)}</b></button>`).join("")}${M.drill.length ? ` › <span class="fsum">by ${cutL.toLowerCase()}</span> <button class="lnk" data-crumb="0" title="Clear the drill-down">✕ clear</button>` : ` <span class="fsum">· click a row name to drill into it by another cut</span>`}</div>
-    <div class="mtscroll"><table class="mt"><thead><tr><th></th>${groups}</tr><tr><th>${cutL}</th>${sub}</tr></thead>
+    <div class="mtscroll"><table class="mt${ss ? " ss" : ""}"><thead><tr><th></th>${groups}</tr><tr><th>${cutL}</th>${sub}</tr></thead>
       <tbody>${tr(totRow, "tot")}${shown.map(r => tr(r)).join("") || `<tr><td colspan="${cols.length + 1}">No ${cutL.toLowerCase()} matches.</td></tr>`}</tbody></table></div>
     <div class="mf"><span class="fsum">${shown.length < rows.length ? `Top ${shown.length} of ${rows.length} · <button class="lnk" id="mall">Show all</button>` : `${rows.length}${q ? ` of ${nAll}` : ""} ${cutL.toLowerCase()} rows`}${M.all && rows.length > 50 ? ` · <button class="lnk" id="mall">Show top 50</button>` : ""} · click a column to sort</span>
+      ${ss ? `<span class="fsum">${sskuNote(P)}</span>` : ""}
       <span class="fsum">${`Krithi tgt = LY GMV (LFL) × 1.25 · ${tg == null ? "No GMV target for this period or filter (targets cover Oct; none by sub-category or season)." : !tg.by ? `Target is shown for the total only: it isn't set by ${cutL.toLowerCase()}.` : M.cut === "bm" ? "Target by business model: each brand's whole target counts under its main model." : M.cut === "cohort" ? "Cohort rows compare their TY dates with their own LFL dates; stock-type metrics sit on the cohort of the last day." : ""}`}</span></div>`;
 }
 // drill menu: pick the cut to break the clicked row into
