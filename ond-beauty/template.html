@@ -234,6 +234,11 @@ body:not([data-tab="rca"]) .rca { display: none; }
 .mt tr.tot td { font-weight: 700; background: var(--flat-bg); }
 .mt tr.tot td:first-child { background: var(--flat-bg); }
 .mt td.na { color: var(--muted); }
+/* full-month block (month target, projection, month ach %) */
+.mt th.mblk, .mt td.mblk { background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }
+.mt tr.tot td.mblk { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
+.mt thead tr:nth-child(2) th.mblk { color: var(--accent); }
+.mt th.mblke, .mt td.mblke { border-right: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); }
 .mtd .crumbs { padding: 0 14px 10px; font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .mtd .crumbs b { color: var(--accent); }
 .mt td .dn { font: inherit; font-weight: 600; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1246,9 +1251,9 @@ function renderMtd() {
     if (m.key === "gmv") {
       // full month: plan, projection (MTD achievement applied to the month plan) and projection as % of the month plan
       const proj = r => { const v = val(g, r.a, 0); return v != null && r.t && r.tm != null ? v / r.t * r.tm : null; };
-      cols.push({ m, id: "gmv:mt", lbl: "Month tgt", f: r => ({ s: r.tm, h: r.tm == null ? "–" : fmt(g, r.tm, true) }) });
-      cols.push({ m, id: "gmv:pj", lbl: "Projection", f: r => { const v = proj(r); return { s: v, h: `<span title="MTD GMV ÷ MTD target × month target">${fmt(g, v, true)}</span>` }; } });
-      cols.push({ m, id: "gmv:ma", lbl: "Month ach %", f: r => { const p = proj(r), v = r.tm && p != null ? p / r.tm : null;
+      cols.push({ m, hl: 1, id: "gmv:mt", lbl: "Month tgt", f: r => ({ s: r.tm, h: r.tm == null ? "–" : fmt(g, r.tm, true) }) });
+      cols.push({ m, hl: 1, id: "gmv:pj", lbl: "Projection", f: r => { const v = proj(r); return { s: v, h: `<span title="MTD GMV ÷ MTD target × month target">${fmt(g, v, true)}</span>` }; } });
+      cols.push({ m, hl: 2, id: "gmv:ma", lbl: "Month ach %", f: r => { const p = proj(r), v = r.tm && p != null ? p / r.tm : null;
         return { s: v, h: v == null ? "–" : `<span title="Projection ÷ month target">${(v * 100).toFixed(1)}%</span>` }; } });
     }
     cols.push({ m, shade: m.shade, id: m.key + ":v", lbl: m.level ? "Now" : "MTD", f: r => { const v = val(m, r.a, 0); return { s: v, h: fmt(m, v, true) }; } });
@@ -1289,11 +1294,11 @@ function renderMtd() {
     ? ` <small class="approx" title="${m.orders ? "Orders by row are estimated from brand-level orders" : "Traffic is kept by brand or by business model / season, so some filters are not applied to traffic here"}">≈</small>` : "";
   const gms = [...new Set(cols.map(c => c.m))];
   const groups = gms.map(m => `<th class="g0" colspan="${cols.filter(c => c.m === m).length}" title="${esc(m.unit || "")}">${m.name}${approx(m)}</th>`).join("");
-  const sub = cols.map((c, i) => `<th data-c="${c.id}" class="${i === 0 || cols[i - 1].m !== c.m ? "g0 " : ""}${c === sc ? "sorted" : ""}" title="Sort by ${esc(c.m.name)} ${c.lbl}">${c.lbl}${c === sc ? (M.dir < 0 ? " ↓" : " ↑") : ""}</th>`).join("");
+  const sub = cols.map((c, i) => `<th data-c="${c.id}" class="${i === 0 || cols[i - 1].m !== c.m ? "g0 " : ""}${c.hl ? "mblk " : ""}${c.hl === 2 ? "mblke " : ""}${c === sc ? "sorted" : ""}" title="Sort by ${esc(c.m.name)} ${c.lbl}">${c.lbl}${c === sc ? (M.dir < 0 ? " ↓" : " ↑") : ""}</th>`).join("");
   // shaded columns (shares, ageing): darker = higher %, scaled to the highest row shown
   const cmax = cols.map((c, i) => c.shade ? Math.max(0, ...shown.map(r => r.cells[i].s ?? 0)) : 0);
   const shadeOf = (i, v, tot) => !cols[i].shade || tot || v == null || !cmax[i] ? "" : ` style="background:color-mix(in srgb, var(--accent) ${Math.round(v / cmax[i] * 42)}%, transparent)"`;
-  const tr = (r, cls) => `<tr class="${cls || ""}"><td title="${cls === "tot" ? "" : `Drill into ${esc(r.name)}`}">${cls === "tot" ? esc(r.name) : `<button class="dn" data-dn="${esc(r.name)}">${esc(r.name)}</button>`}</td>${r.cells.map((x, i) => `<td class="${i === 0 || cols[i - 1].m !== cols[i].m ? "g0" : ""}"${shadeOf(i, x.s, cls === "tot")}>${x.h}</td>`).join("")}</tr>`;
+  const tr = (r, cls) => `<tr class="${cls || ""}"><td title="${cls === "tot" ? "" : `Drill into ${esc(r.name)}`}">${cls === "tot" ? esc(r.name) : `<button class="dn" data-dn="${esc(r.name)}">${esc(r.name)}</button>`}</td>${r.cells.map((x, i) => `<td class="${i === 0 || cols[i - 1].m !== cols[i].m ? "g0" : ""}${cols[i].hl ? " mblk" : ""}${cols[i].hl === 2 ? " mblke" : ""}"${shadeOf(i, x.s, cls === "tot")}>${x.h}</td>`).join("")}</tr>`;
   const ly = shift(P.from, 1, state.align), lyE = shift(P.to, 1, state.align), lly = shift(P.from, 2, state.align), llyE = shift(P.to, 2, state.align);
   const seg = (k, opts, cur) => `<div class="seg" data-k="${k}">${opts.map(o => `<button data-v="${o.v}" aria-pressed="${o.v === cur}">${o.l}</button>`).join("")}</div>`;
   box.innerHTML = `<div class="mh">
