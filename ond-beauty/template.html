@@ -680,7 +680,7 @@ const GLOSS_TERMS = [
   ["MTD", "Month to date: 1st of the month to the latest full day (yesterday). Flow metrics are summed over the period."],
   ["Now", "Stock-type metrics (assortment, stock, inventory, WoC, shares) on the last day of the period; LY / LLY use the LFL day."],
   ["Target", "Daily GMV plan for the Beauty pod (planning_dod_merch_brand_category_targets, pod cp_beauty) by country, brand and category."],
-  ["Krithi tgt", "LY GMV on LFL dates × 1.25, for every row."],
+  ["Krithi tgt", "LY GMV on LFL dates × 1.25, for every row (MTD performance), and for Beauty GMV on the Daily trend tab: the Beauty summary tiles, the GMV chart chips and the daily table's vs Krithi column."],
   ["vs Tgt / vs LY / vs LLY", "% change for value metrics; percentage-point (pp) change for % metrics."],
   ["Δ vs LY", "GMV TY − GMV LY, in AED."],
   ["Contrib. vs LY", "(Row TY − row LY) ÷ total LY, in pp. Rows add up to the total's % change vs LY, so the most negative rows drove the drop."],
@@ -1068,7 +1068,7 @@ function render() {
           <div class="big"><span class="bv"></span><small class="bd"></small></div></div>
         <div class="chips">
           <div class="chiprow cr1"></div>
-          <div class="chiprow"><span class="chiplbl">Since ${fmtD(START)} · ${fmt(m, b.ptd.ty, true)}</span>${chip("LY", delta(m, b.ptd.ty, b.ptd.ly))}${chip("LLY", delta(m, b.ptd.ty, b.ptd.lly))}${tgtOn && b.ptd.tgt != null && b.ptd.tgtFrom === START ? chip("Tgt", delta(m, b.ptd.tgtTy, b.ptd.tgt)) : ""}</div>${tgtOn && b.ptd.tgt != null && b.ptd.tgtFrom !== START ? `<div class="chiprow"><span class="chiplbl">Since ${fmtD(b.ptd.tgtFrom)} · ${fmt(m, b.ptd.tgtTy, true)} vs ${fmt(m, b.ptd.tgt, true)}</span>${chip("Tgt", delta(m, b.ptd.tgtTy, b.ptd.tgt))}</div>` : ""}
+          <div class="chiprow"><span class="chiplbl">Since ${fmtD(START)} · ${fmt(m, b.ptd.ty, true)}</span>${chip("LY", delta(m, b.ptd.ty, b.ptd.ly))}${chip("LLY", delta(m, b.ptd.ty, b.ptd.lly))}${tgtOn && b.ptd.tgt != null && b.ptd.tgtFrom === START ? chip("Tgt", delta(m, b.ptd.tgtTy, b.ptd.tgt)) : ""}${m.key === "gmv" ? chip("Krithi", delta(m, b.ptd.ty, b.ptd.ly ? b.ptd.ly * 1.25 : null)) : ""}</div>${tgtOn && b.ptd.tgt != null && b.ptd.tgtFrom !== START ? `<div class="chiprow"><span class="chiplbl">Since ${fmtD(b.ptd.tgtFrom)} · ${fmt(m, b.ptd.tgtTy, true)} vs ${fmt(m, b.ptd.tgt, true)}</span>${chip("Tgt", delta(m, b.ptd.tgtTy, b.ptd.tgt))}</div>` : ""}
         </div>
         <button class="xp" data-m="${m.key}" aria-pressed="${state.expand === m.key}" title="${state.expand === m.key ? "Back to grid" : "Expand chart"}" aria-label="${state.expand === m.key ? "Back to grid" : "Expand " + m.name}">${state.expand === m.key ? ICON_SHRINK : ICON_EXPAND}</button>
       </div><div class="chart"></div>`;
@@ -1080,7 +1080,7 @@ function render() {
       const v = hv ? { ty: b.s.ty[i], ly: b.s.ly[i], lly: b.s.lly[i], tgt: b.s.tgt[i] } : b.latest, d = hv ? b.dates[i] : lastActual;
       bv.textContent = fmt(m, v.ty);
       bd.textContent = (state.view === "daily" ? "" : VIEW_LBL[state.view] + " · ") + fmtD(d);
-      cr1.innerHTML = `<span class="chiplbl">${VIEW_LBL[state.view]}</span>${chip("LY", delta(m, v.ty, v.ly))}${chip("LLY", delta(m, v.ty, v.lly))}${tgtOn && !state.hide.includes("tgt") ? chip("Tgt", delta(m, v.ty, v.tgt)) : ""}`;
+      cr1.innerHTML = `<span class="chiplbl">${VIEW_LBL[state.view]}</span>${chip("LY", delta(m, v.ty, v.ly))}${chip("LLY", delta(m, v.ty, v.lly))}${tgtOn && !state.hide.includes("tgt") ? chip("Tgt", delta(m, v.ty, v.tgt)) : ""}${m.key === "gmv" ? chip("Krithi", delta(m, v.ty, v.ly ? v.ly * 1.25 : null)) : ""}`;
     };
     header(null);
     CHARTS.push({ m, b, header, api: drawChart(el.querySelector(".chart"), m, b) });
@@ -1098,7 +1098,7 @@ function renderSummary() {
   const tgtOn = hasTarget(g, state.region);
   const sources = [
     { title: "Platform", sub: "all categories", gmv: ds => psum(P.gmv, ds), tgt: ds => psum(P.tgt, ds) },
-    { title: "Beauty", sub: filtered() ? "filtered" : "all Beauty",
+    { title: "Beauty", sub: filtered() ? "filtered" : "all Beauty", krithi: true,
       gmv: ds => { const a = aggMany(ds, state.region); return a ? a[I.gmv] : null; },
       tgt: ds => { if (!tgtOn) return null; let t = 0; for (const d of ds) { const v = target(g, state.region, d); if (v == null) return null; t += v; } return t; } },
   ];
@@ -1117,15 +1117,17 @@ function renderSummary() {
     // month projection: the full-month comparison scaled by the MTD achievement against it
     const proj = k => mtd.ty != null && mtd[k] && full[k] != null ? full[k] * mtd.ty / mtd[k] : null;
     const head = proj("tgt") ?? proj("ly");
+    // Krithi's target (Beauty only): LY GMV on LFL dates × 1.25
+    const kl = (cur, ly) => S.krithi ? [line(chip(cur, ly ? ly * 1.25 : null), "vs Krithi tgt")] : [];
     h += `<div class="tgroup"><h2>${S.title} <small>${S.sub} · ${{ ALL: "Overall", KSA: "KSA", UAE: "UAE" }[state.region]}</small></h2><div class="tiles">` +
       tile(`GMV MTD (${fmtD(mtdD[0]).split(" ")[0]}–${fmtD(y)})`, mtd.ty,
-        [line(chip(mtd.ty, mtd.tgt), "vs target"), line(chip(mtd.ty, mtd.ly), `vs ${yr - 1}`), line(chip(mtd.ty, mtd.lly), `vs ${yr - 2}`)]) +
+        [line(chip(mtd.ty, mtd.tgt), "vs target"), ...kl(mtd.ty, mtd.ly), line(chip(mtd.ty, mtd.ly), `vs ${yr - 1}`), line(chip(mtd.ty, mtd.lly), `vs ${yr - 2}`)]) +
       tile(`GMV yesterday (${fmtD(y)})`, yd.ty,
-        [`<div class="tl">${chip(yd.ty, yd.prev)}<span>DoD</span></div>`, line(chip(yd.ty, yd.tgt), "vs target"),
+        [`<div class="tl">${chip(yd.ty, yd.prev)}<span>DoD</span></div>`, line(chip(yd.ty, yd.tgt), "vs target"), ...kl(yd.ty, yd.ly),
          line(chip(yd.ty, yd.ly), `vs ${yr - 1}`), line(chip(yd.ty, yd.lly), `vs ${yr - 2}`)]) +
       tile(`${mon} projection`, head,
-        [line(chip(proj("tgt"), full.tgt), "vs target"), line(chip(proj("ly"), full.ly), `vs ${yr - 1}`), line(chip(proj("lly"), full.lly), `vs ${yr - 2}`)],
-        `Target ${fmt(g, full.tgt)} · ${yr - 1} ${fmt(g, full.ly)} · ${yr - 2} ${fmt(g, full.lly)}`) +
+        [line(chip(proj("tgt"), full.tgt), "vs target"), ...kl(head, full.ly), line(chip(proj("ly"), full.ly), `vs ${yr - 1}`), line(chip(proj("lly"), full.lly), `vs ${yr - 2}`)],
+        `Target ${fmt(g, full.tgt)}${S.krithi && full.ly ? ` · Krithi ${fmt(g, full.ly * 1.25)}` : ""} · ${yr - 1} ${fmt(g, full.ly)} · ${yr - 2} ${fmt(g, full.lly)}`) +
       `</div></div>`;
   }
   box.innerHTML = h;
@@ -1136,13 +1138,16 @@ function renderTable(built) {
   const TM = METRICS.filter(m => m.section !== "health");
   // metric blocks: a divider before each metric and alternate shading, so the TY / vs LY / vs LLY triplets read as one
   const gc = i => `mg${i % 2}`;
-  let h = `<thead><tr><th></th>${TM.map((m, i) => `<th colspan="3" class="g0 ${gc(i)}">${m.name}</th>`).join("")}</tr><tr><th>Date</th>${TM.map((m, i) => `<th class="g0 ${gc(i)}">TY</th><th class="${gc(i)}">vs LY</th><th class="${gc(i)}">vs LLY</th>`).join("")}</tr></thead><tbody>`;
+  // GMV also gets vs Krithi tgt (LY GMV on LFL dates × 1.25)
+  const kr = m => m.key === "gmv";
+  let h = `<thead><tr><th></th>${TM.map((m, i) => `<th colspan="${kr(m) ? 4 : 3}" class="g0 ${gc(i)}">${m.name}</th>`).join("")}</tr><tr><th>Date</th>${TM.map((m, i) => `<th class="g0 ${gc(i)}">TY</th><th class="${gc(i)}">vs LY</th><th class="${gc(i)}">vs LLY</th>${kr(m) ? `<th class="${gc(i)}" title="vs LY GMV (LFL) × 1.25">vs Krithi</th>` : ""}`).join("")}</tr></thead><tbody>`;
   for (const d of dates) {
     h += `<tr class="${d === state.drill.date ? "cur" : ""}" data-d="${d}"><td class="d">${fmtDL(d)}</td>`;
     TM.forEach((m, i) => {
       const w = windowFor(d), ty = seriesVal(m, w, 0), ly = seriesVal(m, w, 1), lly = seriesVal(m, w, 2);
       const a = delta(m, ty, ly), c = delta(m, ty, lly);
       h += `<td class="g0 ${gc(i)} tyv">${fmt(m, ty)}</td><td class="${gc(i)}"><span class="${a?.cls || ""}">${a?.txt || "–"}</span></td><td class="${gc(i)}"><span class="${c?.cls || ""}">${c?.txt || "–"}</span></td>`;
+      if (kr(m)) { const k = delta(m, ty, ly ? ly * 1.25 : null); h += `<td class="${gc(i)}"><span class="${k?.cls || ""}">${k?.txt || "–"}</span></td>`; }
     });
     h += `</tr>`;
   }
