@@ -234,6 +234,18 @@ body:not([data-tab="rca"]) .rca { display: none; }
 .mt tr.tot td { font-weight: 700; background: var(--flat-bg); }
 .mt tr.tot td:first-child { background: var(--flat-bg); }
 .mt td.na { color: var(--muted); }
+.dd[hidden] { display: none; }
+.pacc { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--fg); padding: 16px; width: min(440px, calc(100vw - 32px)); box-shadow: 0 12px 32px rgba(0,0,0,.25); }
+.pacc::backdrop { background: rgba(0,0,0,.35); }
+.pacc h3 { margin: 0 0 4px; font-size: 15px; }
+.pacc p { margin: 0 0 12px; color: var(--fg-2); font-size: 12.5px; }
+.pacc input { width: 100%; box-sizing: border-box; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg); font: inherit; }
+.pacc ul { list-style: none; margin: 8px 0 0; padding: 0; max-height: 220px; overflow: auto; }
+.pacc li { display: flex; align-items: center; gap: 8px; padding: 6px 2px; border-bottom: 1px solid var(--line); font-size: 13px; }
+.pacc li img { width: 22px; height: 22px; border-radius: 50%; }
+.pacc li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pacc .row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; gap: 8px; }
+.pacc .st { color: var(--muted); font-size: 12px; }
 /* full-month block (month target, projection, month ach %) */
 .mt th.mblk, .mt td.mblk { background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }
 .mt tr.tot td.mblk { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
@@ -360,6 +372,7 @@ details.gloss { margin-top: 12px; }
       <div class="dd" data-f="bgroup"></div>
       <div class="dd" data-f="poc"></div>
       <button class="lnk" id="freset" disabled>Reset filters</button>
+      <button class="lnk" id="pocacc" hidden title="Choose who can see the Brand POC filter">Brand POC access</button>
       <span class="fsum" id="fsum"></span>
     </div>
     <div class="ctl nosku"><span>Region</span>
@@ -660,7 +673,7 @@ const GLOSS = {
 };
 const GLOSS_TERMS = [
   ["Season", "Beauty season tag (beauty_season_mapping on sku_config: carryover, brand noos, namshi noos, ll, na; 'unassigned' when not tagged). Products of a partner other than Namshi retail (item_d id_partner ≠ 3001) are season 'mp' (by sku for sales, OOS, orders and WoC; a sku_config is 'mp' when none of its skus is partner 3001 for traffic, assortment and inventory). The Risk SKUs tab keeps the tag itself (it only covers partner 3001), taken from the card's lead config — the one its title, category and image come from — so each card shows one season."],
-  ["Drill-down (MTD performance)", "Click any row name to break it down by another cut, e.g. Country: UAE → Brand POC: Sammy → by brand, from any level to any level. Each step pins that row (country, cohort or any filter dimension) on top of the filters above; the Total row is then the drilled slice, so the rows explain its change vs LY (Contrib. vs LY adds up to the slice's % change). The breadcrumb steps back to any level; ✕ clear returns to the full view."],
+  ["Drill-down (MTD performance)", "Click any row name to break it down by another cut, e.g. Country: UAE → Category: makeup → by brand, from any level to any level. Each step pins that row (country, cohort or any filter dimension) on top of the filters above; the Total row is then the drilled slice, so the rows explain its change vs LY (Contrib. vs LY adds up to the slice's % change). The breadcrumb steps back to any level; ✕ clear returns to the full view."],
   ["Cohort", "LFL cohort of each date from the LFL mapping table (MS, BAU 1, BAU 2, PD, Pre 11.11, 11.11 Day, Post 11.11, Black Friday Week / Pre / Day / Post / Ext). The Cohort cut sums the period's TY dates in each cohort and compares them with their own LFL LY / LLY dates, so a cohort row is like-for-like. The same cohort in different months (e.g. MS) adds up in OND to date. Stock-type metrics (assortment, stock, inventory, WoC, health) show on the cohort of the period's last day only."],
   ["TY / LY / LLY", "This year (2026), last year (2025) and the year before (2024)."],
   ["LFL date", "Like-for-like date from the LFL mapping (e.g. Black Friday vs Black Friday). “Same date” compares the same calendar date."],
@@ -789,6 +802,70 @@ for (const dm of DIMS) state.f[dm.key] = (state.f[dm.key] || []).filter(v => MET
 if (!["lfl", "date"].includes(state.align)) state.align = "lfl";
 if (state.mtd.v !== 2) Object.assign(state.mtd, { groups: ["sales", "traffic", "assort", "health"], v: 2 });
 if (state.drill.date && !(state.drill.date >= START && state.drill.date <= lastActual)) state.drill.date = null;
+// Brand POC (filter, MTD cut, day breakdown) shows only for the artifact owner and the people the owner adds under
+// "Brand POC access" (their claude.ai account ids, kept in the artifact's db at access/poc). It hides the controls only;
+// the POC mapping itself still ships with the page.
+let POC_OK = false;
+function lockPoc() {
+  state.f.poc = [];
+  if (state.mtd.cut === "poc") state.mtd.cut = "cat";
+  state.mtd.drill = (state.mtd.drill || []).filter(x => x.cut !== "poc");
+  if (state.drill.dim === "poc") state.drill.dim = "cat";
+}
+lockPoc();
+const cuts = () => POC_OK ? CUTS : CUTS.filter(c => c.key !== "poc");
+async function unlockPoc() {
+  const use = n => window.claude?.use ? window.claude.use(n).catch(() => null) : Promise.resolve(null);
+  const user = await use("user");
+  if (!user) return;
+  const me = await user.me();
+  let ok = me.isOwner;
+  if (!ok && me.id) {
+    const db = await use("db");
+    const snap = db ? await db.doc("access/poc").get().catch(() => null) : null;
+    ok = !!snap?.exists && (snap.data().ids || []).includes(me.id);
+  }
+  if (ok) { POC_OK = true; renderFilters(); render(); }
+  if (me.isOwner) pocAccessUi(user, await use("db"));
+}
+// owner-only: pick people (search by name or email) and save their ids to access/poc
+function pocAccessUi(user, db) {
+  const btn = document.getElementById("pocacc");
+  if (!db) return;
+  btn.hidden = false;
+  const dlg = document.createElement("dialog");
+  dlg.className = "pacc";
+  dlg.innerHTML = `<h3>Brand POC access</h3><p>Only you and the people listed here see the Brand POC filter and cut. Everyone else gets the dashboard without it.</p>
+    <input type="search" placeholder="Add someone: search name or email" autocomplete="off"><ul class="hits"></ul>
+    <ul class="list"></ul><div class="row"><span class="st"></span><button class="lnk" data-close>Done</button></div>`;
+  document.body.appendChild(dlg);
+  const q = dlg.querySelector("input"), hits = dlg.querySelector(".hits"), list = dlg.querySelector(".list"), st = dlg.querySelector(".st");
+  let ids = [];
+  const li = (p, label, fn) => {
+    const el = document.createElement("li"), img = document.createElement("img"), sp = document.createElement("span"), b = document.createElement("button");
+    img.src = p.avatarUrl; img.alt = ""; sp.textContent = p.name || "Someone"; b.className = "lnk"; b.textContent = label; b.onclick = fn;
+    el.append(img, sp, b); return el;
+  };
+  const draw = async () => {
+    const ps = ids.length ? await user.profiles(ids) : {};
+    list.replaceChildren(...ids.map(id => li(ps[id], "Remove", () => saveIds(ids.filter(x => x !== id)))));
+    st.textContent = ids.length ? `${ids.length} ${ids.length === 1 ? "person has" : "people have"} access` : "No one added yet";
+  };
+  const saveIds = async next => {
+    st.textContent = "Saving…";
+    try { await db.doc("access/poc").set({ ids: next }); ids = next; } catch (e) { st.textContent = "Couldn't save: " + (e?.code || "error"); return; }
+    draw();
+  };
+  q.addEventListener("focus", async () => { if (!q.value) showHits(await user.search("")); });
+  q.addEventListener("input", async () => showHits(await user.search(q.value.trim())));
+  const showHits = hs => hits.replaceChildren(...hs.filter(h => !h.isMe && !ids.includes(h.id)).map(h => li(h, "Add", () => { q.value = ""; hits.replaceChildren(); saveIds([...ids, h.id]); })));
+  dlg.querySelector("[data-close]").onclick = () => dlg.close();
+  btn.onclick = async () => {
+    const snap = await db.doc("access/poc").get().catch(() => null);
+    ids = snap?.exists ? (snap.data().ids || []) : [];
+    q.value = ""; hits.replaceChildren(); draw(); dlg.showModal();
+  };
+}
 function save() { try { localStorage.setItem("ondBeauty", JSON.stringify(state)); } catch (e) {} }
 const VIEW_LBL = { daily: "Day", ma7: "7D avg", cum: "Cumulative" };
 
@@ -1228,10 +1305,10 @@ function withDrill(path, P, fn) {
 const cutLabel = k => CUTS.find(c => c.key === k)?.label || k;
 function renderMtd() {
   const box = document.getElementById("mtd"), M = state.mtd, periods = mtdPeriods();
-  if (!CUTS.some(c => c.key === M.cut)) M.cut = "cat";
+  if (!cuts().some(c => c.key === M.cut)) M.cut = "cat";
   if (!periods.some(p => p.id === M.period)) M.period = periods.filter(p => p.id !== "ond").pop().id;
   const P = periods.find(p => p.id === M.period);
-  M.drill = (M.drill || []).filter(x => CUTS.some(c => c.key === x.cut));
+  M.drill = (M.drill || []).filter(x => cuts().some(c => c.key === x.cut));
   const ck = JSON.stringify([M.cut, P, state.f, state.region, state.align, M.drill]);
   if (MTD_CACHE.key !== ck) MTD_CACHE = { key: ck, res: withDrill(M.drill, P, Pd => mtdCompute(M.cut, Pd)) };
   const R = MTD_CACHE.res, cutL = CUTS.find(c => c.key === M.cut).label;
@@ -1307,7 +1384,7 @@ function renderMtd() {
       <div class="mctl">${seg("period", periods.map(p => ({ v: p.id, l: p.label })), M.period)}</div>
     </div>
     <div class="mh" style="padding-top:0">
-      <div class="mctl">${seg("cut", CUTS.map(c => ({ v: c.key, l: c.label })), M.cut)}</div>
+      <div class="mctl">${seg("cut", cuts().map(c => ({ v: c.key, l: c.label })), M.cut)}</div>
       <div class="mctl"><div class="seg" data-k="groups">${Object.entries(SECTIONS).map(([k, l]) => `<button data-v="${k}" aria-pressed="${M.groups.includes(k)}">${l}</button>`).join("")}</div>
         <input type="search" id="mq" placeholder="Search ${cutL.toLowerCase()}" value="${esc(M.q || "")}" autocomplete="off"></div>
     </div>
@@ -1321,7 +1398,7 @@ function renderMtd() {
 function drillMenu(btn) {
   const M = state.mtd, v = btn.dataset.dn, used = new Set([...M.drill.map(x => x.cut), M.cut]);
   document.getElementById("dmenu")?.remove();
-  const opts = CUTS.filter(c => !used.has(c.key));
+  const opts = cuts().filter(c => !used.has(c.key));
   const m = document.createElement("div");
   m.id = "dmenu"; m.className = "dmenu"; m.setAttribute("role", "menu");
   m.innerHTML = `<div class="dmh">Drill <b>${esc(v)}</b> into</div>` + opts.map(c => `<button role="menuitem" data-to="${c.key}">${c.label}</button>`).join("");
@@ -1705,7 +1782,7 @@ function renderDrill() {
         <p class="fsum">GMV vs LY (${state.align === "lfl" ? "LFL date" : "same date"}) · ${{ ALL: "Overall", KSA: "KSA", UAE: "UAE" }[state.region]} · total ${fmt(g, tot)} ${chip("LY", delta(g, tot, totLy))}</p></div>
       <div class="dctl">
         <div class="seg" id="dperiod"><button data-v="day" aria-pressed="${D.period === "day"}">This day</button><button data-v="ptd" aria-pressed="${D.period === "ptd"}">Since ${fmtD(START)}</button></div>
-        <div class="seg" id="ddim">${DIMS.map(x => `<button data-v="${x.key}" aria-pressed="${D.dim === x.key}">${x.label}</button>`).join("")}</div>
+        <div class="seg" id="ddim">${DIMS.filter(x => POC_OK || x.key !== "poc").map(x => `<button data-v="${x.key}" aria-pressed="${D.dim === x.key}">${x.label}</button>`).join("")}</div>
         <div class="seg" id="dsort"><button data-v="gmv" aria-pressed="${D.sort === "gmv"}">Top GMV</button><button data-v="up" aria-pressed="${D.sort === "up"}">Top gainers</button><button data-v="down" aria-pressed="${D.sort === "down"}">Top decliners</button></div>
         <button class="lnk" id="dclose">Close</button>
       </div></div>
@@ -1749,6 +1826,8 @@ function options(key) {
 }
 function renderFilters() {
   document.querySelectorAll(".dd").forEach(el => {
+    el.hidden = el.dataset.f === "poc" && !POC_OK;
+    if (el.hidden) { el.innerHTML = ""; return; }
     const dm = DIMS.find(x => x.key === el.dataset.f), sel = state.f[dm.key];
     const v = sel.length === 0 ? dm.all : sel.length === 1 ? sel[0] : `${sel.length} selected`;
     el.innerHTML = `<button class="ddb ${sel.length ? "on" : ""}" id="dd-${dm.key}" aria-haspopup="listbox" aria-expanded="${openDim === dm.key}"><span class="k">${dm.label}</span><span class="v">${esc(v)}</span>${CARET}</button>`;
@@ -1816,7 +1895,7 @@ document.querySelectorAll(".pill[data-dr]").forEach(bt => bt.addEventListener("c
 document.querySelectorAll(".drx").forEach(bt => bt.addEventListener("click", closeDrawer));
 document.getElementById("scrim").addEventListener("click", closeDrawer);
 document.addEventListener("keydown", e => { if (e.key === "Escape" && drOpen) closeDrawer(); });
-loadData().then(() => { recompute(); renderFilters(); render(); }).catch(err => {
+loadData().then(() => { recompute(); renderFilters(); render(); unlockPoc(); }).catch(err => {
   grid.innerHTML = `<p class="loading">The dashboard data could not be loaded (${esc(err.message)}). Open the page in a current version of Chrome, Edge, Safari or Firefox.</p>`;
 });
 </script>
