@@ -1243,17 +1243,19 @@ function renderMtd() {
   // columns: [id, label, metric, getter(row) -> {v (sort), html}]
   const cols = [];
   for (const m of mets) {
-    cols.push({ m, shade: m.shade, id: m.key + ":v", lbl: m.level ? "Now" : "MTD", f: r => { const v = val(m, r.a, 0); return { s: v, h: fmt(m, v, true) }; } });
-    if (!m.tyOnly) cols.push({ m, shade: m.shade, id: m.key + ":ly", lbl: "LY", f: r => { const v = val(m, r.a, 1); return { s: v, h: fmt(m, v, true) }; } });
     if (m.key === "gmv") {
-      cols.push({ m, id: "gmv:t", lbl: "Target", f: r => ({ s: r.t, h: r.t == null ? "–" : fmt(g, r.t, true) }) });
-      cols.push({ m, id: "gmv:vt", lbl: "vs Tgt", f: r => dcell(delta(g, val(g, r.a, 0), r.t)) });
       // full month: plan, projection (MTD achievement applied to the month plan) and MTD GMV as % of the month plan
       const proj = r => { const v = val(g, r.a, 0); return v != null && r.t && r.tm != null ? v / r.t * r.tm : null; };
       cols.push({ m, id: "gmv:mt", lbl: "Month tgt", f: r => ({ s: r.tm, h: r.tm == null ? "–" : fmt(g, r.tm, true) }) });
       cols.push({ m, id: "gmv:pj", lbl: "Projection", f: r => { const v = proj(r); return { s: v, h: `<span title="MTD GMV ÷ MTD target × month target">${fmt(g, v, true)}</span>` }; } });
       cols.push({ m, id: "gmv:ma", lbl: "Month ach %", f: r => { const v = r.tm ? (val(g, r.a, 0) || 0) / r.tm : null;
         return { s: v, h: v == null ? "–" : `<span title="MTD GMV ÷ full-month target">${(v * 100).toFixed(1)}%</span>` }; } });
+    }
+    cols.push({ m, shade: m.shade, id: m.key + ":v", lbl: m.level ? "Now" : "MTD", f: r => { const v = val(m, r.a, 0); return { s: v, h: fmt(m, v, true) }; } });
+    if (!m.tyOnly) cols.push({ m, shade: m.shade, id: m.key + ":ly", lbl: "LY", f: r => { const v = val(m, r.a, 1); return { s: v, h: fmt(m, v, true) }; } });
+    if (m.key === "gmv") {
+      cols.push({ m, id: "gmv:t", lbl: "Target", f: r => ({ s: r.t, h: r.t == null ? "–" : fmt(g, r.t, true) }) });
+      cols.push({ m, id: "gmv:vt", lbl: "vs Tgt", f: r => dcell(delta(g, val(g, r.a, 0), r.t)) });
       // Krithi's target: +25% on LY (LFL dates) at every level
       const kt = r => { const ly = val(g, r.a, 1); return ly ? ly * 1.25 : null; };
       cols.push({ m, id: "gmv:k", lbl: "Krithi tgt", f: r => { const v = kt(r); return { s: v, h: fmt(g, v, true) }; } });
