@@ -185,30 +185,8 @@ def pack():
                                "k": [combo_idx[tuple(ss_raw["info"][n][:5])] for n in ss_names],
                                "fields": ["gmv", "u", "mkd", "np", "rev", "pc1", "ppc1", "gv", "atc", "si", "nsi"], "rows": flat},
                               separators=(",", ":")).encode()
-    bufs["recap"] = pack_recap()
     meta["ssku"] = {"from": ss_raw["from"], "to": ss_raw["to"], "align": ss_raw["align"], "n": len(ss_raw["rows"])}
     return meta, bufs
-
-
-def pack_recap():
-    """OND recap tab (sql/recap_ond.sql, data/recap_raw.json): segments = (year, month, cohort, days) and rows
-    [seg, country, brand, category, sub-category, gmv, mkd, np, rev, pc1, ppc1, si, nsi] (indices into the name lists)."""
-    raw = json.loads((DATA / "recap_raw.json").read_text())
-    segs, rows, nm = [], [], {"brand": {}, "cat": {}, "sub": {}}
-    seg_i = {}
-    ix = lambda k, v: nm[k].setdefault(v, len(nm[k]))
-    for key in sorted(raw):
-        y, m, coh, nd, c = key.split("|")
-        sk = (int(y), int(m), coh)
-        if sk not in seg_i:
-            seg_i[sk] = len(segs)
-            segs.append([int(y), int(m), coh, int(nd)])
-        for rec in raw[key].split(";"):
-            v = rec.split(",")
-            rows += [seg_i[sk], int(c), ix("brand", v[0]), ix("cat", v[1]), ix("sub", v[2])] + [int(round(float(x))) for x in v[3:]]
-    return json.dumps({"segs": segs, "names": {k: list(d) for k, d in nm.items()},
-                       "fields": ["gmv", "mkd", "np", "rev", "pc1", "ppc1", "si", "nsi"], "rows": rows},
-                      separators=(",", ":")).encode()
 
 
 def lfl_map():

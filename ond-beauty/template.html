@@ -140,20 +140,10 @@ h3.sec:first-child { margin-top: 0; }
 .tile .tn { font-size: 11.5px; color: var(--muted); margin: -6px 0 8px; }
 .tile .tl { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12.5px; color: var(--fg-2); white-space: nowrap; }
 .tile .tl .chip { font-size: 12px; padding: 3px 8px; border-radius: 7px; font-weight: 600; }
-body[data-tab="mtd"] .tonly, body[data-tab="rca"] .tonly, body[data-tab="recap"] .tonly, body[data-tab="recap"] .nocap, body[data-tab="sku"] .tonly, body[data-tab="sku"] .nosku { display: none !important; }
+body[data-tab="mtd"] .tonly, body[data-tab="rca"] .tonly, body[data-tab="sku"] .tonly, body[data-tab="sku"] .nosku { display: none !important; }
 body:not([data-tab="mtd"]) .mtd { display: none; }
 body:not([data-tab="sku"]) .skus { display: none; }
-body:not([data-tab="rca"]) .rca:not(.recap) { display: none; }
-body:not([data-tab="recap"]) .recap { display: none; }
-.recap .ylab { text-align: center !important; }
-.recap tr.sel td { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
-.recap tr.base td { color: var(--fg-2); font-style: italic; }
-.recap td small { color: var(--muted); font-weight: 400; margin-left: 4px; }
-.recap .vd { display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
-.recap .vd.w { background: var(--good-bg); color: var(--good); } .recap .vd.m { background: var(--warn-bg); color: var(--warn); } .recap .vd.l { background: var(--bad-bg); color: var(--bad); }
-.recap .lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
-.recap .lists ol { margin: 6px 0 0; padding-left: 20px; font-size: 13px; } .recap .lists li { margin: 3px 0; }
-.recap .lists h4 { margin: 0; font-size: 13px; }
+body:not([data-tab="rca"]) .rca { display: none; }
 .rca { margin-top: 18px; display: grid; gap: 14px; }
 .rca .rp { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; min-width: 0; }
 .rca .mh { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 16px; align-items: flex-start; padding-bottom: 12px; }
@@ -371,7 +361,6 @@ details.gloss { margin-top: 12px; }
     <button role="tab" aria-selected="false" id="tab-mtd" data-tab="mtd">MTD performance</button>
     <button role="tab" aria-selected="false" id="tab-sku" data-tab="sku">Risk SKUs</button>
     <button role="tab" aria-selected="false" id="tab-rca" data-tab="rca">RCA</button>
-    <button role="tab" aria-selected="false" id="tab-recap" data-tab="recap">OND recap</button>
   </nav>
   <div class="bar">
     <div class="filters" id="filters">
@@ -394,7 +383,7 @@ details.gloss { margin-top: 12px; }
         <button id="r-uae" data-v="UAE" aria-pressed="false">UAE</button>
       </div>
     </div>
-    <div class="ctl nosku nocap"><span>Compare</span>
+    <div class="ctl nosku"><span>Compare</span>
       <div class="seg" id="align">
         <button id="a-lfl" data-v="lfl" aria-pressed="true" title="Like-for-like event dates from the LFL mapping (e.g. Black Friday vs Black Friday)">LFL date</button>
         <button id="a-date" data-v="date" aria-pressed="false" title="Same calendar date in 2025 and 2024">Same date</button>
@@ -425,8 +414,6 @@ details.gloss { margin-top: 12px; }
   <section class="skus" id="skus" aria-label="Retail SKUs at risk"></section>
 
   <section class="rca" id="rca" aria-label="Root cause analysis of MTD GMV"></section>
-
-  <section class="rca recap" id="recap" aria-label="OND recap of LY and LLY against September BAU"></section>
 
   <section class="grid tonly" id="grid"><p class="loading">Loading Beauty sales data…</p></section>
 
@@ -694,7 +681,6 @@ const GLOSS_TERMS = [
   ["MTD", "Month to date: 1st of the month to the latest full day (yesterday). Flow metrics are summed over the period."],
   ["Now", "Stock-type metrics (assortment, stock, inventory, WoC, shares) on the last day of the period; LY / LLY use the LFL day."],
   ["Target", "Daily GMV plan for the Beauty pod (planning_dod_merch_brand_category_targets, pod cp_beauty) by country, brand and category."],
-  ["OND recap", "LY (2025) and LLY (2024) Oct–Dec, each cohort against that year's September (BAU): GMV and impressions per day vs Sep, PC1 % / Prov. PC1 % / MKD % with their change vs Sep in pp. Incr. vs BAU = GMV − Sep GMV per day × days. vs Beauty lift = GMV − Sep GMV per day × days × (1 + Beauty's lift vs Sep): above zero the row outgrew Beauty (Worked; Margin hit when PC1 % is more than 2pp below Sep), below zero it lagged. Cohorts are the OND 2026 ones matched on LFL dates; dates no 2026 day maps to are 'Other'. Cuts: country, category, sub-category, brand; business model and season filters don't apply."],
   ["Krithi tgt", "LY GMV on LFL dates × 1.25, for every row (MTD performance), and on the Daily trend tab's Beauty summary tiles (MTD, yesterday and month projection)."],
   ["vs Tgt / vs LY / vs LLY", "% change for value metrics; percentage-point (pp) change for % metrics."],
   ["Δ vs LY", "GMV TY − GMV LY, in AED."],
@@ -1060,7 +1046,6 @@ function render() {
   if (state.tab === "mtd") { renderMtd(); return; }
   if (state.tab === "sku") { renderSkus(); return; }
   if (state.tab === "rca") { renderRca(); return; }
-  if (state.tab === "recap") { renderRecap(); return; }
   const zb = document.getElementById("zoominfo");
   zb.hidden = !state.zoom;
   if (state.zoom) zb.querySelector("span").textContent = `Zoomed to ${fmtD(state.zoom[0])} – ${fmtD(state.zoom[1])}`;
@@ -1668,166 +1653,6 @@ document.getElementById("rca").addEventListener("click", e => {
   else if (bt.parentElement?.dataset.k) { S[bt.parentElement.dataset.k] = bt.dataset.v; S.all = false; }
   else return;
   save(); renderRca();
-});
-
-// ---------- OND recap: LY (2025) and LLY (2024) Oct-Dec by cohort against September BAU (sql/recap_ond.sql) ----------
-// Every cohort is compared per day with that year's September (BAU): GMV / impressions per day vs Sep, and PC1 %,
-// Prov. PC1 % and MKD % in pp vs Sep. "vs Beauty lift" = row GMV - row Sep GMV per day x days x (1 + Beauty's lift):
-// above zero the row outgrew Beauty in that period (worked), below it lagged.
-let RECAP = null, RECAP_LOADING = false;
-const RC_Y = [2025, 2024], RC_F = 8;   // fields: gmv, mkd, np, rev, pc1, ppc1, si, nsi
-function loadRecap() {
-  if (RECAP || RECAP_LOADING) return;
-  RECAP_LOADING = true;
-  fetchBin("recap").then(b => { RECAP = JSON.parse(new TextDecoder().decode(b)); if (state.tab === "recap") renderRecap(); })
-    .catch(e => { RECAP = { err: String(e) }; if (state.tab === "recap") renderRecap(); });
-}
-// rows passing the filters (category, sub-category, brand and brand type / group / POC; business model and season
-// are not kept in the recap) and the region
-function recapMask() {
-  const N = RECAP.names, bIdx = Object.fromEntries(META.names.brand.map((b, i) => [b, i])), f = state.f;
-  const okName = (k, v) => !f[k].length || f[k].includes(v);
-  const okB = N.brand.map(b => okName("brand", b) && DIMS.filter(dm => dm.attr != null && f[dm.key].length).every(dm => {
-    const i = bIdx[b], a = i != null && META.battr[i][dm.attr] >= 0 ? META.names[dm.key][META.battr[i][dm.attr]] : "unassigned";
-    return f[dm.key].includes(a); }));
-  const okC = N.cat.map(v => okName("cat", v)), okS = N.sub.map(v => okName("sub", v)), regOk = [0, 1, 2].map(c => RIDX[state.region].includes(c));
-  return (c, b, ca, su) => regOk[c] && okB[b] && okC[ca] && okS[su];
-}
-// sum rows by key: per row name a Float64Array [year 0/1][part 0 = period, 1 = Sep][8 fields]
-function recapAgg(inPeriod, keyFn) {
-  const R = RECAP.rows, w = 5 + RC_F, ok = recapMask(), by = new Map(), tot = new Float64Array(4 * RC_F);
-  const yIdx = RECAP.segs.map(sg => RC_Y.indexOf(sg[0])), part = RECAP.segs.map(sg => sg[1] === 9 ? 1 : inPeriod(sg) ? 0 : -1);
-  for (let o = 0; o < R.length; o += w) {
-    const sg = R[o], p = part[sg], y = yIdx[sg];
-    if (p < 0 || y < 0 || !ok(R[o + 1], R[o + 2], R[o + 3], R[o + 4])) continue;
-    const base = (y * 2 + p) * RC_F, nm = keyFn ? keyFn(R, o) : null;
-    let a = null;
-    if (nm != null && !PLACEHOLDER.has(nm)) { a = by.get(nm); if (!a) by.set(nm, a = new Float64Array(4 * RC_F)); }
-    for (let j = 0; j < RC_F; j++) { const v = R[o + 5 + j]; tot[base + j] += v; if (a) a[base + j] += v; }
-  }
-  const days = RC_Y.map(y => RECAP.segs.reduce((s, sg) => s + (sg[0] === y && sg[1] !== 9 && inPeriod(sg) ? sg[3] : 0), 0));
-  const sepDays = RC_Y.map(y => RECAP.segs.find(sg => sg[0] === y && sg[1] === 9)?.[3] || 30);
-  return { by, tot, days, sepDays };
-}
-// per-year figures of one aggregated row (a) against the Beauty total of the same selection (T)
-function recapFig(a, y, A, T) {
-  const P = a.subarray((y * 2) * RC_F, (y * 2 + 1) * RC_F), S = a.subarray((y * 2 + 1) * RC_F, (y * 2 + 2) * RC_F);
-  const d = A.days[y], sd = A.sepDays[y], rt = (n, dn) => dn ? n / dn : null;
-  const gd = d ? P[0] / d : null, sgd = S[0] / sd;
-  const lift = sgd && gd != null ? gd / sgd - 1 : null;
-  const imp = d ? (P[6] + P[7]) / d : null, simp = (S[6] + S[7]) / sd;
-  const o = { gmv: P[0], days: d, gd, lift, inc: d ? P[0] - sgd * d : null,
-    pc1: rt(P[4], P[3]), pc1s: rt(S[4], S[3]), ppc1: rt(P[5], P[3]), ppc1s: rt(S[5], S[3]), mkd: rt(P[1], P[2]), mkds: rt(S[1], S[2]),
-    implift: simp && imp != null ? imp / simp - 1 : null };
-  if (T && T !== a) { const tl = recapFig(T, y, A, null).lift; o.vsB = tl == null || !d || !sgd ? null : P[0] - sgd * d * (1 + tl); o.tl = tl; }
-  return o;
-}
-function recapCohorts() {
-  // cohort order within each month: as the OND 2026 dates run (META.cohort), "Other" last
-  const ord = new Map();
-  Object.keys(META.cohort).sort().forEach(d => { const k = +d.slice(5, 7) + "|" + META.cohort[d].replace(/_/g, " "); if (!ord.has(k)) ord.set(k, ord.size); });
-  const seen = new Map();
-  for (const [, m, c] of RECAP.segs) if (m !== 9) seen.set(m + "|" + c, { m, c });
-  return [...seen.entries()].sort((a, b) => (a[1].m - b[1].m) || ((ord.get(a[0]) ?? 999) - (ord.get(b[0]) ?? 999))).map(x => x[1]);
-}
-const RC_CUTS = [["country", "Country"], ["cat", "Category"], ["sub", "Sub-category"], ["brand", "Brand"]];
-function renderRecap() {
-  const box = document.getElementById("recap");
-  if (!RECAP) { loadRecap(); box.innerHTML = `<div class="rp"><p class="fsum">Loading the OND recap…</p></div>`; return; }
-  if (RECAP.err) { box.innerHTML = `<div class="rp"><p class="fsum">Couldn't load the recap (${esc(RECAP.err)}).</p></div>`; return; }
-  const S = state.recap = Object.assign({ month: "ond", seg: null, cut: "cat", q: "", all: false, sort: "vsB0", dir: -1 }, state.recap || {});
-  const G = METRICS[0], MN = { 10: "Oct", 11: "Nov", 12: "Dec" };
-  const pc = v => v == null || !isFinite(v) ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v * 100).toFixed(1) + "%";
-  const pp = v => v == null || !isFinite(v) ? "" : (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v * 100).toFixed(1) + "pp";
-  const aed = v => v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "") + fmt(G, Math.abs(v), true);
-  const cl = (v, lb) => v == null || Math.abs(v) < 1e-9 ? "" : (v > 0) !== !!lb ? "up" : "down";
-  const pct = (v, base, lb) => v == null ? "–" : `${(v * 100).toFixed(1)}%<small class="${base == null ? "" : cl(v - base, lb)}">${base == null ? "" : pp(v - base)}</small>`;
-  const vd = (o, cohortRow) => {
-    if (o.gmv <= 0 && !o.days) return "";
-    const ref = cohortRow ? o.lift : o.vsB, mh = o.pc1 != null && o.pc1s != null && o.pc1 - o.pc1s < -0.02;
-    if (ref == null) return `<span class="vd">New</span>`;
-    if (ref < 0) return `<span class="vd l" title="${cohortRow ? "GMV per day below September" : "Grew less than Beauty did in this period"}">${cohortRow ? "No lift" : "Lagged"}</span>`;
-    return mh ? `<span class="vd m" title="PC1 % more than 2pp below September">Margin hit</span>` : `<span class="vd w">Worked</span>`;
-  };
-  const cohorts = recapCohorts(), months = [10, 11, 12].filter(m => cohorts.some(x => x.m === m));
-  if (S.seg && !cohorts.some(x => x.m + "|" + x.c === S.seg)) S.seg = null;
-  if (S.month !== "ond" && !months.includes(+S.month)) S.month = "ond";
-  const inMonth = sg => S.month === "ond" || sg[1] === +S.month;
-  const inSel = sg => S.seg ? sg[1] + "|" + sg[2] === S.seg : inMonth(sg);
-  const selLabel = S.seg ? `${MN[S.seg.split("|")[0]]} · ${S.seg.split("|")[1]}` : S.month === "ond" ? "OND (Oct–Dec)" : MN[S.month];
-  // 1) cohorts vs September
-  const yh = (extra = "") => RC_Y.map((y, i) => `<th class="g0 ylab" colspan="${7 + (extra ? 1 : 0)}">${i ? "LLY" : "LY"} ${y}</th>`).join("");
-  const cohSub = RC_Y.map(() => `<th class="g0">Days</th><th>GMV / day</th><th>vs Sep</th><th>PC1 %</th><th>Prov. PC1 %</th><th>MKD %</th><th>Imp. / day vs Sep</th><th>Verdict</th>`).join("");
-  const cohCells = (A, a) => RC_Y.map((y, yi) => { const o = recapFig(a, yi, A, null);
-    return `<td class="g0">${o.days || "–"}</td><td>${o.gd == null ? "–" : fmt(G, o.gd, true)}</td><td><span class="${cl(o.lift)}">${pc(o.lift)}</span></td><td>${pct(o.pc1, o.pc1s)}</td><td>${pct(o.ppc1, o.ppc1s)}</td><td>${pct(o.mkd, o.mkds, true)}</td><td><span class="${cl(o.implift)}">${pc(o.implift)}</span></td><td>${o.days ? vd(o, true) : ""}</td>`; }).join("");
-  const sepA = recapAgg(() => false, null);
-  const sepCells = RC_Y.map((y, yi) => { const Sx = sepA.tot.subarray((yi * 2 + 1) * RC_F, (yi * 2 + 2) * RC_F), sd = sepA.sepDays[yi];
-    return `<td class="g0">${sd}</td><td>${fmt(G, Sx[0] / sd, true)}</td><td></td><td>${pct(Sx[3] ? Sx[4] / Sx[3] : null, null)}</td><td>${pct(Sx[3] ? Sx[5] / Sx[3] : null, null)}</td><td>${pct(Sx[2] ? Sx[1] / Sx[2] : null, null)}</td><td>${fmt({ kind: "cnt" }, (Sx[6] + Sx[7]) / sd, true)}</td><td></td>`; }).join("");
-  let coh = `<tr class="base"><td>Sep (BAU) · baseline</td>${sepCells}</tr>`;
-  for (const m of months) {
-    if (S.month !== "ond" && +S.month !== m) continue;
-    const Am = recapAgg(sg => sg[1] === m, null);
-    coh += `<tr class="tot${!S.seg && (S.month == m) ? " sel" : ""}"><td><button class="lnk" data-rcm="${m}">${MN[m]} · all</button></td>${cohCells(Am, Am.tot)}</tr>`;
-    for (const x of cohorts.filter(x => x.m === m)) {
-      const k = m + "|" + x.c, A = recapAgg(sg => sg[1] === m && sg[2] === x.c, null);
-      coh += `<tr class="${S.seg === k ? "sel" : ""}"><td><button class="lnk" data-rcs="${esc(k)}">${esc(x.c)}</button></td>${cohCells(A, A.tot)}</tr>`;
-    }
-  }
-  // 2) by cut for the selection
-  const N = RECAP.names, kf = { country: (R, o) => COUNTRY[R[o + 1]], cat: (R, o) => N.cat[R[o + 3]], sub: (R, o) => N.sub[R[o + 4]], brand: (R, o) => N.brand[R[o + 2]] }[S.cut];
-  const A = recapAgg(inSel, kf), T = A.tot;
-  let rows = [...A.by.entries()].map(([name, a]) => ({ name, f: RC_Y.map((y, yi) => recapFig(a, yi, A, T)) })).filter(r => r.f.some(o => o.gmv > 0));
-  const nAll = rows.length, q = (S.q || "").trim().toLowerCase();
-  if (q) rows = rows.filter(r => r.name.toLowerCase().includes(q));
-  const sortKeys = { gmv: o => o.gmv, inc: o => o.inc, lift: o => o.lift, vsB: o => o.vsB, pc1: o => o.pc1 == null || o.pc1s == null ? null : o.pc1 - o.pc1s, mkd: o => o.mkd == null || o.mkds == null ? null : o.mkd - o.mkds };
-  const sk = S.sort.slice(0, -1), sy = +S.sort.slice(-1), sf = sortKeys[sk] || sortKeys.vsB;
-  rows.sort((a, b) => { const x = sf(a.f[sy]), y = sf(b.f[sy]); if (x == null) return y == null ? 0 : 1; if (y == null) return -1; return S.dir * (x - y); });
-  const shown = S.all ? rows : rows.slice(0, 50);
-  const th = (k, y, l, t) => `<th data-rsort="${k}${y}" class="${["gmv"].includes(k) ? "g0 " : ""}${S.sort === k + y ? "sorted" : ""}" title="${t || "Sort"}">${l}${S.sort === k + y ? (S.dir < 0 ? " ↓" : " ↑") : ""}</th>`;
-  const cutSub = RC_Y.map((y, yi) => th("gmv", yi, "GMV") + th("inc", yi, "Incr. vs BAU", "GMV minus September GMV per day × days") + th("lift", yi, "GMV / day vs Sep") + th("vsB", yi, "vs Beauty lift", "GMV minus what the row would have made at Beauty's own lift vs September: above zero it outgrew Beauty") + th("pc1", yi, "PC1 %", "PC1 % and its change vs September") + `<th>Prov. PC1 %</th>` + th("mkd", yi, "MKD %", "MKD % and its change vs September") + `<th>Imp. / day vs Sep</th><th>Verdict</th>`).join("");
-  const cutCells = r => r.f.map(o => `<td class="g0">${fmt(G, o.gmv, true)}</td><td><span class="${cl(o.inc)}">${aed(o.inc)}</span></td><td><span class="${cl(o.lift)}">${pc(o.lift)}</span></td><td><span class="${cl(o.vsB)}">${aed(o.vsB)}</span></td><td>${pct(o.pc1, o.pc1s)}</td><td>${pct(o.ppc1, o.ppc1s)}</td><td>${pct(o.mkd, o.mkds, true)}</td><td><span class="${cl(o.implift)}">${pc(o.implift)}</span></td><td>${o.gmv > 0 ? vd(o, r.name === "Total") : ""}</td>`).join("");
-  const totF = { name: "Total", f: RC_Y.map((y, yi) => recapFig(T, yi, A, T)) };
-  // 3) what worked / what didn't: biggest gains and shortfalls against Beauty's lift
-  const cutL = RC_CUTS.find(c => c[0] === S.cut)[1];
-  const top = (yi, dir) => [...A.by.entries()].map(([name, a]) => ({ name, o: recapFig(a, yi, A, T) })).filter(x => x.o.vsB != null && dir * x.o.vsB > 0)
-    .sort((a, b) => dir * (b.o.vsB - a.o.vsB)).slice(0, 5);
-  const li = x => `<li><b>${esc(x.name)}</b> ${aed(x.o.vsB)} <small class="fsum">· GMV/day ${pc(x.o.lift)} vs Sep · PC1 ${pp(x.o.pc1 - x.o.pc1s) || "–"} · MKD ${pp(x.o.mkd - x.o.mkds) || "–"}</small></li>`;
-  const lists = RC_Y.map((y, yi) => { const tl = recapFig(T, yi, A, null).lift;
-    return `<div><h4>${yi ? "LLY" : "LY"} ${y} · worked <small class="fsum">(Beauty ${pc(tl)} per day vs Sep)</small></h4><ol>${top(yi, 1).map(li).join("") || "<li>–</li>"}</ol></div>
-      <div><h4>${yi ? "LLY" : "LY"} ${y} · didn't</h4><ol>${top(yi, -1).map(li).join("") || "<li>–</li>"}</ol></div>`; }).join("");
-  const seg = (k, opts, cur) => `<div class="seg" data-rk="${k}">${opts.map(([v, l]) => `<button data-v="${v}" aria-pressed="${String(v) === String(cur)}">${l}</button>`).join("")}</div>`;
-  box.innerHTML = `
-    <div class="rp"><div class="mh"><div><h2>OND recap · what worked in ${RC_Y[0]} and ${RC_Y[1]}</h2>
-      <p class="fsum">Each cohort per day against that year's September (BAU) · GMV and impressions per day vs Sep, PC1 % / Prov. PC1 % / MKD % with their change vs Sep in pp · cohorts are the OND ${RC_Y[0] + 1} ones, matched to each year on LFL dates · ${{ ALL: "Overall", KSA: "KSA", UAE: "UAE" }[state.region]}${filtered() ? " · filtered (business model and season filters don't apply here)" : ""}</p></div>
-      <div class="mctl">${seg("month", [["ond", "OND"], ...months.map(m => [m, MN[m]])], S.month)}</div></div>
-      <div class="mtscroll"><table class="mt"><thead><tr><th></th>${yh(1)}</tr><tr><th>Cohort</th>${cohSub}</tr></thead><tbody>${coh}</tbody></table></div>
-      <p class="fsum">Click a cohort (or a month) to break it down below · Verdict: Worked = GMV per day above September; Margin hit = above September with PC1 % more than 2pp lower; No lift = below September.</p></div>
-    <div class="rp"><h3>What worked and what didn't · ${esc(selLabel)} · by ${cutL.toLowerCase()}</h3>
-      <p class="fsum">Ranked by GMV against Beauty's own lift: GMV minus the row's September GMV per day × days × (1 + Beauty's lift vs Sep). Above zero the ${cutL.toLowerCase()} outgrew Beauty in this period (worth repeating); below zero it lagged (worth fixing).</p>
-      <div class="lists">${lists}</div></div>
-    <div class="rp"><div class="mh"><div><h3>${esc(selLabel)} by ${cutL.toLowerCase()}</h3></div>
-      <div class="mctl">${seg("cut", RC_CUTS, S.cut)}<input type="search" id="rcq" placeholder="Search ${cutL.toLowerCase()}" value="${esc(S.q || "")}" autocomplete="off"></div></div>
-      <div class="mtscroll"><table class="mt"><thead><tr><th></th>${RC_Y.map((y, i) => `<th class="g0 ylab" colspan="9">${i ? "LLY" : "LY"} ${y}</th>`).join("")}</tr><tr><th>${cutL}</th>${cutSub}</tr></thead>
-        <tbody><tr class="tot"><td>Total</td>${cutCells(totF)}</tr>${shown.map(r => `<tr><td title="${esc(r.name)}">${esc(r.name)}</td>${cutCells(r)}</tr>`).join("")}</tbody></table></div>
-      <div class="mf"><span class="fsum">${shown.length < rows.length ? `Top ${shown.length} of ${rows.length} · <button class="lnk" id="rcall">Show all</button>` : `${rows.length}${q ? ` of ${nAll}` : ""} rows`}${S.all && rows.length > 50 ? ` · <button class="lnk" id="rcall">Show top 50</button>` : ""} · click a column to sort · Verdict: Worked = outgrew Beauty's lift; Margin hit = outgrew it with PC1 % more than 2pp below September; Lagged = grew less than Beauty; New = no September sales</span></div></div>`;
-  const qi = document.getElementById("rcq");
-  if (S._focus) { qi.focus(); qi.setSelectionRange(qi.value.length, qi.value.length); S._focus = false; }
-}
-document.getElementById("recap").addEventListener("click", e => {
-  const S = state.recap, b = e.target.closest("button"), th = e.target.closest("th[data-rsort]");
-  if (th) { const k = th.dataset.rsort; if (S.sort === k) S.dir = -S.dir; else { S.sort = k; S.dir = -1; } save(); renderRecap(); return; }
-  if (!b) return;
-  const sg = b.closest(".seg[data-rk]");
-  if (sg) { S[sg.dataset.rk] = sg.dataset.rk === "month" && b.dataset.v !== "ond" ? +b.dataset.v : b.dataset.v; if (sg.dataset.rk === "month") S.seg = null; S.all = false; }
-  else if (b.dataset.rcs) { S.seg = S.seg === b.dataset.rcs ? null : b.dataset.rcs; }
-  else if (b.dataset.rcm) { S.month = +b.dataset.rcm; S.seg = null; }
-  else if (b.id === "rcall") S.all = !S.all;
-  else return;
-  save(); renderRecap();
-});
-document.getElementById("recap").addEventListener("input", e => {
-  if (e.target.id !== "rcq") return;
-  state.recap.q = e.target.value; state.recap._focus = true; renderRecap();
 });
 
 // ---------- Risk SKUs: retail supplier SKUs out of stock or with WoC <= 3, top 500 per country by GMV since 1 Jul (sql/risk_skus.sql) ----------
