@@ -1791,7 +1791,10 @@ const fbDrvCell = o => !o || !o.drv ? "–" : `<span class="drv ${o.drv}" title=
 // "if conversion lifts like LY" divides that by LY's lift in GMV per impression from Sept to the period.
 // Rows with too little Sept 2026 traffic (under 200K impressions or 30 units) use their parent's GMV per impression (≈).
 function fbPlan(r, ps, parent) {
-  const ly = fbStat(r, 1, ps), tgt = ly.g * FB.uplift, own = fbSum(r, 2, [0]);
+  // target = per period, LY GMV per day (LFL dates) × uplift × the period's 2026 days; LY impressions scaled the same way
+  const ly = fbStat(r, 1, ps), own = fbSum(r, 2, [0]);
+  let tgt = 0, lyIm = 0;
+  for (const p of ps) if (p) { const o = fbStat(r, 1, [p]), d = fbTyDays(p); tgt += (o.gpd || 0) * d * FB.uplift; lyIm += (o.ipd || 0) * d; }
   let cur = own, approx = false;
   if ((own.m[5] < 2e5 || own.m[1] < 30) && parent) { cur = fbSum(parent, 2, [0]); approx = true; }
   const gpi = cur.m[5] > 0 && cur.m[0] > 0 ? cur.m[0] / cur.m[5] : null;
@@ -1800,7 +1803,7 @@ function fbPlan(r, ps, parent) {
   const needL = need && lift ? need / lift : null;
   const tyDays = ps.reduce((a, p) => a + (p ? fbTyDays(p) : 0), 0), ipdNow = own.d ? own.m[5] / own.d : 0;
   return { ly, tgt, need, needL, approx, lift, tyDays, ipdNow,
-    vsLy: need && ly.im ? need / ly.im - 1 : null, vsLyL: needL && ly.im ? needL / ly.im - 1 : null,
+    vsLy: need && lyIm ? need / lyIm - 1 : null, vsLyL: needL && lyIm ? needL / lyIm - 1 : null,
     runX: need && ipdNow && tyDays ? need / tyDays / ipdNow : null, runXL: needL && ipdNow && tyDays ? needL / tyDays / ipdNow : null };
 }
 function fbParent(lv, r) {
@@ -1824,7 +1827,7 @@ function fbTable(lv) {
   const yh = y => `<th class="g0" title="GMV per day in the period">GMV / day</th><th title="GMV per day vs the same year's September per day">GMV vs Sept</th><th title="Impressions per day vs the same year's September per day">Imps vs Sept</th><th title="Markdown % (change vs September in pp)">MKD %</th><th style="text-align:left">What drove it</th>`;
   let h = `<div class="mtscroll"><table class="mt"><thead><tr><th></th><th class="g0" colspan="5">LLY · ${FB.years[0]}</th><th class="g0" colspan="5">LY · ${FB.years[1]}</th>`
     + `<th class="g0 pl" colspan="5">2026 plan · GMV +${Math.round((FB.uplift - 1) * 100)}% vs LY</th></tr>`
-    + `<tr><th>${first}</th>${yh(0)}${yh(1)}<th class="g0 pl" title="LY GMV × ${FB.uplift}">Target GMV</th><th class="pl" title="Target ÷ today's GMV per impression (Sept 2026 CTR × UCR × ASP)">Imps needed</th>`
+    + `<tr><th>${first}</th>${yh(0)}${yh(1)}<th class="g0 pl" title="LY GMV per day × ${FB.uplift} × 2026 days">Target GMV</th><th class="pl" title="Target ÷ today's GMV per impression (Sept 2026 CTR × UCR × ASP)">Imps needed</th>`
     + `<th class="pl" title="Impressions needed vs LY impressions in the same period">vs LY imps</th><th class="pl" title="If GMV per impression moves from Sept to the period the way it did LY">vs LY if conv. moves like LY</th><th class="pl">× today's imps/day</th></tr></thead><tbody>`;
   const line = (label, r, ps, cls, parent) => {
     const sep = ps.length === 1 && ps[0] === 0;
@@ -1875,6 +1878,68 @@ function fbLearn() {
     + `<div><h3>What didn't work · improve</h3><ul class="ln bad">${li(L.bad)}</ul><h3 style="margin-top:12px">Missed vs LLY</h3><ul class="ln warn">${li(L.warn)}</ul></div></div>`;
 }
 
+// ---- impressions vs conversion (daily, Sept + Nov LY / LLY) and the period-level impressions plan ----
+// yield = GMV per impression (= CTR × UCR × ASP), each day indexed to the same year's September yield
+function fbImps() {
+  if (!FB.daily || !FB.daily.length) return "";
+  const yrs = [FB.years[0], FB.years[1]], all = FB.lv.all[0], U = FB.uplift;
+  const base = {}, pts = {};
+  for (const y of yrs) {
+    const sep = FB.daily.filter(r => r[0].startsWith(y + "-09")), sum = (L, i) => L.reduce((a, r) => a + r[i], 0);
+    base[y] = { ipd: sum(sep, 5) / sep.length, gpi: sum(sep, 1) / sum(sep, 5), ctr: sum(sep, 4) / sum(sep, 5), ucr: sum(sep, 2) / sum(sep, 4) };
+    pts[y] = FB.daily.filter(r => r[0].startsWith(y + "-11")).map(r => ({ d: r[0], ix: r[5] / base[y].ipd, yx: r[1] / r[5] / base[y].gpi, r }));
+  }
+  // buckets by impressions vs that year's September per day
+  const BK = [[0, 1.5, "under 1.5×"], [1.5, 2.5, "1.5–2.5×"], [2.5, 3.5, "2.5–3.5×"], [3.5, 99, "3.5× +"]];
+  const bk = y => BK.map(([lo, hi, l]) => {
+    const L = pts[y].filter(p => p.ix >= lo && p.ix < hi).map(p => p.r), s = i => L.reduce((a, r) => a + r[i], 0);
+    return L.length ? { l, n: L.length, ctr: s(4) / s(5), ucr: s(2) / s(4), asp: s(1) / s(2), yx: s(1) / s(5) / base[y].gpi, mk: L.reduce((a, r) => a + r[3], 0) / L.length } : { l, n: 0 };
+  });
+  const B0 = bk(yrs[0]), B1 = bk(yrs[1]);
+  const btab = `<div class="mtscroll" style="max-height:none"><table class="mt"><thead><tr><th>Imps / day vs Sept</th>${yrs.map(y => `<th class="g0" colspan="5">${y === yrs[1] ? "LY" : "LLY"} · ${y} November days</th>`).join("")}</tr>`
+    + `<tr><th></th>${yrs.map(() => `<th class="g0">Days</th><th>CTR</th><th>UCR</th><th>ASP</th><th title="GMV per impression vs that year's September">Yield vs Sept</th>`).join("")}</tr></thead><tbody>`
+    + BK.map((_, i) => `<tr><td>${BK[i][2]}</td>${[B0[i], B1[i]].map(b => b.n ? `<td class="g0">${b.n}</td><td>${(b.ctr * 100).toFixed(2)}%</td><td>${(b.ucr * 100).toFixed(2)}%</td><td>${Math.round(b.asp)}</td><td><span class="${fbCls(b.yx - 1)}">${fbPc(b.yx - 1)}</span><small>MKD ${Math.round(b.mk * 100)}%</small></td>` : `<td class="g0 na" colspan="5">–</td>`).join("")}</tr>`).join("")
+    + `<tr class="sep"><td>September base</td>${yrs.map(y => `<td class="g0">30</td><td>${(base[y].ctr * 100).toFixed(2)}%</td><td>${(base[y].ucr * 100).toFixed(2)}%</td><td></td><td>${(base[y].gpi * 1000).toFixed(1)} / 1K</td>`).join("")}</tr></tbody></table></div>`;
+  // scatter: impressions multiple (x) vs yield index (y)
+  const W = 560, H = 230, L0 = 40, Bm = 26, xs = v => L0 + (W - L0 - 10) * (Math.min(v, 5.5) - 0.5) / 5, ys = v => H - Bm - (H - Bm - 10) * (Math.max(0.4, Math.min(v, 1.6)) - 0.4) / 1.2;
+  let sv = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Daily impressions vs GMV per impression, November ${yrs.join(" and ")}" style="width:100%;max-width:680px;height:auto">`;
+  for (const t of [0.6, 0.8, 1, 1.2, 1.4]) sv += `<line x1="${L0}" x2="${W - 10}" y1="${ys(t)}" y2="${ys(t)}" stroke="var(--grid)"${t === 1 ? ' stroke-dasharray="4 3" stroke="var(--axis)"' : ""}/><text x="${L0 - 6}" y="${ys(t) + 4}" font-size="10" text-anchor="end" fill="var(--muted)">${fbPc(t - 1)}</text>`;
+  for (const t of [1, 2, 3, 4]) sv += `<text x="${xs(t)}" y="${H - 8}" font-size="10" text-anchor="middle" fill="var(--muted)">${t}×</text>`;
+  sv += `<text x="${W - 10}" y="${H - 8}" font-size="10" text-anchor="end" fill="var(--fg-2)">imps / day vs Sept →</text><text x="${L0}" y="10" font-size="10" fill="var(--fg-2)">GMV per impression vs Sept</text>`;
+  for (const y of yrs) for (const p of pts[y]) sv += `<circle cx="${xs(p.ix)}" cy="${ys(p.yx)}" r="4.5" fill="${y === yrs[1] ? "var(--accent)" : "var(--muted)"}" fill-opacity="${y === yrs[1] ? 0.85 : 0.6}"><title>${fmtD(p.d)} ${y}: imps ${p.ix.toFixed(1)}× Sept, GMV per impression ${fbPc(p.yx - 1)}, MKD ${Math.round(p.r[3] * 100)}%, UCR ${(p.r[2] / p.r[4] * 100).toFixed(2)}%</title></circle>`;
+  sv += `</svg>`;
+  // which LY days wasted impressions: 2×+ Sept impressions at under 75% of Sept yield
+  const weak = pts[yrs[1]].filter(p => p.ix >= 2 && p.yx < 0.75), peak = pts[yrs[1]].filter(p => p.ix >= 2 && p.yx >= 0.9);
+  const wsum = (L, i) => L.reduce((a, p) => a + p.r[i], 0);
+  // plan per period: target = LY period GMV × uplift; yield = Sept 2026 GMV per impression × the period's lift (LY, LLY, average)
+  const s26 = fbSum(all, 2, [0]).m, gpi26 = s26[0] / s26[5], ipd26 = s26[5] / FB.days[2][0];
+  let T = { tgt: 0, mid: 0, lo: 0, hi: 0, ly: 0 }; const ev = { ly: [], lly: [] };
+  const rows = fbWin().map(p => {
+    const P = FB.periods[p - 1], ly = fbStat(all, 1, [p]), lly = fbStat(all, 0, [p]), ty = fbTyDays(p);
+    const i1 = ly.gpi / ly.sgpi, i0 = lly.gpi / lly.sgpi, tgt = ly.gpd * ty * U, im = idx => tgt / (gpi26 * idx);
+    if (!/BAU/.test(P.cohort)) { ev.ly.push(i1 - 1); ev.lly.push(i0 - 1); }
+    const mid = im((i1 + i0) / 2), lo = im(Math.max(i1, i0)), hi = im(Math.min(i1, i0)), lyIm = ly.ipd * ty;
+    T.tgt += tgt; T.mid += mid; T.lo += lo; T.hi += hi; T.ly += lyIm;
+    return `<tr><td>${esc(P.cohort)}<small>${fbDates(P.ty[0], P.ty[1])}</small></td><td class="g0">${fbK(ly.ipd)}</td><td><span class="${fbCls(i1 - 1)}">${fbPc(i1 - 1)}</span></td><td><span class="${fbCls(i0 - 1)}">${fbPc(i0 - 1)}</span></td>`
+      + `<td class="pl g0">${fbK(tgt)}</td><td class="pl"><b>${fbK(mid / ty)}</b><small>${fbK(lo / ty)}–${fbK(hi / ty)}</small></td><td class="pl">×${(mid / ty / ipd26).toFixed(1)}</td><td class="pl"><span class="${fbCls(-(mid / lyIm - 1))}">${fbPc(mid / lyIm - 1)}</span></td></tr>`;
+  });
+  const ptab = `<div class="mtscroll" style="max-height:none"><table class="mt"><thead><tr><th>Period (2026)</th><th class="g0" title="LY impressions per day in the period">LY imps / day</th><th title="LY GMV per impression vs LY September">LY yield vs Sept</th><th title="LLY GMV per impression vs LLY September">LLY yield vs Sept</th>`
+    + `<th class="g0 pl">Target GMV</th><th class="pl" title="Impressions per day needed at today's yield × the average of LY and LLY lift; range = the better year's lift to the weaker year's lift">Imps / day needed</th><th class="pl">× Sept 2026 imps/day</th><th class="pl">vs LY imps / day</th></tr></thead><tbody>${rows.join("")}`
+    + `<tr class="tot"><td>November</td><td class="g0">${fbK(T.ly)}</td><td></td><td></td><td class="pl g0">${fbK(T.tgt)}</td><td class="pl"><b>${fbK(T.mid)}</b><small>${fbK(T.lo)}–${fbK(T.hi)}</small></td><td class="pl">×${(T.mid / 30 / ipd26).toFixed(1)}</td><td class="pl">${fbPc(T.mid / T.ly - 1)}</td></tr></tbody></table></div>`;
+  return `<div class="rp"><h2>Impressions vs conversion · November ${yrs[0]} and ${yrs[1]}</h2>`
+    + `<p class="sub">Does conversion fall as impressions rise? Each November day against its own September: impressions per day (×) and GMV per impression (= CTR × UCR × ASP). Grey = ${yrs[0]}, colour = ${yrs[1]}; hover a dot for the day.</p>`
+    + `<div class="two" style="margin-top:10px"><div>${sv}</div><div><ul class="ln" style="margin-top:6px">`
+    + `<li><b>UCR does not fall as impressions rise — it rises.</b> On the biggest-traffic days UCR was ${(B1[3].ucr * 100 || B1[2].ucr * 100).toFixed(1)}% LY vs ${(base[yrs[1]].ucr * 100).toFixed(1)}% in September: event traffic comes with deals and buys more units.</li>`
+    + `<li><b>What falls is CTR and ASP:</b> CTR slips a little as impressions widen (${(base[yrs[1]].ctr * 100).toFixed(2)}% Sept → about ${(pts[yrs[1]].filter(p => p.ix >= 2).reduce((a, p) => a + p.r[4], 0) / pts[yrs[1]].filter(p => p.ix >= 2).reduce((a, p) => a + p.r[5], 0) * 100).toFixed(2)}% on 2×+ days LY) and deeper markdown pulls ASP down, so GMV per impression can drop even while UCR climbs.</li>`
+    + `<li><b>It's about which days, not how many impressions.</b> LY had ${weak.length} days at 2×+ Sept impressions that converted at under 75% of September's yield (${weak.map(p => fmtD(p.d)).join(", ")}): mostly the BAU week after Singles and Black Friday Week, pushed with impressions and markdown but without a peak-day reason to buy. Those days took ${fbK(wsum(weak, 5))} impressions for ${fbK(wsum(weak, 1))} GMV. The ${peak.length} peak days (${peak.map(p => fmtD(p.d)).join(", ")}) held 90%+ of September's yield even at ${Math.floor(Math.min(...peak.map(p => p.ix)))}–${Math.ceil(Math.max(...peak.map(p => p.ix)))}× impressions.</li>`
+    + `<li>LLY converted its event traffic better: on event periods its yield ran ${fbPc(Math.min(...ev.lly))} to ${fbPc(Math.max(...ev.lly))} vs its September, LY's ${fbPc(Math.min(...ev.ly))} to ${fbPc(Math.max(...ev.ly))}. With the diluted in-between days, LY's November GMV per impression ended ${fbPc(fbStat(all, 1, fbWin()).gpi / fbStat(all, 1, fbWin()).sgpi - 1)} vs September.</li></ul></div></div>`
+    + `<h3 style="margin-top:14px">Conversion by impression level</h3>${btab}`
+    + `<h3 style="margin-top:14px">Impressions plan · GMV +${Math.round((U - 1) * 100)}% vs LY November</h3>`
+    + `<p class="sub">Imps / day needed = period target ÷ (Sept 2026 GMV per impression ${(gpi26 * 1000).toFixed(1)} / 1K × the period's lift over September). Bold uses the average of LY's and LLY's lift; the range runs from the better year's lift to the weaker year's. Sept 2026 runs ${fbK(ipd26)} impressions a day.</p>${ptab}`
+    + `<ul class="ln" style="margin-top:10px"><li><b>Ask onsite for about ${fbK(T.mid)} November impressions (${fbPc(T.mid / T.ly - 1)} vs LY; range ${fbPc(T.lo / T.ly - 1)} to ${fbPc(T.hi / T.ly - 1)})</b>, weighted to the peaks: 11.11, Pre YF, YF and YF Post carry the highest yield, so extra impressions there convert best.</li>`
+    + `<li>The BAU week after Singles (15–19 Nov) converted at only 67–78% of September in both years, so its +25% costs the most impressions per AED in the month (about +46% vs LY). Either fix the offer for that week or accept less growth there and make it up on 11.11 and YF, where an extra impression was worth 40%+ more in both years.</li>`
+    + `<li>The weaker-year end of the range assumes LY-like dilution; the lower end needs LLY-like efficiency (sharper offers on the in-between days, stock on hero SKUs). Today's yield is already ${fbPc(gpi26 / base[yrs[1]].gpi - 1)} vs LY September, so conversion work lowers the impressions ask more than anything else.</li></ul></div>`;
+}
 // top 20 retail brands: LY / LLY November, per-period GMV / day bars, Sept 2026 run-rate, and the write-up (data/flashback_notes.json)
 function fbCards() {
   if (!FB.retail || !FB.retail.length) return "";
@@ -1941,11 +2006,12 @@ function renderFb() {
     + `<div class="rp"><h2 style="margin-bottom:10px">Learnings · LY and LLY</h2>${fbLearn()}</div>`
     + `<div class="rp" style="padding:14px 0 6px"><div class="mh" style="padding:0 14px 10px"><div><h2>${FB_LV[state.fb.lv]}</h2><p class="sub">${state.fb.lv === "all" ? "Each cohort period, LLY and LY, against September." : "November totals (1 – 30 Nov); click a name to open its periods."} Imps needed (and "× today's imps/day") use today's GMV per impression; the next column assumes GMV per impression moves from Sept the way it did LY.</p></div>`
     + `<div class="seg" role="group" aria-label="View by">${segs}</div></div>${fbTable(state.fb.lv)}</div>`
+    + fbImps()
     + fbCards()
     + `<div class="rp"><h3>How to read</h3><ul class="ln" style="color:var(--fg-2)">`
     + `<li>GMV / day and impressions / day are compared with the same year's September per day (the BAU base): +150% = 2.5× a September day.</li>`
     + `<li>What drove it: ${Object.entries(FB_DRV).map(([k, l]) => `<b>${l}</b> = ${FB_DRV_T[k]}`).join("; ")}.</li>`
-    + `<li>2026 plan: target = LY GMV × ${FB.uplift}. GMV = impressions × CTR × UCR × ASP, so impressions needed = target ÷ (Sept 2026 CTR × UCR × ASP). "If conv. moves like LY" divides that by LY's change in GMV per impression from September to the period (below 1 when LY's extra impressions converted worse than September's). Rows with under 200K Sept 2026 impressions or 30 units use their category's rates (≈).</li>`
+    + `<li>2026 plan: target = LY GMV per day on the like-for-like dates × ${FB.uplift} × the 2026 days of each period (so the 3-day YF Post counts 3 days although LY had 2 in November); "vs LY imps" scales LY's impressions the same way. GMV = impressions × CTR × UCR × ASP, so impressions needed = target ÷ (Sept 2026 CTR × UCR × ASP). "If conv. moves like LY" divides that by LY's change in GMV per impression from September to the period (below 1 when LY's extra impressions converted worse than September's). Rows with under 200K Sept 2026 impressions or 30 units use their category's rates (≈).</li>`
     + `<li>Scope as the rest of the dashboard: Namshi marketplaces, GMV above zero, Beauty, no samples &amp; GWP; impressions = search + non-search, all platforms. Brands, categories and sub-categories under ${fbK(5000)} AED November GMV (LY + LLY) are grouped as "(other)".</li></ul></div>`;
 }
 
