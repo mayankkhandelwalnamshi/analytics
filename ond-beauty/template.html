@@ -154,6 +154,7 @@ body:not([data-tab="buy"]) .buyt { display: none; }
 .fbt h2, .buyt h2 { margin: 0; font-size: 16px; } .fbt h3, .buyt h3 { margin: 0 0 6px; font-size: 14px; }
 .fbt .sub, .buyt .sub { margin: 4px 0 0; color: var(--fg-2); font-size: 12.5px; line-height: 1.5; }
 .fbt .mh, .buyt .mh { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 16px; align-items: flex-start; }
+.fbt .seg { flex-wrap: wrap; }
 .fbt .tiles { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-top: 12px; }
 .fbt .tile .tv { font-size: 24px; margin: 4px 0 6px; }
 .fbt .tile .tl { flex-wrap: wrap; white-space: normal; gap: 4px; }
@@ -162,6 +163,19 @@ body:not([data-tab="buy"]) .buyt { display: none; }
 .fbt ul.ln li { border-left: 3px solid var(--line); padding-left: 9px; }
 .fbt ul.ln.good li { border-color: var(--good); } .fbt ul.ln.bad li { border-color: var(--bad); } .fbt ul.ln.warn li { border-color: var(--warn); }
 .fbt .up, .buyt .up { color: var(--good); } .fbt .down, .buyt .down { color: var(--bad); }
+.bcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 14px; margin-top: 12px; }
+.bcard { border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 12px; min-width: 0; align-content: start; background: var(--surface); }
+.bcard .bh { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.bcard .bh h3 { margin: 0; font-size: 15px; text-transform: capitalize; } .bcard .bh small { color: var(--muted); font-size: 12px; text-transform: capitalize; }
+.bcard .rk { display: inline-block; min-width: 26px; padding: 1px 6px; margin-right: 6px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 700; text-align: center; }
+.bcard .bv { text-align: right; } .bcard .bv b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; } .bcard .bv span { font-size: 12px; font-weight: 600; }
+.bcard table { font-size: 12px; } .bcard th, .bcard td { padding: 4px 6px; white-space: normal; } .bcard .drv { white-space: normal; } .bcard td:first-child { color: var(--fg-2); }
+.bcard .yl i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin: 0 4px 0 10px; vertical-align: -1px; }
+.bcard svg { width: 100%; height: auto; display: block; }
+.bcard .s26 { font-size: 12px; color: var(--fg-2); background: var(--flat-bg); border-radius: 8px; padding: 6px 9px; }
+.bcard h4 { margin: 0 0 4px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.bcard h4.g { color: var(--good); } .bcard h4.b { color: var(--bad); } .bcard h4.a { color: var(--accent); }
+.bcard ul { margin: 0; padding-left: 16px; display: grid; gap: 4px; font-size: 12.5px; line-height: 1.45; }
 .drv { display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 11.5px; font-weight: 600; white-space: nowrap; background: var(--flat-bg); color: var(--fg-2); }
 .drv.imp { background: var(--accent-soft); color: var(--accent); } .drv.mkd, .drv.both { background: var(--warn-bg); color: var(--warn); }
 .drv.org { background: var(--good-bg); color: var(--good); } .drv.dec { background: var(--bad-bg); color: var(--bad); }
@@ -1861,6 +1875,47 @@ function fbLearn() {
     + `<div><h3>What didn't work · improve</h3><ul class="ln bad">${li(L.bad)}</ul><h3 style="margin-top:12px">Missed vs LLY</h3><ul class="ln warn">${li(L.warn)}</ul></div></div>`;
 }
 
+// top 20 retail brands: LY / LLY window, per-period GMV / day bars, Sept 2026 run-rate, and the write-up (data/flashback_notes.json)
+function fbCards() {
+  if (!FB.retail || !FB.retail.length) return "";
+  const win = fbWin(), yy = FB.years.map(y => "'" + String(y).slice(2)), W = 440, H = 96, B = 14;
+  const keyP = new Map([["11.11 Day", "Singles"], ["Black Friday", "YF"]]);
+  const card = (r, i) => {
+    const o0 = fbStat(r, 0, win), o1 = fbStat(r, 1, win), s0 = fbSum(r, 0, win).m, s1 = fbSum(r, 1, win).m;
+    const vs = o0.g ? o1.g / o0.g - 1 : null, ucr = m => m[4] ? m[1] / m[4] : null, asp = m => m[1] ? m[0] / m[1] : null;
+    const row = (lbl, a, b) => `<tr><td>${lbl}</td><td>${a}</td><td>${b}</td></tr>`;
+    // bars: GMV / day per period, LLY (grey) and LY (accent)
+    const vals = win.map(p => [fbStat(r, 0, [p]).gpd || 0, fbStat(r, 1, [p]).gpd || 0]), mx = Math.max(1, ...vals.flat());
+    const bw = (W - 8) / win.length, y = v => H - B - (H - B - 6) * v / mx;
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="GMV per day by period, ${FB.years[0]} vs ${FB.years[1]}"><line x1="0" x2="${W}" y1="${H - B}" y2="${H - B}" stroke="var(--axis)"/>`;
+    win.forEach((p, j) => {
+      const P = FB.periods[p - 1], x = 4 + j * bw, w = Math.max(2, bw / 2 - 2);
+      svg += `<rect x="${x + 1}" y="${y(vals[j][0])}" width="${w}" height="${H - B - y(vals[j][0])}" rx="1.5" fill="var(--muted)" opacity=".55"><title>${esc(P.cohort)} ${FB.years[0]}: ${fbK(vals[j][0])}/day</title></rect>`
+        + `<rect x="${x + 1 + w + 1}" y="${y(vals[j][1])}" width="${w}" height="${H - B - y(vals[j][1])}" rx="1.5" fill="var(--accent)"><title>${esc(P.cohort)} ${FB.years[1]}: ${fbK(vals[j][1])}/day</title></rect>`;
+      if (keyP.has(P.cohort)) svg += `<text x="${x + bw / 2}" y="${H - 2}" font-size="10" text-anchor="middle" fill="var(--fg-2)">${keyP.get(P.cohort)}</text>`;
+    });
+    svg += `<text x="2" y="${H - 2}" font-size="10" fill="var(--muted)">20 Oct</text><text x="${W - 2}" y="${H - 2}" font-size="10" text-anchor="end" fill="var(--muted)">10 Dec</text></svg>`;
+    const sp25 = fbSum(r, 1, [0]), sp26 = fbSum(r, 2, [0]), g25 = sp25.d ? sp25.m[0] / sp25.d : 0, g26 = sp26.d ? sp26.m[0] / sp26.d : 0;
+    const n = r.note || {}, li = a => (a || []).map(t => `<li>${esc(t)}</li>`).join("");
+    return `<article class="bcard"><div class="bh"><div><h3><span class="rk">#${i + 1}</span> ${esc(r.k.replace(/_/g, " "))}</h3><small>${esc((r.cat || "").replace(/_/g, " "))} · retail</small></div>`
+      + `<div class="bv"><b>${fbK(o1.g)}</b><span class="${fbCls(vs)}">${fbPc(vs)} vs LLY</span></div></div>`
+      + `<table><thead><tr><th>20 Oct – 10 Dec</th><th>LY ${yy[1]}</th><th>LLY ${yy[0]}</th></tr></thead><tbody>`
+      + row("GMV", fbK(o1.g), fbK(o0.g))
+      + row("GMV / day vs Sept", fbSp(o1.spG, o1.newG), fbSp(o0.spG, o0.newG))
+      + row("Impressions", `${fbK(o1.im)} <small>${o1.newI ? "new" : fbPc(o1.spI)}</small>`, `${fbK(o0.im)} <small>${o0.newI ? "new" : fbPc(o0.spI)}</small>`)
+      + row("Markdown %", `${fbPct(o1.mk)} <small>${fbPp(o1.dMk)}</small>`, `${fbPct(o0.mk)} <small>${fbPp(o0.dMk)}</small>`)
+      + row("UCR · ASP", `${fbPct(ucr(s1))} · ${Math.round(asp(s1) || 0)}`, `${fbPct(ucr(s0))} · ${Math.round(asp(s0) || 0)}`)
+      + row("What drove it", fbDrvCell(o1), fbDrvCell(o0))
+      + `</tbody></table><div><div class="yl" style="font-size:11.5px;color:var(--fg-2)">GMV / day by cohort period<i style="background:var(--muted);opacity:.55"></i>${FB.years[0]}<i style="background:var(--accent)"></i>${FB.years[1]}</div>${svg}</div>`
+      + `<div class="s26">Sept 2026: <b>${fbK(g26)}/day</b> vs ${fbK(g25)} in Sept ${FB.years[1]} (<span class="${fbCls(g25 ? g26 / g25 - 1 : null)}">${fbPc(g25 ? g26 / g25 - 1 : null)}</span>) · UCR ${fbPct(ucr(sp26.m))} vs ${fbPct(ucr(sp25.m))} · MKD ${fbPct(sp26.m[3] ? sp26.m[2] / sp26.m[3] : null)}</div>`
+      + (n.worked ? `<div><h4 class="g">What worked</h4><ul>${li(n.worked)}</ul></div>` : "")
+      + (n.missed ? `<div><h4 class="b">Where we missed GMV</h4><ul>${li(n.missed)}</ul></div>` : "")
+      + (n.do ? `<div><h4 class="a">2026 focus</h4><ul>${li(n.do)}</ul></div>` : "")
+      + `</article>`;
+  };
+  return `<div class="rp"><h2>Top 20 retail brands · 20 Oct – 10 Dec</h2><p class="sub">Retail business model only, ranked by LY window GMV (${fbPc(FB.retail.reduce((a, r) => a + fbSum(r, 1, fbWin()).m[0], 0) / FB.lv.all[0].v[1].slice(1).reduce((a, c) => a + c[0], 0), 0).replace("+", "")} of LY Beauty window GMV). Bars = GMV per day in each cohort period; the write-up reads the LY and LLY numbers period by period.</p>`
+    + `<div class="bcards">${FB.retail.map(card).join("")}</div></div>`;
+}
 function renderFb() {
   const box = document.getElementById("fbt");
   if (!FB) { loadFb(); box.innerHTML = `<div class="rp"><p class="loading">${FB_ERR ? "Couldn't load the flashback data: " + esc(FB_ERR) : "Loading Nov Flashback…"}</p></div>`; return; }
@@ -1886,6 +1941,7 @@ function renderFb() {
     + `<div class="rp"><h2 style="margin-bottom:10px">Learnings · LY and LLY</h2>${fbLearn()}</div>`
     + `<div class="rp" style="padding:14px 0 6px"><div class="mh" style="padding:0 14px 10px"><div><h2>${FB_LV[state.fb.lv]}</h2><p class="sub">${state.fb.lv === "all" ? "Each cohort period, LLY and LY, against September." : "Window totals (20 Oct – 10 Dec); click a name to open its periods."} Imps needed (and "× today's imps/day") use today's GMV per impression; the next column assumes GMV per impression moves from Sept the way it did LY.</p></div>`
     + `<div class="seg" role="group" aria-label="View by">${segs}</div></div>${fbTable(state.fb.lv)}</div>`
+    + fbCards()
     + `<div class="rp"><h3>How to read</h3><ul class="ln" style="color:var(--fg-2)">`
     + `<li>GMV / day and impressions / day are compared with the same year's September per day (the BAU base): +150% = 2.5× a September day.</li>`
     + `<li>What drove it: ${Object.entries(FB_DRV).map(([k, l]) => `<b>${l}</b> = ${FB_DRV_T[k]}`).join("; ")}.</li>`

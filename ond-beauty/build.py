@@ -314,7 +314,24 @@ def pack_flashback():
         # LY window GMV, largest first; the "(other …)" bucket last
         rows.sort(key=lambda r: (r["k"].startswith("(other"), -sum(cell[0] for cell in r["v"][1][1:])))
         out[lv] = rows
-    return {"periods": [{"p": p["p"], "cohort": p["cohort"].replace("_", " "), "ty": [p["ty"][0], p["ty"][-1]],
+    # top retail brands (sql/flashback_retail.sql: retail business model only) + hand-written learnings per brand
+    retail = []
+    if (DATA / "flashback_retail_raw.json").exists():
+        rraw = json.loads((DATA / "flashback_retail_raw.json").read_text())
+        ents = {}
+        for k, v in rraw.items():
+            y, p, d = map(int, k.split("|"))
+            if days[y][p] != d:
+                raise SystemExit(f"flashback_retail_raw {k}: {d} days, flashback_raw has {days[y][p]}")
+            for r in v.split(";"):
+                x = r.split(",")
+                e = ents.setdefault(x[0], [[[0] * 6 for _ in range(n_p)] for _ in FB_YEARS])
+                e[yi[y]][p] = [round(float(t)) for t in x[1:7]]
+        notes = json.loads((DATA / "flashback_notes.json").read_text()) if (DATA / "flashback_notes.json").exists() else {}
+        top = sorted((b for b in ents if b != "(none)"), key=lambda b: -sum(c[0] for c in ents[b][1][1:]))[:20]
+        cat_of = {r["k"]: r.get("cat") for r in out["brand"]}
+        retail = [{"k": b, "cat": cat_of.get(b), "v": ents[b], "note": notes.get(b)} for b in top]
+    return {"retail": retail, "periods": [{"p": p["p"], "cohort": p["cohort"].replace("_", " "), "ty": [p["ty"][0], p["ty"][-1]],
                          "ly": [p["ly"][0], p["ly"][-1]], "lly": [p["lly"][0], p["lly"][-1]]} for p in periods],
             "years": list(FB_YEARS), "days": [days[y] for y in FB_YEARS], "lv": out, "uplift": 1.25}
 
