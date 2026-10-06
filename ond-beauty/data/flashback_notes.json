@@ -1,102 +1,281 @@
 {
-"nyx_professional_makeup": {
- "worked": ["LY Nov +24% vs LLY at the same ~50% markdown.", "Extending the Singles deal paid off: Post Singles 67K/day (vs 40K LLY) and the BAU week after Singles 74K/day vs 15.5K LLY at 57% markdown.", "YF Post held at 77.5K/day (76K LLY)."],
- "missed": ["Pre Singles LY: 39K/day vs 66.5K LLY (−42%) even with impressions +199% (UCR 3.2% vs 4.6%). The early offer didn't convert.", "BF Week 33K vs 42K/day and YF 74.5K vs 91K/day (−18%) at the same 50% markdown and 5× impressions. Conversion fell from 5.3% to 4.3%.", "Sept 2026 is 7.9K/day vs 17.5K LY (−55%), with UCR 1.74% vs 2.71%."],
- "do": ["Lock 50%+ from Pre Singles through the week after Singles, with visibility from day 1 of Pre Singles.", "Find out why Sept 2026 halved (stock, listings, price) before November."]
-},
-"charlotte_tilbury": {
- "worked": ["LY Nov +41% vs LLY.", "Full price through Singles: 0–10% markdown yet 41K/day on 11.11 (+122% vs Sept) and 33K/day on MS. Demand is organic.", "YF was the biggest Beauty brand-day: 137K/day (80K LLY) at 70% markdown with impressions +885%. Pre YF was 94K vs 52K/day."],
- "missed": ["BF Week at 73% markdown gave 42.5K/day vs 34K LLY at 13%: units doubled but ASP fell from 190 to 61, so the depth bought little GMV.", "Sept 2026 UCR is 1.07% vs 1.68% LY at ASP 195. Conversion is the risk going in."],
- "do": ["Stay full price until Pre YF; put depth only into Pre YF, YF and YF Post, not the whole BF Week."]
-},
-"kiko_milano": {
- "worked": ["LLY was the model: Pre Singles 68K, 11.11 126K, Post 58K/day at 40–43% markdown, with impressions up only 1.7–2.7×. That was organic pull.", "LY's YF and YF Post: 124K and 143K/day (vs 130K and 117K LLY) at 49% markdown."],
- "missed": ["LY Nov −27% vs LLY. Singles is the hole: 11.11 63K vs 126K/day and Pre Singles 29K vs 68K, at 33–37% markdown vs 40–43%.", "BF Week 28K vs 65K/day even with impressions +168% (UCR 1.9% vs 2.4%). The offer started late or was weak.", "MS (1–6 Nov): 21K vs 35K/day."],
- "do": ["Rebuild LLY's Singles: 40%+ across Pre Singles, 11.11 and Post Singles.", "Have the YF-level offer live from the first day of BF Week."]
-},
-"kerastase": {
- "worked": ["YF and YF Post LY: 96K and 125K/day (YF Post +57% vs LLY) at 31–41% markdown, with UCR 5.7–7%.", "LLY's Singles at only 24% markdown: 54K / 75K / 46K per day, driven by impressions (+165% to +631% vs Sept)."],
- "missed": ["LY Nov −22% vs LLY. Singles was about half of LLY (11.11 38K vs 75K/day). Impressions were the gap: +119% LY vs +631% LLY at a similar 20–24% markdown.", "BF Week and Pre YF LY at 43–46% markdown: 25.5K and 48K/day vs 49K and 80K LLY at 27%.", "Sept 2026 is 10.3K/day vs 20K LY, with UCR 1.98% vs 3.34%."],
- "do": ["Ask onsite for LLY-level Singles visibility; about 24% markdown was enough.", "Keep the YF offer running through YF Post (LY's best days); check why Sept 2026 conversion dropped."]
-},
-"mac_cosmetics": {
- "worked": ["LLY ran 45–48% for Singles (Pre Singles 75K, 11.11 61K/day) and 33–40% through BF (YF 108K and YF Post 112K/day)."],
- "missed": ["LY Nov −37% vs LLY.", "MS at 4% markdown: 15.5K vs 26K/day.", "Singles at 33–39% markdown: 39–46K vs 61–75K/day.", "YF 62K vs 108K/day even with impressions +328%, UCR 1.8% vs 2.9%. Sept 2026 UCR is 1.05% (1.86% LY)."],
- "do": ["Run 45%+ on Singles and start the MS offer on 1 Nov.", "Conversion is the YF gap: check stock depth of hero shades and sets before buying more impressions."]
-},
-"maybelline_new_york": {
- "worked": ["LLY's Singles: Pre Singles 37K and 11.11 50K/day at 52% markdown, with impressions 4–5× Sept.", "LY's extension after Singles: the BAU week 24K/day vs 10K LLY at 56% markdown."],
- "missed": ["LY Nov −19% vs LLY.", "Pre Singles: 12K vs 37K/day (−66%) at 42% markdown and impressions +157% (vs +425% LLY).", "BF Week 15K vs 28K/day.", "Sept 2026 is 2.8K/day vs 6.4K LY, with UCR 1.83% vs 3.02%."],
- "do": ["Start the Singles deal 4 days early at 50%+ with visibility, and keep the post-Singles extension."]
-},
-"make_up_for_ever": {
- "worked": ["LLY ran a steady 30–37% markdown all month: 11.11 49K/day, Pre YF 88K, YF 135K (+1729% vs Sept), YF Post 108K."],
- "missed": ["LY Nov −46% vs LLY.", "Singles at only 20–24% markdown: 11.11 18K vs 49K/day (−64%).", "LY went to 62–65% for BF, but YF still reached only 68K vs 135K/day, with UCR 1.9% vs 2.9%. Deeper markdown didn't recover it, so range, stock and price are the issue.", "Sept 2026 is 4.1K/day vs 8.8K LY, with UCR 1.0%."],
- "do": ["Ask for 30%+ from Singles (LLY level) rather than 60%+ only at BF; review range and stock first."]
-},
-"estee_lauder": {
- "worked": ["LLY ran 52–57% markdown from Pre Singles to Pre YF with impressions up to 10× Sept: 11.11 41K, Pre YF 48K and YF 58K/day.", "LY's Post Singles held: 22K vs 24K/day at 40%."],
- "missed": ["LY Nov −43% vs LLY.", "Singles at 26–31% markdown: Pre Singles 7K vs 24.5K/day (−70%).", "YF 22K vs 58K/day (−63%). Impressions were +333% vs +970% LLY, so visibility was the gap.", "UCR stays low (about 1.3%) and Sept 2026 UCR is 0.98%."],
- "do": ["Ask for about 50% from Pre Singles (LLY level) and get YF visibility back to LLY levels."]
-},
-"kylie_cosmetics": {
- "worked": ["LY Nov +30% vs LLY.", "Deep BF (73–77% markdown) took Pre YF to 21K and YF to 27K/day (vs 14K and 22K LLY), with UCR 5–6%.", "Post Singles 12K vs 6K/day."],
- "missed": ["Singles LY at 22–24% markdown: 11.11 12.7K vs 15.5K/day LLY at 36%.", "YF at 77% markdown gave only +25% vs LLY's 34%, and ASP fell from 69 to 28. That depth is expensive."],
- "do": ["Give Singles about 35% (as LLY) and test about 50% instead of 75%+ for YF."]
-},
-"loreal_professionnel": {
- "worked": ["LY Nov +14% vs LLY.", "11.11: 29.5K vs 10.6K/day at only 20% markdown (UCR 4.6%).", "YF Post 35K vs 20K/day at 52%, with UCR 7.5%."],
- "missed": ["BF Week and Pre YF LY at 44–52% markdown gave 9K and 14K/day, about half of LLY's 14K and 28.5K at 25%. Impressions were +21–69% vs +780–870% LLY, so visibility, not markdown, was the gap."],
- "do": ["Repeat LY's 11.11. For BF Week and Pre YF, ask for impressions rather than more markdown (about 25% was enough LLY)."]
-},
-"skin1004": {
- "worked": ["New in LY and grew organically: Nov +224% vs Sept at a steady 25–32% markdown, with UCR 4–6%.", "YF 31K/day (+729% vs Sept) with impressions +1018%, and YF Post 26K/day."],
- "missed": ["BAU week after Singles dipped to 6K/day (24% markdown).", "Sept 2026 is 2.1K/day vs 3.7K LY (−43%), so momentum has slowed."],
- "do": ["Hold about 30% across every November event with high visibility; check why Sept 2026 slowed."]
-},
-"rimmel_london": {
- "worked": ["Singles held: 11.11 21K/day in both years at about 52% markdown, and LY's BAU week after Singles reached 10K vs 6K LLY."],
- "missed": ["LY Nov −12% vs LLY.", "BF: Pre YF 14K vs 18K/day, YF 19K vs 28K and YF Post 16K vs 24.5K at the same ~48–52% markdown. Conversion fell (UCR 7.6% vs 8.5% on YF).", "Sept 2026 is 1.3K/day vs 3.6K LY."],
- "do": ["Keep about 50% for BF and secure stock of the best sellers. The gap is availability and conversion, not depth."]
-},
-"la_roche_posay": {
- "worked": ["YF Post LY: 37K/day at 54% markdown; LLY's YF reached 58K/day at 48%.", "LY's Pre Singles and 11.11 were close to LLY (10K and 20K vs 17K and 25K/day)."],
- "missed": ["LY Nov −37% vs LLY.", "YF 31K vs 58K/day (−47%) at a similar 45% markdown, so conversion and ASP were the gap.", "BF Week 8.7K vs 22K/day even though impressions were +334%.", "Sept 2026 is 1.7K/day vs 4.9K LY (−66%)."],
- "do": ["Check stock and assortment first (down two-thirds since LY Sept), then rebuild the BF Week and YF offer."]
-},
-"anastasia_beverly_hills": {
- "worked": ["The November winner: LY 299K vs 139K LLY (+115%).", "Pre Singles at 47% markdown: 11K vs 5.6K/day.", "YF and YF Post 25K and 32K/day (vs 10K and 7K LLY) at 38–43%, with impressions 6–7× Sept."],
- "missed": ["MS (1–6 Nov) at 13% markdown was flat vs LLY: 2.9K/day with impressions −20% vs Sept."],
- "do": ["Repeat the LY plan and add an MS hook; Sept 2026 is up 21% vs LY Sept, so the brand is growing."]
-},
-"l_oreal": {
- "worked": ["LY Nov +54% vs LLY.", "Deep Singles (57–67% markdown) carried into the following week: 11.11 21K, Post Singles 13K and the BAU week 15.6K/day (vs 18K, 6K and 2.5K LLY)."],
- "missed": ["YF LY: 9.9K vs 13.4K/day (−26%) at 46% markdown even with impressions +302%. UCR 4.1% vs 5.0%.", "Sept 2026 is 2.0K/day vs 3.5K LY."],
- "do": ["Repeat the extended Singles; find a stronger YF hero offer rather than more impressions."]
-},
-"lancome": {
- "worked": ["11.11 LY: 21K vs 14K/day LLY (+44%) at 27% markdown.", "YF in both years: 24–28K/day at about 30%."],
- "missed": ["LY Nov −8% vs LLY.", "MS at 3% markdown (after a 30% September): 4.1K/day, −37% vs Sept.", "BF Week 6.6K vs 11K/day, and conversion stayed low (UCR about 1.2–1.5%)."],
- "do": ["Avoid a promo gap on 1–6 Nov; repeat the 11.11 offer and start BF visibility from BF Week."]
-},
-"clinique": {
- "worked": ["Singles was strong in both years: 11.11 24K/day at 33–42% markdown."],
- "missed": ["LY Nov −42% vs LLY.", "BF collapsed: Week 7K vs 20K/day, Pre YF 9K vs 22K, YF 13K vs 39K (−66%), YF Post 11K vs 35K. That happened at 35–63% markdown with impressions +306%; UCR on YF was 2.3% vs 4.8%.", "Sept 2026 is 3.2K/day vs 5.3K LY, with UCR 1.40%."],
- "do": ["Markdown depth wasn't the problem. Check stock of hero sets for BF and the offer mechanics before November."]
-},
-"essie": {
- "worked": ["LY Nov +90% vs LLY, almost all from Singles: Pre Singles 10K, 11.11 16.5K, Post Singles 16K and the BAU week 12.7K/day at 37–60% markdown (vs 3–7K LLY)."],
- "missed": ["BF LY was flat to negative vs Sept (−16% to +6%) despite 52–64% markdown and impressions +82–355%. The BF offer didn't land."],
- "do": ["Make Singles the essie event again; for BF, a lighter offer or a bundle instead of 60% markdown.", "Sept 2026 is 1.7K/day vs 3.4K LY."]
-},
-"vichy": {
- "worked": ["YF Post LY: 26.5K vs 18K/day (+47%) at 54% markdown, with UCR 11%.", "Singles in both years: 11.11 15–17K/day at 40–41%."],
- "missed": ["LY Nov −27% vs LLY.", "YF 17K vs 30K/day. Impressions were +133% vs +1057% LLY, so visibility was the gap.", "BF Week 6.8K vs 13K/day.", "Sept 2026 is 1.1K/day vs 3.7K LY (−71%)."],
- "do": ["Check stock and listings first, then ask for LLY-level YF visibility."]
-},
-"beauty_of_joseon": {
- "worked": ["The fastest grower: LY Nov +35% vs LLY with best-in-class conversion (UCR 8–12% on event days).", "YF and YF Post LY: 18K and 24K/day at 40–50% markdown."],
- "missed": ["Visibility lagged demand: impressions rose about half as fast as GMV, and the BAU week after Singles fell to 3.7K/day at 15% markdown."],
- "do": ["Sept 2026 is 3.1K/day (3.6× LY Sept). Give it more impressions; it converts them better than almost anyone."]
-}
+ "nyx_professional_makeup": {
+  "worked": [
+   "LY Nov +21% vs LLY at the same ~50% markdown.",
+   "Extending the Singles deal paid off: Post Singles 67K/day (vs 40K LLY) and the BAU week after Singles 66K/day vs 18K LLY at mid-50s% markdown.",
+   "YF Post held at 77.5K/day (76K LLY)."
+  ],
+  "missed": [
+   "Pre Singles LY: 39K/day vs 66.5K LLY (−42%) even with impressions +199% (UCR 3.2% vs 4.6%). The early offer didn't convert.",
+   "BF Week 33K vs 42K/day and YF 74.5K vs 91K/day (−18%) at the same 50% markdown and 5× impressions. Conversion fell from 5.3% to 4.3%.",
+   "Sept 2026 is 7.9K/day vs 17.5K LY (−55%), with UCR 1.74% vs 2.71%."
+  ],
+  "do": [
+   "Lock 50%+ from Pre Singles through the week after Singles, with visibility from day 1 of Pre Singles.",
+   "Find out why Sept 2026 halved (stock, listings, price) before November."
+  ]
+ },
+ "charlotte_tilbury": {
+  "worked": [
+   "LY Nov +37% vs LLY.",
+   "Full price through Singles: 0–10% markdown yet 41K/day on 11.11 (+122% vs Sept) and 33K/day on MS. Demand is organic.",
+   "YF was the biggest Beauty brand-day: 137K/day (80K LLY) at 70% markdown with impressions +885%. Pre YF was 94K vs 52K/day."
+  ],
+  "missed": [
+   "BF Week at 73% markdown gave 42.5K/day vs 34K LLY at 13%: units doubled but ASP fell from 190 to 61, so the depth bought little GMV.",
+   "Sept 2026 UCR is 1.07% vs 1.68% LY at ASP 195. Conversion is the risk going in."
+  ],
+  "do": [
+   "Stay full price until Pre YF; put depth only into Pre YF, YF and YF Post, not the whole BF Week."
+  ]
+ },
+ "kiko_milano": {
+  "worked": [
+   "LLY was the model: Pre Singles 68K, 11.11 126K, Post 58K/day at 40–43% markdown, with impressions up only 1.7–2.7×. That was organic pull.",
+   "LY's YF and YF Post: 124K and 143K/day (vs 130K and 117K LLY) at 49% markdown."
+  ],
+  "missed": [
+   "LY Nov −28% vs LLY. Singles is the hole: 11.11 63K vs 126K/day and Pre Singles 29K vs 68K, at 33–37% markdown vs 40–43%.",
+   "BF Week 28K vs 65K/day even with impressions +168% (UCR 1.9% vs 2.4%). The offer started late or was weak.",
+   "MS (1–6 Nov): 21K vs 35K/day."
+  ],
+  "do": [
+   "Rebuild LLY's Singles: 40%+ across Pre Singles, 11.11 and Post Singles.",
+   "Have the YF-level offer live from the first day of BF Week."
+  ]
+ },
+ "kerastase": {
+  "worked": [
+   "YF and YF Post LY: 96K and 125K/day (YF Post +57% vs LLY) at 31–41% markdown, with UCR 5.7–7%.",
+   "LLY's Singles at only 24% markdown: 54K / 75K / 46K per day, driven by impressions (+165% to +631% vs Sept)."
+  ],
+  "missed": [
+   "LY Nov −24% vs LLY. Singles was about half of LLY (11.11 38K vs 75K/day). Impressions were the gap: +119% LY vs +631% LLY at a similar 20–24% markdown.",
+   "BF Week and Pre YF LY at 43–46% markdown: 25.5K and 48K/day vs 49K and 80K LLY at 27%.",
+   "Sept 2026 is 10.3K/day vs 20K LY, with UCR 1.98% vs 3.34%."
+  ],
+  "do": [
+   "Ask onsite for LLY-level Singles visibility; about 24% markdown was enough.",
+   "Keep the YF offer running through YF Post (LY's best days); check why Sept 2026 conversion dropped."
+  ]
+ },
+ "mac_cosmetics": {
+  "worked": [
+   "LLY ran 45–48% for Singles (Pre Singles 75K, 11.11 61K/day) and 33–40% through BF (YF 108K and YF Post 112K/day)."
+  ],
+  "missed": [
+   "LY Nov −37% vs LLY.",
+   "MS at 4% markdown: 15.5K vs 26K/day.",
+   "Singles at 33–39% markdown: 39–46K vs 61–75K/day.",
+   "YF 62K vs 108K/day even with impressions +328%, UCR 1.8% vs 2.9%. Sept 2026 UCR is 1.05% (1.86% LY)."
+  ],
+  "do": [
+   "Run 45%+ on Singles and start the MS offer on 1 Nov.",
+   "Conversion is the YF gap: check stock depth of hero shades and sets before buying more impressions."
+  ]
+ },
+ "maybelline_new_york": {
+  "worked": [
+   "LLY's Singles: Pre Singles 37K and 11.11 50K/day at 52% markdown, with impressions 4–5× Sept.",
+   "LY's extension after Singles: the BAU week 22K/day vs 11K LLY at mid-50s% markdown."
+  ],
+  "missed": [
+   "LY Nov −21% vs LLY.",
+   "Pre Singles: 12K vs 37K/day (−66%) at 42% markdown and impressions +157% (vs +425% LLY).",
+   "BF Week 15K vs 28K/day.",
+   "Sept 2026 is 2.8K/day vs 6.4K LY, with UCR 1.83% vs 3.02%."
+  ],
+  "do": [
+   "Start the Singles deal 4 days early at 50%+ with visibility, and keep the post-Singles extension."
+  ]
+ },
+ "make_up_for_ever": {
+  "worked": [
+   "LLY ran a steady 30–37% markdown all month: 11.11 49K/day, Pre YF 88K, YF 135K (+1729% vs Sept), YF Post 108K."
+  ],
+  "missed": [
+   "LY Nov −47% vs LLY.",
+   "Singles at only 20–24% markdown: 11.11 18K vs 49K/day (−64%).",
+   "LY went to 62–65% for BF, but YF still reached only 68K vs 135K/day, with UCR 1.9% vs 2.9%. Deeper markdown didn't recover it, so range, stock and price are the issue.",
+   "Sept 2026 is 4.1K/day vs 8.8K LY, with UCR 1.0%."
+  ],
+  "do": [
+   "Ask for 30%+ from Singles (LLY level) rather than 60%+ only at BF; review range and stock first."
+  ]
+ },
+ "estee_lauder": {
+  "worked": [
+   "LLY ran 52–57% markdown from Pre Singles to Pre YF with impressions up to 10× Sept: 11.11 41K, Pre YF 48K and YF 58K/day.",
+   "LY's Post Singles held: 22K vs 24K/day at 40%."
+  ],
+  "missed": [
+   "LY Nov −43% vs LLY.",
+   "Singles at 26–31% markdown: Pre Singles 7K vs 24.5K/day (−70%).",
+   "YF 22K vs 58K/day (−63%). Impressions were +333% vs +970% LLY, so visibility was the gap.",
+   "UCR stays low (about 1.3%) and Sept 2026 UCR is 0.98%."
+  ],
+  "do": [
+   "Ask for about 50% from Pre Singles (LLY level) and get YF visibility back to LLY levels."
+  ]
+ },
+ "kylie_cosmetics": {
+  "worked": [
+   "LY Nov +26% vs LLY.",
+   "Deep BF (73–77% markdown) took Pre YF to 21K and YF to 27K/day (vs 14K and 22K LLY), with UCR 5–6%.",
+   "Post Singles 12K vs 6K/day."
+  ],
+  "missed": [
+   "Singles LY at 22–24% markdown: 11.11 12.7K vs 15.5K/day LLY at 36%.",
+   "YF at 77% markdown gave only +25% vs LLY's 34%, and ASP fell from 69 to 28. That depth is expensive."
+  ],
+  "do": [
+   "Give Singles about 35% (as LLY) and test about 50% instead of 75%+ for YF."
+  ]
+ },
+ "loreal_professionnel": {
+  "worked": [
+   "LY Nov +11% vs LLY.",
+   "11.11: 29.5K vs 10.6K/day at only 20% markdown (UCR 4.6%).",
+   "YF Post 35K vs 20K/day at 52%, with UCR 7.5%."
+  ],
+  "missed": [
+   "BF Week and Pre YF LY at 44–52% markdown gave 9K and 14K/day, about half of LLY's 14K and 28.5K at 25%. Impressions were +21–69% vs +780–870% LLY, so visibility, not markdown, was the gap."
+  ],
+  "do": [
+   "Repeat LY's 11.11. For BF Week and Pre YF, ask for impressions rather than more markdown (about 25% was enough LLY)."
+  ]
+ },
+ "skin1004": {
+  "worked": [
+   "New in LY and grew organically: Nov +224% vs Sept at a steady 25–32% markdown, with UCR 4–6%.",
+   "YF 31K/day (+729% vs Sept) with impressions +1018%, and YF Post 26K/day."
+  ],
+  "missed": [
+   "BAU week after Singles dipped to 6K/day (24% markdown).",
+   "Sept 2026 is 2.1K/day vs 3.7K LY (−43%), so momentum has slowed."
+  ],
+  "do": [
+   "Hold about 30% across every November event with high visibility; check why Sept 2026 slowed."
+  ]
+ },
+ "rimmel_london": {
+  "worked": [
+   "Singles held: 11.11 21K/day in both years at about 52% markdown, and LY's BAU week after Singles reached 10K vs 6K LLY."
+  ],
+  "missed": [
+   "LY Nov −13% vs LLY.",
+   "BF: Pre YF 14K vs 18K/day, YF 19K vs 28K and YF Post 16K vs 24.5K at the same ~48–52% markdown. Conversion fell (UCR 7.6% vs 8.5% on YF).",
+   "Sept 2026 is 1.3K/day vs 3.6K LY."
+  ],
+  "do": [
+   "Keep about 50% for BF and secure stock of the best sellers. The gap is availability and conversion, not depth."
+  ]
+ },
+ "la_roche_posay": {
+  "worked": [
+   "YF Post LY: 37K/day at 54% markdown; LLY's YF reached 58K/day at 48%.",
+   "LY's Pre Singles and 11.11 were close to LLY (10K and 20K vs 17K and 25K/day)."
+  ],
+  "missed": [
+   "LY Nov −40% vs LLY.",
+   "YF 31K vs 58K/day (−47%) at a similar 45% markdown, so conversion and ASP were the gap.",
+   "BF Week 8.7K vs 22K/day even though impressions were +334%.",
+   "Sept 2026 is 1.7K/day vs 4.9K LY (−66%)."
+  ],
+  "do": [
+   "Check stock and assortment first (down two-thirds since LY Sept), then rebuild the BF Week and YF offer."
+  ]
+ },
+ "anastasia_beverly_hills": {
+  "worked": [
+   "The November winner: LY 307K vs 145K LLY (+111%).",
+   "Pre Singles at 47% markdown: 11K vs 5.6K/day.",
+   "YF and YF Post 25K and 32K/day (vs 10K and 7K LLY) at 38–43%, with impressions 6–7× Sept."
+  ],
+  "missed": [
+   "MS (1–6 Nov) at 13% markdown was flat vs LLY: 2.9K/day with impressions −20% vs Sept."
+  ],
+  "do": [
+   "Repeat the LY plan and add an MS hook; Sept 2026 is up 21% vs LY Sept, so the brand is growing."
+  ]
+ },
+ "l_oreal": {
+  "worked": [
+   "LY Nov +53% vs LLY.",
+   "Deep Singles (57–67% markdown) carried into the following week: 11.11 21K, Post Singles 13K and the BAU week 14K/day (vs 18K, 6K and 2.6K LLY)."
+  ],
+  "missed": [
+   "YF LY: 9.9K vs 13.4K/day (−26%) at 46% markdown even with impressions +302%. UCR 4.1% vs 5.0%.",
+   "Sept 2026 is 2.0K/day vs 3.5K LY."
+  ],
+  "do": [
+   "Repeat the extended Singles; find a stronger YF hero offer rather than more impressions."
+  ]
+ },
+ "lancome": {
+  "worked": [
+   "11.11 LY: 21K vs 14K/day LLY (+44%) at 27% markdown.",
+   "YF in both years: 24–28K/day at about 30%."
+  ],
+  "missed": [
+   "LY Nov −10% vs LLY.",
+   "MS at 3% markdown (after a 30% September): 4.1K/day, −37% vs Sept.",
+   "BF Week 6.6K vs 11K/day, and conversion stayed low (UCR about 1.2–1.5%)."
+  ],
+  "do": [
+   "Avoid a promo gap on 1–6 Nov; repeat the 11.11 offer and start BF visibility from BF Week."
+  ]
+ },
+ "clinique": {
+  "worked": [
+   "Singles was strong in both years: 11.11 24K/day at 33–42% markdown."
+  ],
+  "missed": [
+   "LY Nov −43% vs LLY.",
+   "BF collapsed: Week 7K vs 20K/day, Pre YF 9K vs 22K, YF 13K vs 39K (−66%), YF Post 11K vs 35K. That happened at 35–63% markdown with impressions +306%; UCR on YF was 2.3% vs 4.8%.",
+   "Sept 2026 is 3.2K/day vs 5.3K LY, with UCR 1.40%."
+  ],
+  "do": [
+   "Markdown depth wasn't the problem. Check stock of hero sets for BF and the offer mechanics before November."
+  ]
+ },
+ "essie": {
+  "worked": [
+   "LY Nov +82% vs LLY, almost all from Singles: Pre Singles 10K, 11.11 16.5K, Post Singles 16K and the BAU week 11K/day at 37–60% markdown (vs 3–7K LLY)."
+  ],
+  "missed": [
+   "BF LY was flat to negative vs Sept (−16% to +6%) despite 52–64% markdown and impressions +82–355%. The BF offer didn't land."
+  ],
+  "do": [
+   "Make Singles the essie event again; for BF, a lighter offer or a bundle instead of 60% markdown.",
+   "Sept 2026 is 1.7K/day vs 3.4K LY."
+  ]
+ },
+ "vichy": {
+  "worked": [
+   "YF Post LY: 26.5K vs 18K/day (+47%) at 54% markdown, with UCR 11%.",
+   "Singles in both years: 11.11 15–17K/day at 40–41%."
+  ],
+  "missed": [
+   "LY Nov −31% vs LLY.",
+   "YF 17K vs 30K/day. Impressions were +133% vs +1057% LLY, so visibility was the gap.",
+   "BF Week 6.8K vs 13K/day.",
+   "Sept 2026 is 1.1K/day vs 3.7K LY (−71%)."
+  ],
+  "do": [
+   "Check stock and listings first, then ask for LLY-level YF visibility."
+  ]
+ },
+ "beauty_of_joseon": {
+  "worked": [
+   "The fastest grower: LY Nov +27% vs LLY with best-in-class conversion (UCR 8–12% on event days).",
+   "YF and YF Post LY: 18K and 24K/day at 40–50% markdown."
+  ],
+  "missed": [
+   "Visibility lagged demand: impressions rose about half as fast as GMV, and the BAU week after Singles fell to 3.5K/day at about 15% markdown."
+  ],
+  "do": [
+   "Sept 2026 is 3.1K/day (3.6× LY Sept). Give it more impressions; it converts them better than almost anyone."
+  ]
+ }
 }
