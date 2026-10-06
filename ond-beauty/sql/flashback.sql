@@ -1,5 +1,5 @@
 -- Beauty Pulse · Nov Flashback tab (LY / LLY). One run per year {Y} (2024, 2025, or 2026 for the current Sept baseline).
--- Window: the 2026 dates 20 Oct .. 10 Dec, split into cohort periods (lfl_mapping cohorts, consecutive days with the same
+-- Window: the 2026 dates 1 .. 30 Nov (LY / LLY dates outside November dropped), split into cohort periods (lfl_mapping cohorts, consecutive days with the same
 -- cohort = one period); each period's LY / LLY dates come from lfl_mapping (ly_lfl for 2025, ly2_lfl for 2024), a date
 -- mapped from two periods counts in the first. Period 0 = September of {Y} (BAU baseline).
 -- {DT} = the literal (date, period) list built by build.py --flashback-sql; {RANGE} = the literal date range for pruning.

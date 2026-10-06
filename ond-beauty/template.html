@@ -474,7 +474,7 @@ details.gloss { margin-top: 12px; }
 
   <section class="rca" id="rca" aria-label="Root cause analysis of MTD GMV"></section>
 
-  <section class="fbt" id="fbt" aria-label="Nov Flashback: LY and LLY 20 Oct to 10 Dec by cohort period"></section>
+  <section class="fbt" id="fbt" aria-label="Nov Flashback: LY and LLY 1 to 30 Nov by cohort period"></section>
 
   <section class="buyt" id="buyt" aria-label="Buyers reference: markdown, GMV and impressions spike by brand and cohort"></section>
 
@@ -1728,7 +1728,7 @@ document.getElementById("rca").addEventListener("click", e => {
   save(); renderRca();
 });
 
-// ---------- Nov Flashback + Buyers ref: LY / LLY 20 Oct – 10 Dec by cohort period, against that year's September (sql/flashback.sql) ----------
+// ---------- Nov Flashback + Buyers ref: LY / LLY 1 – 30 Nov by cohort period, against that year's September (sql/flashback.sql) ----------
 // FB.lv[level] = [{ k, cat?, v: [year][period] = [gmv, units, mkd, np, gv, impressions] }], years 2024, 2025, 2026 (Sept only); period 0 = September
 let FB = null, FB_ERR = null;
 function loadFb() {
@@ -1836,7 +1836,7 @@ function fbTable(lv) {
     const r = rows[0];
     h += line(`<td>September (BAU base)</td>`, r, [0], "sep", null);
     for (const p of win) h += line(pLabel(p), r, [p], "", null);
-    h += line(`<td>20 Oct – 10 Dec window</td>`, r, win, "tot", null);
+    h += line(`<td>November total</td>`, r, win, "tot", null);
   } else {
     for (const r of rows) {
       const isOpen = open.has(r.k), parent = fbParent(lv, r);
@@ -1866,16 +1866,16 @@ function fbLearn() {
   if (imp.length) L.good.push(`Impressions did the work (repeat the visibility): ${imp.map(x => `<b>${esc(x.r.k.replace(/_/g, " "))}</b> GMV ${fbPc(x.o1.spG)}, imps ${fbPc(x.o1.spI)}`).join(", ")}`);
   const nopay = top.filter(x => (x.o1.dMk || 0) >= 0.1 && (x.o1.spG ?? 1) < 0.1).sort((a, b) => b.o1.g - a.o1.g).slice(0, 6);
   if (nopay.length) L.bad.push(`Markdown didn't pay (markdown +10pp or more vs Sept, GMV/day up under 10%): ${nopay.map(x => `<b>${esc(x.r.k.replace(/_/g, " "))}</b> ${fbPct(x.o1.mk)} (${fbPp(x.o1.dMk)}), GMV ${fbPc(x.o1.spG)}`).join(", ")}`);
-  const lost = br.filter(x => x.o0.g >= 20000 && x.o0.spG >= 0.5 && (x.o1.spG ?? -1) < 0.1).sort((a, b) => b.o0.g - a.o0.g).slice(0, 8);
+  const lost = br.filter(x => x.o0.g >= 20000 && x.o0.spG >= 0.5 && x.o1.spG != null && x.o1.spG < 0.1).sort((a, b) => b.o0.g - a.o0.g).slice(0, 8);
   if (lost.length) L.warn.push(`Spiked in LLY but not in LY (missed): ${lost.map(x => `<b>${esc(x.r.k.replace(/_/g, " "))}</b> LLY ${fbPc(x.o0.spG)} → LY ${fbPc(x.o1.spG)}`).join(", ")}`);
   const fall = br.filter(x => x.o0.g >= 50000 && x.o1.g < x.o0.g * 0.7).sort((a, b) => (b.o0.g - b.o1.g) - (a.o0.g - a.o1.g)).slice(0, 8);
-  if (fall.length) L.warn.push(`Window GMV down 30%+ LY vs LLY: ${fall.map(x => `<b>${esc(x.r.k.replace(/_/g, " "))}</b> ${fbK(x.o1.g)} vs ${fbK(x.o0.g)}`).join(", ")}`);
+  if (fall.length) L.warn.push(`November GMV down 30%+ LY vs LLY: ${fall.map(x => `<b>${esc(x.r.k.replace(/_/g, " "))}</b> ${fbK(x.o1.g)} vs ${fbK(x.o0.g)}`).join(", ")}`);
   const li = a => a.length ? a.map(t => `<li>${t}</li>`).join("") : `<li>Nothing stands out.</li>`;
   return `<div class="two"><div><h3>What worked LY · replicate</h3><ul class="ln good">${li(L.good)}</ul></div>`
     + `<div><h3>What didn't work · improve</h3><ul class="ln bad">${li(L.bad)}</ul><h3 style="margin-top:12px">Missed vs LLY</h3><ul class="ln warn">${li(L.warn)}</ul></div></div>`;
 }
 
-// top 20 retail brands: LY / LLY window, per-period GMV / day bars, Sept 2026 run-rate, and the write-up (data/flashback_notes.json)
+// top 20 retail brands: LY / LLY November, per-period GMV / day bars, Sept 2026 run-rate, and the write-up (data/flashback_notes.json)
 function fbCards() {
   if (!FB.retail || !FB.retail.length) return "";
   const win = fbWin(), yy = FB.years.map(y => "'" + String(y).slice(2)), W = 440, H = 96, B = 14;
@@ -1894,12 +1894,12 @@ function fbCards() {
         + `<rect x="${x + 1 + w + 1}" y="${y(vals[j][1])}" width="${w}" height="${H - B - y(vals[j][1])}" rx="1.5" fill="var(--accent)"><title>${esc(P.cohort)} ${FB.years[1]}: ${fbK(vals[j][1])}/day</title></rect>`;
       if (keyP.has(P.cohort)) svg += `<text x="${x + bw / 2}" y="${H - 2}" font-size="10" text-anchor="middle" fill="var(--fg-2)">${keyP.get(P.cohort)}</text>`;
     });
-    svg += `<text x="2" y="${H - 2}" font-size="10" fill="var(--muted)">20 Oct</text><text x="${W - 2}" y="${H - 2}" font-size="10" text-anchor="end" fill="var(--muted)">10 Dec</text></svg>`;
+    svg += `<text x="2" y="${H - 2}" font-size="10" fill="var(--muted)">1 Nov</text><text x="${W - 2}" y="${H - 2}" font-size="10" text-anchor="end" fill="var(--muted)">30 Nov</text></svg>`;
     const sp25 = fbSum(r, 1, [0]), sp26 = fbSum(r, 2, [0]), g25 = sp25.d ? sp25.m[0] / sp25.d : 0, g26 = sp26.d ? sp26.m[0] / sp26.d : 0;
     const n = r.note || {}, li = a => (a || []).map(t => `<li>${esc(t)}</li>`).join("");
     return `<article class="bcard"><div class="bh"><div><h3><span class="rk">#${i + 1}</span> ${esc(r.k.replace(/_/g, " "))}</h3><small>${esc((r.cat || "").replace(/_/g, " "))} · retail</small></div>`
       + `<div class="bv"><b>${fbK(o1.g)}</b><span class="${fbCls(vs)}">${fbPc(vs)} vs LLY</span></div></div>`
-      + `<table><thead><tr><th>20 Oct – 10 Dec</th><th>LY ${yy[1]}</th><th>LLY ${yy[0]}</th></tr></thead><tbody>`
+      + `<table><thead><tr><th>1 – 30 Nov</th><th>LY ${yy[1]}</th><th>LLY ${yy[0]}</th></tr></thead><tbody>`
       + row("GMV", fbK(o1.g), fbK(o0.g))
       + row("GMV / day vs Sept", fbSp(o1.spG, o1.newG), fbSp(o0.spG, o0.newG))
       + row("Impressions", `${fbK(o1.im)} <small>${o1.newI ? "new" : fbPc(o1.spI)}</small>`, `${fbK(o0.im)} <small>${o0.newI ? "new" : fbPc(o0.spI)}</small>`)
@@ -1913,7 +1913,7 @@ function fbCards() {
       + (n.do ? `<div><h4 class="a">2026 focus</h4><ul>${li(n.do)}</ul></div>` : "")
       + `</article>`;
   };
-  return `<div class="rp"><h2>Top 20 retail brands · 20 Oct – 10 Dec</h2><p class="sub">Retail business model only, ranked by LY window GMV (${fbPc(FB.retail.reduce((a, r) => a + fbSum(r, 1, fbWin()).m[0], 0) / FB.lv.all[0].v[1].slice(1).reduce((a, c) => a + c[0], 0), 0).replace("+", "")} of LY Beauty window GMV). Bars = GMV per day in each cohort period; the write-up reads the LY and LLY numbers period by period.</p>`
+  return `<div class="rp"><h2>Top 20 retail brands · 1 – 30 Nov</h2><p class="sub">Retail business model only, ranked by LY November GMV (${fbPc(FB.retail.reduce((a, r) => a + fbSum(r, 1, fbWin()).m[0], 0) / FB.lv.all[0].v[1].slice(1).reduce((a, c) => a + c[0], 0), 0).replace("+", "")} of LY Beauty November GMV). Bars = GMV per day in each cohort period; the write-up reads the LY and LLY numbers period by period.</p>`
     + `<div class="bcards">${FB.retail.map(card).join("")}</div></div>`;
 }
 function renderFb() {
@@ -1927,26 +1927,26 @@ function renderFb() {
   const tile = (t, v, note, chips) => `<div class="tile"><h3>${t}</h3><div class="tv">${v}</div>${note ? `<div class="tn">${note}</div>` : ""}<div class="tl">${chips}</div></div>`;
   const chip = (lbl, v, txt) => `<span class="chip ${v == null ? "" : v >= 0 ? "up" : "down"}" style="background:var(--flat-bg)">${lbl} ${txt}</span>`;
   const segs = Object.entries(FB_LV).map(([k, l]) => `<button data-lv="${k}" aria-pressed="${state.fb.lv === k}">${l}</button>`).join("");
-  box.innerHTML = `<div class="rp"><div class="mh"><div><h2>Nov Flashback · 20 Oct – 10 Dec</h2>`
-    + `<p class="sub">How each cohort period did in LY (${FB.years[1]}) and LLY (${FB.years[0]}) against that year's September (BAU), and the impressions 2026 needs to grow GMV ${Math.round((FB.uplift - 1) * 100)}% vs LY at today's conversion. Periods follow the LFL cohorts of the 2026 dates; LY / LLY use the like-for-like dates. Per-day figures, so periods of different length compare fairly.</p></div></div>`
+  box.innerHTML = `<div class="rp"><div class="mh"><div><h2>Nov Flashback · 1 – 30 Nov</h2>`
+    + `<p class="sub">How each cohort period did in LY (${FB.years[1]}) and LLY (${FB.years[0]}) against that year's September (BAU), and the impressions 2026 needs to grow GMV ${Math.round((FB.uplift - 1) * 100)}% vs LY at today's conversion. November only: periods follow the LFL cohorts of the 2026 dates 1–30 Nov; LY / LLY use the like-for-like dates, leaving out any that fall outside November (YF Post LY 1 Dec, LLY 1–2 Dec). Per-day figures, so periods of different length compare fairly.</p></div></div>`
     + `<div class="tiles">`
-    + tile(`LLY ${FB.years[0]} · window GMV`, fbK(o0.g), `${fbK(o0.gpd)}/day · MKD ${fbPct(o0.mk)}`, chip("vs Sept/day", o0.spG, fbPc(o0.spG)))
-    + tile(`LY ${FB.years[1]} · window GMV`, fbK(o1.g), `${fbK(o1.gpd)}/day · MKD ${fbPct(o1.mk)}`, chip("vs Sept/day", o1.spG, fbPc(o1.spG)) + chip("vs LLY", o0.g ? o1.g / o0.g - 1 : null, fbPc(o0.g ? o1.g / o0.g - 1 : null)))
+    + tile(`LLY ${FB.years[0]} · Nov GMV`, fbK(o0.g), `${fbK(o0.gpd)}/day · MKD ${fbPct(o0.mk)}`, chip("vs Sept/day", o0.spG, fbPc(o0.spG)))
+    + tile(`LY ${FB.years[1]} · Nov GMV`, fbK(o1.g), `${fbK(o1.gpd)}/day · MKD ${fbPct(o1.mk)}`, chip("vs Sept/day", o1.spG, fbPc(o1.spG)) + chip("vs LLY", o0.g ? o1.g / o0.g - 1 : null, fbPc(o0.g ? o1.g / o0.g - 1 : null)))
     + tile(`2026 target · +${Math.round((FB.uplift - 1) * 100)}% vs LY`, fbK(pl.tgt), `${fbK(pl.tgt / pl.tyDays)}/day vs ${fbK(s26[0] / FB.days[2][0])}/day in Sept 2026`, chip("vs Sept 26/day", 1, fbPc(pl.tgt / pl.tyDays / (s26[0] / FB.days[2][0]) - 1)))
     + tile("Impressions needed · today's conversion", fbK(pl.need), `${fbK(pl.need / pl.tyDays)}/day · ×${pl.runX.toFixed(1)} Sept 2026 imps/day`, chip("vs LY imps", -pl.vsLy, fbPc(pl.vsLy)))
-    + tile("…if conversion moves like LY", fbK(pl.needL), `LY's GMV per impression in the window was ${fbPc(pl.lift - 1)} vs its Sept`, chip("vs LY imps", -pl.vsLyL, fbPc(pl.vsLyL)))
+    + tile("…if conversion moves like LY", fbK(pl.needL), `LY's November GMV per impression was ${fbPc(pl.lift - 1)} vs its Sept`, chip("vs LY imps", -pl.vsLyL, fbPc(pl.vsLyL)))
     + tile("Today's funnel · Sept 2026", `${f26.gpk.toFixed(1)} <small style="font-size:13px;font-weight:500">AED / 1K imps</small>`, `LY Sept: ${f25.gpk.toFixed(1)} AED / 1K imps`,
       chip("CTR", f26.ctr - f25.ctr, `${(f26.ctr * 100).toFixed(2)}% (LY ${(f25.ctr * 100).toFixed(2)}%)`) + chip("UCR", f26.ucr - f25.ucr, `${(f26.ucr * 100).toFixed(2)}% (LY ${(f25.ucr * 100).toFixed(2)}%)`) + chip("ASP", f26.asp - f25.asp, `${Math.round(f26.asp)} (LY ${Math.round(f25.asp)})`))
     + `</div></div>`
     + `<div class="rp"><h2 style="margin-bottom:10px">Learnings · LY and LLY</h2>${fbLearn()}</div>`
-    + `<div class="rp" style="padding:14px 0 6px"><div class="mh" style="padding:0 14px 10px"><div><h2>${FB_LV[state.fb.lv]}</h2><p class="sub">${state.fb.lv === "all" ? "Each cohort period, LLY and LY, against September." : "Window totals (20 Oct – 10 Dec); click a name to open its periods."} Imps needed (and "× today's imps/day") use today's GMV per impression; the next column assumes GMV per impression moves from Sept the way it did LY.</p></div>`
+    + `<div class="rp" style="padding:14px 0 6px"><div class="mh" style="padding:0 14px 10px"><div><h2>${FB_LV[state.fb.lv]}</h2><p class="sub">${state.fb.lv === "all" ? "Each cohort period, LLY and LY, against September." : "November totals (1 – 30 Nov); click a name to open its periods."} Imps needed (and "× today's imps/day") use today's GMV per impression; the next column assumes GMV per impression moves from Sept the way it did LY.</p></div>`
     + `<div class="seg" role="group" aria-label="View by">${segs}</div></div>${fbTable(state.fb.lv)}</div>`
     + fbCards()
     + `<div class="rp"><h3>How to read</h3><ul class="ln" style="color:var(--fg-2)">`
     + `<li>GMV / day and impressions / day are compared with the same year's September per day (the BAU base): +150% = 2.5× a September day.</li>`
     + `<li>What drove it: ${Object.entries(FB_DRV).map(([k, l]) => `<b>${l}</b> = ${FB_DRV_T[k]}`).join("; ")}.</li>`
     + `<li>2026 plan: target = LY GMV × ${FB.uplift}. GMV = impressions × CTR × UCR × ASP, so impressions needed = target ÷ (Sept 2026 CTR × UCR × ASP). "If conv. moves like LY" divides that by LY's change in GMV per impression from September to the period (below 1 when LY's extra impressions converted worse than September's). Rows with under 200K Sept 2026 impressions or 30 units use their category's rates (≈).</li>`
-    + `<li>Scope as the rest of the dashboard: Namshi marketplaces, GMV above zero, Beauty, no samples &amp; GWP; impressions = search + non-search, all platforms. Brands, categories and sub-categories under ${fbK(5000)} AED window GMV (LY + LLY) are grouped as "(other)".</li></ul></div>`;
+    + `<li>Scope as the rest of the dashboard: Namshi marketplaces, GMV above zero, Beauty, no samples &amp; GWP; impressions = search + non-search, all platforms. Brands, categories and sub-categories under ${fbK(5000)} AED November GMV (LY + LLY) are grouped as "(other)".</li></ul></div>`;
 }
 
 // Buyers ref "Key periods": September base + these cohorts, under the names buyers use
@@ -1960,10 +1960,10 @@ function renderBuy() {
   if (!FB) { loadFb(); box.innerHTML = `<div class="rp"><p class="loading">${FB_ERR ? "Couldn't load the buyers reference: " + esc(FB_ERR) : "Loading buyers reference…"}</p></div>`; return; }
   const per = buyPeriods(), key = buyKey();
   box.innerHTML = `<div class="rp" style="padding:14px 0 6px"><div class="mh" style="padding:0 14px 10px"><div><h2>Buyers ref · markdown by brand and cohort</h2>`
-    + `<p class="sub">For each brand and cohort period: <b>bold = the markdown % the brand ran LY</b>, the bare minimum to ask the brand for in 2026 (grey = LLY). GMV and Imps = GMV / impressions per day vs that year's September per day, LY ('${String(FB.years[1]).slice(2)}) / LLY ('${String(FB.years[0]).slice(2)}). Brands are sorted by LY window GMV.${key ? " Key periods: Sept base, Singles (11.11), Post Singles, Pre YF and YF." : ""}</p></div>`
+    + `<p class="sub">For each brand and cohort period: <b>bold = the markdown % the brand ran LY</b>, the bare minimum to ask the brand for in 2026 (grey = LLY). GMV and Imps = GMV / impressions per day vs that year's September per day, LY ('${String(FB.years[1]).slice(2)}) / LLY ('${String(FB.years[0]).slice(2)}). Brands are sorted by LY November GMV.${key ? " Key periods: Sept base, Singles (11.11), Post Singles, Pre YF and YF." : ""}</p></div>`
     + `<div class="mctl" style="display:flex;flex-wrap:wrap;gap:8px"><div class="seg" role="group" aria-label="Periods"><button data-bv="key" aria-pressed="${key}">Key periods</button><button data-bv="all" aria-pressed="${!key}">All periods</button></div>`
     + `<input type="search" id="buyq" placeholder="Find a brand or category" value="${esc(state.buy.q)}" aria-label="Find a brand or category"></div></div>`
-    + `<div class="mtscroll"><table class="mt"><thead><tr><th>Brand</th><th class="g0" title="September markdown: LY (LLY in grey)">Sept base</th>${key ? "" : `<th class="g0" title="20 Oct – 10 Dec">Window</th>`}`
+    + `<div class="mtscroll"><table class="mt"><thead><tr><th>Brand</th><th class="g0" title="September markdown: LY (LLY in grey)">Sept base</th>${key ? "" : `<th class="g0" title="1 – 30 Nov">Nov total</th>`}`
     + per.map(({ p, nm }) => { const P = FB.periods[p - 1]; return `<th class="g0" style="text-align:left;text-transform:none;letter-spacing:0" title="LY ${fbDates(P.ly[0], P.ly[1])} · LLY ${fbDates(P.lly[0], P.lly[1])}">${esc(nm)}<br><small style="font-weight:400">${fbDates(P.ty[0], P.ty[1])} 2026</small></th>`; }).join("")
     + `</tr></thead><tbody id="buyb"></tbody></table></div></div>`;
   fillBuy();
