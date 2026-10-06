@@ -260,6 +260,7 @@ def build():
 
 
 FB_YEARS = (2024, 2025, 2026)   # 2026 = September baseline only (current conversion)
+FB_EXCLUDE = {"benefit_cosmetics"}   # discontinued brands: left out of the flashback, its targets and the buyers ref
 FB_MIN = 5000                  # brands / categories / sub-categories under this LY + LLY window GMV fold into "(other)"
 
 
@@ -276,6 +277,8 @@ def pack_flashback():
         days[y][p] = d
         for r in v.split(";"):
             x = r.split(",")
+            if x[0] in FB_EXCLUDE:
+                continue
             recs.append((y, p, c, x[0], x[1], x[2], [float(t) for t in x[3:6]] + [float(x[6]), float(x[7]), float(x[8]) + float(x[9])]))
     # window GMV (LY + LLY, periods 1..n) decides who gets a row of their own
     win = {"cat": {}, "sub": {}, "brand": {}}
@@ -325,6 +328,8 @@ def pack_flashback():
                 raise SystemExit(f"flashback_retail_raw {k}: {d} days, flashback_raw has {days[y][p]}")
             for r in v.split(";"):
                 x = r.split(",")
+                if x[0] in FB_EXCLUDE:
+                    continue
                 e = ents.setdefault(x[0], [[[0] * 6 for _ in range(n_p)] for _ in FB_YEARS])
                 e[yi[y]][p] = [round(float(t)) for t in x[1:7]]
         notes = json.loads((DATA / "flashback_notes.json").read_text()) if (DATA / "flashback_notes.json").exists() else {}
@@ -336,7 +341,7 @@ def pack_flashback():
     if (DATA / "flashback_daily.json").exists():
         daily = [[r["d"], round(r["g"]), round(r["u"]), round(r["mk"], 4), round(r["gv"]), round(r["im"])]
                  for r in json.loads((DATA / "flashback_daily.json").read_text()) if r["d"][5:7] in ("09", "11")]
-    return {"daily": daily, "retail": retail, "periods": [{"p": p["p"], "cohort": p["cohort"].replace("_", " "), "ty": [p["ty"][0], p["ty"][-1]],
+    return {"excluded": sorted(FB_EXCLUDE), "daily": daily, "retail": retail, "periods": [{"p": p["p"], "cohort": p["cohort"].replace("_", " "), "ty": [p["ty"][0], p["ty"][-1]],
                          "ly": [p["ly"][0], p["ly"][-1]], "lly": [p["lly"][0], p["lly"][-1]]} for p in periods],
             "years": list(FB_YEARS), "days": [days[y] for y in FB_YEARS], "lv": out, "uplift": 1.25}
 
