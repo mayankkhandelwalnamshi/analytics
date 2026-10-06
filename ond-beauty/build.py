@@ -332,11 +332,11 @@ def pack_flashback():
         top = sorted((b for b in ents if b != "(none)"), key=lambda b: -sum(c[0] for c in ents[b][1][1:]))[:20]
         cat_of = {r["k"]: r.get("cat") for r in out["brand"]}
         retail = [{"k": b, "cat": cat_of.get(b), "v": ents[b], "note": notes.get(b)} for b in top]
-    # daily Beauty totals (Sept + Nov, LY / LLY) for the impressions vs conversion check: [date, gmv, units, mkd, np→mkd%, gv, imps]
+    # daily Beauty totals (Sept, Oct, Nov LY / LLY; Sept 2026): [date, gmv, units, mkd %, gv, imps, mkd, np]
     daily = []
     if (DATA / "flashback_daily.json").exists():
-        daily = [[r["d"], round(r["g"]), round(r["u"]), round(r["mk"], 4), round(r["gv"]), round(r["im"])]
-                 for r in json.loads((DATA / "flashback_daily.json").read_text()) if r["d"][5:7] in ("09", "11")]
+        daily = [[r["d"], round(r["g"]), round(r["u"]), round(r["mk"], 4), round(r["gv"]), round(r["im"]), round(r["mkd"]), round(r["np"])]
+                 for r in json.loads((DATA / "flashback_daily.json").read_text()) if r["d"][5:7] in ("09", "10", "11")]
     # discontinued brands: their LY GMV in each period and sub-category is handed to the brands of the same brand type
     # (prestige / masstige) in that sub-category, in proportion to those brands' LY GMV there (whole November when they
     # had none in the period; any brand type when no same-type brand sells there). Category, sub-category and brand-type
@@ -369,7 +369,7 @@ def pack_flashback():
         if "add" in e:
             e["add"] = [round(v) for v in e["add"]]
     return {"realloc": realloc, "daily": daily, "retail": retail, "periods": [{"p": p["p"], "cohort": p["cohort"].replace("_", " "), "ty": [p["ty"][0], p["ty"][-1]],
-                         "ly": [p["ly"][0], p["ly"][-1]], "lly": [p["lly"][0], p["lly"][-1]]} for p in periods],
+                         "ly": [p["ly"][0], p["ly"][-1]], "lly": [p["lly"][0], p["lly"][-1]], "lyd": p["ly"], "llyd": p["lly"]} for p in periods],
             "years": list(FB_YEARS), "days": [days[y] for y in FB_YEARS], "lv": out, "uplift": 1.25}
 
 
