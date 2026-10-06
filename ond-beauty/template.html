@@ -173,8 +173,8 @@ body:not([data-tab="buy"]) .buyt { display: none; }
 .fbt .mt .tg { font: inherit; font-weight: 600; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
 .fbt .mt .tg:hover { color: var(--accent); }
 .fbt .mt .tg svg { transition: transform .15s; } .fbt .mt .tg[aria-expanded="true"] svg { transform: rotate(180deg); }
-.buyt .mt td.bc { text-align: left; vertical-align: top; line-height: 1.35; min-width: 104px; }
-.buyt .mt td.bc b { font-size: 14px; } .buyt .mt td.bc span { display: block; font-size: 11.5px; font-family: var(--mono); }
+.buyt .mt td.bc { text-align: left; vertical-align: top; line-height: 1.35; min-width: 150px; }
+.buyt .mt td.bc b { font-size: 14px; } .buyt .mt td.bc i { font-style: normal; } .buyt .mt td.bc .na { color: var(--muted); } .buyt .mt td.bc span { display: block; font-size: 11.5px; font-family: var(--mono); }
 .buyt .mt td:first-child { vertical-align: top; } .buyt .mt td:first-child small { display: block; margin: 2px 0 0; font-weight: 400; }
 .buyt input[type=search] { font: inherit; font-size: 13px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); width: 220px; }
 @media (max-width: 700px) { .buyt input[type=search] { width: 100%; } }
@@ -1898,7 +1898,7 @@ function renderBuy() {
   if (!FB) { loadFb(); box.innerHTML = `<div class="rp"><p class="loading">${FB_ERR ? "Couldn't load the buyers reference: " + esc(FB_ERR) : "Loading buyers reference…"}</p></div>`; return; }
   const win = fbWin();
   box.innerHTML = `<div class="rp" style="padding:14px 0 6px"><div class="mh" style="padding:0 14px 10px"><div><h2>Buyers ref · markdown by brand and cohort</h2>`
-    + `<p class="sub">For each brand and cohort period: <b>bold = the markdown % the brand ran LY</b>, the bare minimum to ask the brand for in 2026 (grey = LLY). GMV and Imps = LY GMV / impressions per day vs LY September per day. Brands are sorted by LY window GMV.</p></div>`
+    + `<p class="sub">For each brand and cohort period: <b>bold = the markdown % the brand ran LY</b>, the bare minimum to ask the brand for in 2026 (grey = LLY). GMV and Imps = GMV / impressions per day vs that year's September per day, LY ('${String(FB.years[1]).slice(2)}) / LLY ('${String(FB.years[0]).slice(2)}). Brands are sorted by LY window GMV.</p></div>`
     + `<input type="search" id="buyq" placeholder="Find a brand or category" value="${esc(state.buy.q)}" aria-label="Find a brand or category"></div>`
     + `<div class="mtscroll"><table class="mt"><thead><tr><th>Brand</th><th class="g0" title="September markdown: LY (LLY in grey)">Sept base</th><th class="g0" title="20 Oct – 10 Dec">Window</th>`
     + win.map(p => { const P = FB.periods[p - 1]; return `<th class="g0" style="text-align:left;text-transform:none;letter-spacing:0" title="LY ${fbDates(P.ly[0], P.ly[1])} · LLY ${fbDates(P.lly[0], P.lly[1])}">${esc(P.cohort)}<br><small style="font-weight:400">${fbDates(P.ty[0], P.ty[1])} 2026</small></th>`; }).join("")
@@ -1907,12 +1907,16 @@ function renderBuy() {
 }
 function fillBuy() {
   const q = state.buy.q.trim().toLowerCase(), win = fbWin();
+  const yy = FB.years.map(y => "'" + String(y).slice(2));
   const cell = (r, ps) => {
     const o1 = fbStat(r, 1, ps), o0 = fbStat(r, 0, ps), ask = o1.mk ?? o0.mk;
     if (!o1.g && !o0.g) return `<td class="bc g0 na">–</td>`;
-    return `<td class="bc g0"><b>${fbPct(ask)}</b><small>LLY ${fbPct(o0.mk)}</small><span class="${fbCls(o1.spG)}">GMV ${o1.newG ? "new" : fbPc(o1.spG)}</span><span>Imps ${o1.newI ? "new" : fbPc(o1.spI)}</span></td>`;
+    // each year against its own September: 'yy = LY, then LLY
+    const v = (x, isNew) => isNew ? `<i class="na">new</i>` : `<i class="${fbCls(x)}">${fbPc(x)}</i>`;
+    const both = (lbl, k, n) => `<span>${lbl}${yy[1]} ${v(o1[k], o1[n])} / ${yy[0]} ${v(o0[k], o0[n])}</span>`;
+    return `<td class="bc g0"><b>${fbPct(ask)}</b><small>LLY ${fbPct(o0.mk)}</small>${both("GMV", "spG", "newG")}${both("Imps", "spI", "newI")}</td>`;
   };
-  const sep = r => { const a = fbStat(r, 1, [0]), b = fbStat(r, 0, [0]); return `<td class="bc g0"><b>${fbPct(a.smk)}</b><small>LLY ${fbPct(b.smk)}</small><span>${fbK(a.sgpd)}/day</span></td>`; };
+  const sep = r => { const a = fbStat(r, 1, [0]), b = fbStat(r, 0, [0]); return `<td class="bc g0"><b>${fbPct(a.smk)}</b><small>LLY ${fbPct(b.smk)}</small><span>GMV/day${yy[1]} ${fbK(a.sgpd)} / ${yy[0]} ${fbK(b.sgpd)}</span></td>`; };
   const row = (r, nm, sub, cls) => `<tr class="${cls}"><td>${esc(nm)}${sub ? `<small>${esc(sub)}</small>` : ""}</td>${sep(r)}${cell(r, win)}${win.map(p => cell(r, [p])).join("")}</tr>`;
   const rows = FB.lv.brand.filter(r => !q || r.k.toLowerCase().includes(q) || r.k.replace(/_/g, " ").toLowerCase().includes(q) || (r.cat || "").toLowerCase().includes(q));
   document.getElementById("buyb").innerHTML = row(FB.lv.all[0], "All Beauty", "", "tot")
