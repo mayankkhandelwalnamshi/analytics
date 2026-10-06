@@ -260,7 +260,7 @@ def build():
 
 
 FB_YEARS = (2024, 2025, 2026)   # 2026 = September baseline only (current conversion)
-FB_EXCLUDE = {"benefit_cosmetics"}   # discontinued brands: left out of the flashback, its targets and the buyers ref
+FB_REALLOC = {"benefit_cosmetics"}   # discontinued brands: history stays, their 2026 target moves to like-for-like brands
 FB_MIN = 5000                  # brands / categories / sub-categories under this LY + LLY window GMV fold into "(other)"
 
 
@@ -277,8 +277,6 @@ def pack_flashback():
         days[y][p] = d
         for r in v.split(";"):
             x = r.split(",")
-            if x[0] in FB_EXCLUDE:
-                continue
             recs.append((y, p, c, x[0], x[1], x[2], [float(t) for t in x[3:6]] + [float(x[6]), float(x[7]), float(x[8]) + float(x[9])]))
     # window GMV (LY + LLY, periods 1..n) decides who gets a row of their own
     win = {"cat": {}, "sub": {}, "brand": {}}
@@ -328,8 +326,6 @@ def pack_flashback():
                 raise SystemExit(f"flashback_retail_raw {k}: {d} days, flashback_raw has {days[y][p]}")
             for r in v.split(";"):
                 x = r.split(",")
-                if x[0] in FB_EXCLUDE:
-                    continue
                 e = ents.setdefault(x[0], [[[0] * 6 for _ in range(n_p)] for _ in FB_YEARS])
                 e[yi[y]][p] = [round(float(t)) for t in x[1:7]]
         notes = json.loads((DATA / "flashback_notes.json").read_text()) if (DATA / "flashback_notes.json").exists() else {}
@@ -341,7 +337,38 @@ def pack_flashback():
     if (DATA / "flashback_daily.json").exists():
         daily = [[r["d"], round(r["g"]), round(r["u"]), round(r["mk"], 4), round(r["gv"]), round(r["im"])]
                  for r in json.loads((DATA / "flashback_daily.json").read_text()) if r["d"][5:7] in ("09", "11")]
-    return {"excluded": sorted(FB_EXCLUDE), "daily": daily, "retail": retail, "periods": [{"p": p["p"], "cohort": p["cohort"].replace("_", " "), "ty": [p["ty"][0], p["ty"][-1]],
+    # discontinued brands: their LY GMV in each period and sub-category is handed to the brands of the same brand type
+    # (prestige / masstige) in that sub-category, in proportion to those brands' LY GMV there (whole November when they
+    # had none in the period; any brand type when no same-type brand sells there). Category, sub-category and brand-type
+    # targets stay the same; only the brand split changes. realloc[brand] = extra LY GMV per period, {"from": ...}.
+    btype = {k: v[0] for k, v in json.loads((DATA / "brand_attrs.json").read_text()).items()}
+    ly_sub = {}
+    for y, p, c, b, cat, sub, m in recs:
+        if y == FB_YEARS[1] and p > 0:
+            ly_sub.setdefault((cat, sub), {}).setdefault(b, [0.0] * n_p)[p] += m[0]
+    realloc = {}
+    for gone in sorted(FB_REALLOC):
+        for (cat, sub), bs in ly_sub.items():
+            src = bs.get(gone)
+            if not src:
+                continue
+            others = {b: v for b, v in bs.items() if b not in FB_REALLOC and not b.startswith("(")}
+            same = {b: v for b, v in others.items() if btype.get(b) == btype.get(gone)} or others
+            for p in range(1, n_p):
+                if not src[p]:
+                    continue
+                w = {b: v[p] for b, v in same.items() if v[p] > 0} or {b: sum(v[1:]) for b, v in same.items() if sum(v[1:]) > 0}
+                tot = sum(w.values())
+                for b, wv in w.items():
+                    e = realloc.setdefault(b, {"add": [0.0] * n_p, "from": []})
+                    e["add"][p] += src[p] * wv / tot
+                    if gone not in e["from"]:
+                        e["from"].append(gone)
+        realloc[gone] = {"gone": True}
+    for e in realloc.values():
+        if "add" in e:
+            e["add"] = [round(v) for v in e["add"]]
+    return {"realloc": realloc, "daily": daily, "retail": retail, "periods": [{"p": p["p"], "cohort": p["cohort"].replace("_", " "), "ty": [p["ty"][0], p["ty"][-1]],
                          "ly": [p["ly"][0], p["ly"][-1]], "lly": [p["lly"][0], p["lly"][-1]]} for p in periods],
             "years": list(FB_YEARS), "days": [days[y] for y in FB_YEARS], "lv": out, "uplift": 1.25}
 

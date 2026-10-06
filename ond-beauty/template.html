@@ -1790,11 +1790,17 @@ const fbDrvCell = o => !o || !o.drv ? "–" : `<span class="drv ${o.drv}" title=
 // 2026 plan: LY GMV × uplift. Impressions needed = target ÷ today's GMV per impression (Sept 2026 = CTR × UCR × ASP);
 // "if conversion lifts like LY" divides that by LY's lift in GMV per impression from Sept to the period.
 // Rows with too little Sept 2026 traffic (under 200K impressions or 30 units) use their parent's GMV per impression (≈).
-function fbPlan(r, ps, parent) {
+function fbPlan(r, ps, parent, lv) {
   // target = per period, LY GMV per day (LFL dates) × uplift × the period's 2026 days; LY impressions scaled the same way
   const ly = fbStat(r, 1, ps), own = fbSum(r, 2, [0]);
   let tgt = 0, lyIm = 0;
   for (const p of ps) if (p) { const o = fbStat(r, 1, [p]), d = fbTyDays(p); tgt += (o.gpd || 0) * d * FB.uplift; lyIm += (o.ipd || 0) * d; }
+  // discontinued brands hand their target to same-type brands in their sub-categories (FB.realloc, build.py)
+  const ra = lv === "brand" && FB.realloc ? FB.realloc[r.k] : null;
+  let extra = 0;
+  if (ra && ra.gone) tgt = 0;
+  else if (ra) for (const p of ps) if (p && FB.days[1][p]) extra += ra.add[p] / FB.days[1][p] * fbTyDays(p) * FB.uplift;
+  tgt += extra;
   let cur = own, approx = false;
   if ((own.m[5] < 2e5 || own.m[1] < 30) && parent) { cur = fbSum(parent, 2, [0]); approx = true; }
   const gpi = cur.m[5] > 0 && cur.m[0] > 0 ? cur.m[0] / cur.m[5] : null;
@@ -1802,7 +1808,7 @@ function fbPlan(r, ps, parent) {
   const lift = ly.gpi && ly.sgpi ? ly.gpi / ly.sgpi : null;
   const needL = need && lift ? need / lift : null;
   const tyDays = ps.reduce((a, p) => a + (p ? fbTyDays(p) : 0), 0), ipdNow = own.d ? own.m[5] / own.d : 0;
-  return { ly, tgt, need, needL, approx, lift, tyDays, ipdNow,
+  return { ly, tgt, need, needL, approx, lift, tyDays, ipdNow, extra, gone: !!(ra && ra.gone), from: ra && ra.from,
     vsLy: need && lyIm ? need / lyIm - 1 : null, vsLyL: needL && lyIm ? needL / lyIm - 1 : null,
     runX: need && ipdNow && tyDays ? need / tyDays / ipdNow : null, runXL: needL && ipdNow && tyDays ? needL / tyDays / ipdNow : null };
 }
@@ -1817,7 +1823,8 @@ const fbYearTds = (o, sep) => sep
   : `<td class="g0">${fbK(o.gpd)}</td><td>${fbSp(o.spG, o.newG)}</td><td>${fbSp(o.spI, o.newI)}</td>`
     + `<td>${fbPct(o.mk)}<small>${fbPp(o.dMk)}</small></td><td style="text-align:left">${fbDrvCell(o)}</td>`;
 const fbPlanTds = (pl, sep) => sep ? `<td class="pl g0" colspan="5"><span class="na">September = the base each period is compared with</span></td>`
-  : `<td class="pl g0">${fbK(pl.tgt)}</td><td class="pl">${fbK(pl.need)}${pl.approx ? `<small title="Too little Sept 2026 traffic of its own: uses its category's GMV per impression">≈</small>` : ""}</td>`
+  : pl.gone ? `<td class="pl g0" colspan="5"><span class="na">Discontinued: its 2026 target is handed to same-type brands in its sub-categories</span></td>`
+  : `<td class="pl g0">${fbK(pl.tgt)}${pl.extra >= 1 ? `<small title="Added from discontinued ${(pl.from || []).map(b => b.replace(/_/g, " ")).join(", ")}">+${fbK(pl.extra)} ${(pl.from || []).map(b => b.split("_")[0]).join(", ")}</small>` : ""}</td><td class="pl">${fbK(pl.need)}${pl.approx ? `<small title="Too little Sept 2026 traffic of its own: uses its category's GMV per impression">≈</small>` : ""}</td>`
     + `<td class="pl"><span class="${fbCls(-pl.vsLy)}">${fbPc(pl.vsLy)}</span></td><td class="pl"><span class="${fbCls(-pl.vsLyL)}">${fbPc(pl.vsLyL)}</span></td>`
     + `<td class="pl" title="Impressions per day needed ÷ Sept 2026 impressions per day">${pl.runX == null ? "–" : "×" + pl.runX.toFixed(1)}</td>`;
 
@@ -1831,7 +1838,7 @@ function fbTable(lv) {
     + `<th class="pl" title="Impressions needed vs LY impressions in the same period">vs LY imps</th><th class="pl" title="If GMV per impression moves from Sept to the period the way it did LY">vs LY if conv. moves like LY</th><th class="pl">× today's imps/day</th></tr></thead><tbody>`;
   const line = (label, r, ps, cls, parent) => {
     const sep = ps.length === 1 && ps[0] === 0;
-    const o0 = fbStat(r, 0, ps), o1 = fbStat(r, 1, ps), pl = sep ? null : fbPlan(r, ps, parent);
+    const o0 = fbStat(r, 0, ps), o1 = fbStat(r, 1, ps), pl = sep ? null : fbPlan(r, ps, parent, lv);
     return `<tr class="${cls}">${label}${fbYearTds(o0, sep)}${fbYearTds(o1, sep)}${fbPlanTds(pl, sep)}</tr>`;
   };
   const pLabel = p => { const P = FB.periods[p - 1]; return `<td title="LY ${fbDates(P.ly[0], P.ly[1])} ${FB.years[1]} · LLY ${fbDates(P.lly[0], P.lly[1])} ${FB.years[0]}">${esc(P.cohort)}<small>${fbDates(P.ty[0], P.ty[1])}</small></td>`; };
@@ -1993,7 +2000,7 @@ function renderFb() {
   const chip = (lbl, v, txt) => `<span class="chip ${v == null ? "" : v >= 0 ? "up" : "down"}" style="background:var(--flat-bg)">${lbl} ${txt}</span>`;
   const segs = Object.entries(FB_LV).map(([k, l]) => `<button data-lv="${k}" aria-pressed="${state.fb.lv === k}">${l}</button>`).join("");
   box.innerHTML = `<div class="rp"><div class="mh"><div><h2>Nov Flashback · 1 – 30 Nov</h2>`
-    + `<p class="sub">How each cohort period did in LY (${FB.years[1]}) and LLY (${FB.years[0]}) against that year's September (BAU), and the impressions 2026 needs to grow GMV ${Math.round((FB.uplift - 1) * 100)}% vs LY at today's conversion. November only: periods follow the LFL cohorts of the 2026 dates 1–30 Nov; LY / LLY use the like-for-like dates, leaving out any that fall outside November (YF Post LY 1 Dec, LLY 1–2 Dec). Per-day figures, so periods of different length compare fairly.${FB.excluded && FB.excluded.length ? ` Excludes discontinued ${FB.excluded.map(b => b.replace(/_/g, " ")).join(", ")}.` : ""}</p></div></div>`
+    + `<p class="sub">How each cohort period did in LY (${FB.years[1]}) and LLY (${FB.years[0]}) against that year's September (BAU), and the impressions 2026 needs to grow GMV ${Math.round((FB.uplift - 1) * 100)}% vs LY at today's conversion. November only: periods follow the LFL cohorts of the 2026 dates 1–30 Nov; LY / LLY use the like-for-like dates, leaving out any that fall outside November (YF Post LY 1 Dec, LLY 1–2 Dec). Per-day figures, so periods of different length compare fairly.</p></div></div>`
     + `<div class="tiles">`
     + tile(`LLY ${FB.years[0]} · Nov GMV`, fbK(o0.g), `${fbK(o0.gpd)}/day · MKD ${fbPct(o0.mk)}`, chip("vs Sept/day", o0.spG, fbPc(o0.spG)))
     + tile(`LY ${FB.years[1]} · Nov GMV`, fbK(o1.g), `${fbK(o1.gpd)}/day · MKD ${fbPct(o1.mk)}`, chip("vs Sept/day", o1.spG, fbPc(o1.spG)) + chip("vs LLY", o0.g ? o1.g / o0.g - 1 : null, fbPc(o0.g ? o1.g / o0.g - 1 : null)))
@@ -2012,7 +2019,7 @@ function renderFb() {
     + `<li>GMV / day and impressions / day are compared with the same year's September per day (the BAU base): +150% = 2.5× a September day.</li>`
     + `<li>What drove it: ${Object.entries(FB_DRV).map(([k, l]) => `<b>${l}</b> = ${FB_DRV_T[k]}`).join("; ")}.</li>`
     + `<li>2026 plan: target = LY GMV per day on the like-for-like dates × ${FB.uplift} × the 2026 days of each period (so the 3-day YF Post counts 3 days although LY had 2 in November); "vs LY imps" scales LY's impressions the same way. GMV = impressions × CTR × UCR × ASP, so impressions needed = target ÷ (Sept 2026 CTR × UCR × ASP). "If conv. moves like LY" divides that by LY's change in GMV per impression from September to the period (below 1 when LY's extra impressions converted worse than September's). Rows with under 200K Sept 2026 impressions or 30 units use their category's rates (≈).</li>`
-    + `<li>Scope as the rest of the dashboard: Namshi marketplaces, GMV above zero, Beauty, no samples &amp; GWP; impressions = search + non-search, all platforms. Brands, categories and sub-categories under ${fbK(5000)} AED November GMV (LY + LLY) are grouped as "(other)".${FB.excluded && FB.excluded.length ? ` Discontinued brands are left out of every number on this tab and the Buyers ref (LY / LLY history, targets and the impressions plan): ${FB.excluded.map(b => b.replace(/_/g, " ")).join(", ")}.` : ""}</li></ul></div>`;
+    + `<li>Scope as the rest of the dashboard: Namshi marketplaces, GMV above zero, Beauty, no samples &amp; GWP; impressions = search + non-search, all platforms. Brands, categories and sub-categories under ${fbK(5000)} AED November GMV (LY + LLY) are grouped as "(other)".</li>${FB.realloc && Object.values(FB.realloc).some(e => e.gone) ? `<li>Discontinued: ${Object.keys(FB.realloc).filter(k => FB.realloc[k].gone).map(k => k.replace(/_/g, " ")).join(", ")}. Its history stays in every number (overall GMV, LY / LLY), but its 2026 target is handed to the brands of the same brand type (prestige / masstige) in the same sub-categories, in proportion to their LY GMV there in each period, so category, sub-category and overall targets don't change. In the Brand view the receiving brands show the added target (and the impressions it needs at their own conversion) in grey under Target GMV.</li>` : ""}</ul></div>`;
 }
 
 // Buyers ref "Key periods": September base + these cohorts, under the names buyers use
