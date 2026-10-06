@@ -843,7 +843,7 @@ const chip = (lbl, dl) => `<span class="chip ${dl ? dl.cls : ""}" title="vs ${lb
 const state = { region: "ALL", align: "lfl", range: "td", view: "daily", hide: [], zoom: null, expand: null, f: Object.fromEntries(DIMS.map(dm => [dm.key, []])),
   drill: { date: null, period: "day", dim: "cat", sort: "gmv" },
   sku: { c: null, sort: "rk", q: "", n: 60, risk: "all" },
-  fb: { lv: "all", open: [] }, buy: { q: "" },
+  fb: { lv: "all", open: [] }, buy: { q: "", view: "key" },
   tab: "trend", rca: { period: null, cut: "cat", all: false }, mtd: { cut: "cat", period: null, groups: ["sales", "traffic", "assort", "health"], sort: "gmv:v", dir: -1, all: false, v: 2, drill: [] } };
 try {
   const sv = JSON.parse(localStorage.getItem("ondBeauty") || "{}");
@@ -1893,20 +1893,27 @@ function renderFb() {
     + `<li>Scope as the rest of the dashboard: Namshi marketplaces, GMV above zero, Beauty, no samples &amp; GWP; impressions = search + non-search, all platforms. Brands, categories and sub-categories under ${fbK(5000)} AED window GMV (LY + LLY) are grouped as "(other)".</li></ul></div>`;
 }
 
+// Buyers ref "Key periods": September base + these cohorts, under the names buyers use
+const BUY_KEY = [["11.11 Day", "Singles"], ["Post 11.11", "Post Singles"], ["Black Friday Pre", "Pre YF"], ["Black Friday", "YF"]];
+const buyKey = () => state.buy.view !== "all";
+const buyPeriods = () => buyKey()
+  ? BUY_KEY.map(([c, nm]) => { const P = FB.periods.find(x => x.cohort === c); return P && { p: P.p, nm }; }).filter(Boolean)
+  : fbWin().map(p => ({ p, nm: FB.periods[p - 1].cohort }));
 function renderBuy() {
   const box = document.getElementById("buyt");
   if (!FB) { loadFb(); box.innerHTML = `<div class="rp"><p class="loading">${FB_ERR ? "Couldn't load the buyers reference: " + esc(FB_ERR) : "Loading buyers reference…"}</p></div>`; return; }
-  const win = fbWin();
+  const per = buyPeriods(), key = buyKey();
   box.innerHTML = `<div class="rp" style="padding:14px 0 6px"><div class="mh" style="padding:0 14px 10px"><div><h2>Buyers ref · markdown by brand and cohort</h2>`
-    + `<p class="sub">For each brand and cohort period: <b>bold = the markdown % the brand ran LY</b>, the bare minimum to ask the brand for in 2026 (grey = LLY). GMV and Imps = GMV / impressions per day vs that year's September per day, LY ('${String(FB.years[1]).slice(2)}) / LLY ('${String(FB.years[0]).slice(2)}). Brands are sorted by LY window GMV.</p></div>`
-    + `<input type="search" id="buyq" placeholder="Find a brand or category" value="${esc(state.buy.q)}" aria-label="Find a brand or category"></div>`
-    + `<div class="mtscroll"><table class="mt"><thead><tr><th>Brand</th><th class="g0" title="September markdown: LY (LLY in grey)">Sept base</th><th class="g0" title="20 Oct – 10 Dec">Window</th>`
-    + win.map(p => { const P = FB.periods[p - 1]; return `<th class="g0" style="text-align:left;text-transform:none;letter-spacing:0" title="LY ${fbDates(P.ly[0], P.ly[1])} · LLY ${fbDates(P.lly[0], P.lly[1])}">${esc(P.cohort)}<br><small style="font-weight:400">${fbDates(P.ty[0], P.ty[1])} 2026</small></th>`; }).join("")
+    + `<p class="sub">For each brand and cohort period: <b>bold = the markdown % the brand ran LY</b>, the bare minimum to ask the brand for in 2026 (grey = LLY). GMV and Imps = GMV / impressions per day vs that year's September per day, LY ('${String(FB.years[1]).slice(2)}) / LLY ('${String(FB.years[0]).slice(2)}). Brands are sorted by LY window GMV.${key ? " Key periods: Sept base, Singles (11.11), Post Singles, Pre YF and YF." : ""}</p></div>`
+    + `<div class="mctl" style="display:flex;flex-wrap:wrap;gap:8px"><div class="seg" role="group" aria-label="Periods"><button data-bv="key" aria-pressed="${key}">Key periods</button><button data-bv="all" aria-pressed="${!key}">All periods</button></div>`
+    + `<input type="search" id="buyq" placeholder="Find a brand or category" value="${esc(state.buy.q)}" aria-label="Find a brand or category"></div></div>`
+    + `<div class="mtscroll"><table class="mt"><thead><tr><th>Brand</th><th class="g0" title="September markdown: LY (LLY in grey)">Sept base</th>${key ? "" : `<th class="g0" title="20 Oct – 10 Dec">Window</th>`}`
+    + per.map(({ p, nm }) => { const P = FB.periods[p - 1]; return `<th class="g0" style="text-align:left;text-transform:none;letter-spacing:0" title="LY ${fbDates(P.ly[0], P.ly[1])} · LLY ${fbDates(P.lly[0], P.lly[1])}">${esc(nm)}<br><small style="font-weight:400">${fbDates(P.ty[0], P.ty[1])} 2026</small></th>`; }).join("")
     + `</tr></thead><tbody id="buyb"></tbody></table></div></div>`;
   fillBuy();
 }
 function fillBuy() {
-  const q = state.buy.q.trim().toLowerCase(), win = fbWin();
+  const q = state.buy.q.trim().toLowerCase(), win = fbWin(), per = buyPeriods(), key = buyKey();
   const yy = FB.years.map(y => "'" + String(y).slice(2));
   const cell = (r, ps) => {
     const o1 = fbStat(r, 1, ps), o0 = fbStat(r, 0, ps), ask = o1.mk ?? o0.mk;
@@ -1917,10 +1924,10 @@ function fillBuy() {
     return `<td class="bc g0"><b>${fbPct(ask)}</b><small>LLY ${fbPct(o0.mk)}</small>${both("GMV", "spG", "newG")}${both("Imps", "spI", "newI")}</td>`;
   };
   const sep = r => { const a = fbStat(r, 1, [0]), b = fbStat(r, 0, [0]); return `<td class="bc g0"><b>${fbPct(a.smk)}</b><small>LLY ${fbPct(b.smk)}</small><span>GMV/day${yy[1]} ${fbK(a.sgpd)} / ${yy[0]} ${fbK(b.sgpd)}</span></td>`; };
-  const row = (r, nm, sub, cls) => `<tr class="${cls}"><td>${esc(nm)}${sub ? `<small>${esc(sub)}</small>` : ""}</td>${sep(r)}${cell(r, win)}${win.map(p => cell(r, [p])).join("")}</tr>`;
+  const row = (r, nm, sub, cls) => `<tr class="${cls}"><td>${esc(nm)}${sub ? `<small>${esc(sub)}</small>` : ""}</td>${sep(r)}${key ? "" : cell(r, win)}${per.map(x => cell(r, [x.p])).join("")}</tr>`;
   const rows = FB.lv.brand.filter(r => !q || r.k.toLowerCase().includes(q) || r.k.replace(/_/g, " ").toLowerCase().includes(q) || (r.cat || "").toLowerCase().includes(q));
   document.getElementById("buyb").innerHTML = row(FB.lv.all[0], "All Beauty", "", "tot")
-    + (rows.length ? rows.map(r => row(r, r.k.replace(/_/g, " "), (r.cat || "").replace(/_/g, " "), "")).join("") : `<tr><td colspan="${win.length + 3}" class="na">No brand matches “${esc(q)}”.</td></tr>`);
+    + (rows.length ? rows.map(r => row(r, r.k.replace(/_/g, " "), (r.cat || "").replace(/_/g, " "), "")).join("") : `<tr><td colspan="${per.length + (key ? 2 : 3)}" class="na">No brand matches “${esc(q)}”.</td></tr>`);
 }
 document.getElementById("fbt").addEventListener("click", e => {
   const lv = e.target.closest("button[data-lv]");
@@ -1928,6 +1935,7 @@ document.getElementById("fbt").addEventListener("click", e => {
   const tg = e.target.closest("button[data-tg]");
   if (tg) { const k = tg.dataset.tg, o = new Set(state.fb.open); o.has(k) ? o.delete(k) : o.add(k); state.fb.open = [...o].slice(-40); save(); renderFb(); }
 });
+document.getElementById("buyt").addEventListener("click", e => { const b = e.target.closest("button[data-bv]"); if (!b) return; state.buy.view = b.dataset.bv; save(); renderBuy(); });
 document.getElementById("buyt").addEventListener("input", e => { if (e.target.id !== "buyq") return; state.buy.q = e.target.value; save(); fillBuy(); });
 
 // ---------- Risk SKUs: retail supplier SKUs out of stock or with WoC <= 3, top 500 per country by GMV since 1 Jul (sql/risk_skus.sql) ----------
