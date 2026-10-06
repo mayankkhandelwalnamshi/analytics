@@ -166,6 +166,14 @@ body:not([data-tab="buy"]) .buyt { display: none; }
 .novg { display: grid; gap: 14px; margin-top: 10px; }
 .novc { border: 1px solid var(--line); border-radius: 12px; padding: 12px 12px 8px; background: var(--surface); min-width: 0; overflow-x: auto; }
 .novc svg { min-width: 680px; }
+.novlg { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: var(--fg-2); margin: 10px 0 2px; }
+.novlg span { display: inline-flex; align-items: center; gap: 6px; }
+.novlg i { display: inline-block; }
+.novlg .ln-g { width: 22px; height: 0; border-top: 3px solid var(--accent); border-radius: 2px; }
+.novlg .ln-i { width: 22px; height: 0; border-top: 2.5px dashed var(--fg-2); }
+.novlg .sw { width: 14px; height: 12px; border-radius: 3px; }
+.novh .kp { display: inline-flex; gap: 5px; align-items: baseline; background: var(--flat-bg); border-radius: 999px; padding: 2px 10px; font-size: 12px; }
+.novh .kp em { font-style: normal; color: var(--muted); }
 .novh { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; margin-bottom: 4px; font-size: 13px; }
 .novh b { font-size: 14px; } .novh span { color: var(--fg-2); } .novh i { font-style: normal; font-weight: 600; }
 .novh i.up { color: var(--good); } .novh i.down { color: var(--bad); }
@@ -1909,48 +1917,66 @@ function fbNov() {
     for (const P of FB.periods) B[y].coh[P.p] = { P, dates: P[key[y]], a: agg(P[key[y]]) };
   }
   // ---- chart: one per year, same y-scale, bars = GMV per day, bands = cohort periods, dashed = Sept / Oct average per day
-  const mx = Math.max(...yrs.flatMap(y => month(y, "11").map(d => byDate.get(d)[1]))) * 1.08;
-  const W = 1120, H = 250, L = 74, R = 96, T = 30, Bt = 22, iw = W - L - R, bw = iw / 30;
-  const ys = v => T + (H - T - Bt) * (1 - v / mx), xs = i => L + i * bw;
+  // indexed to that year's October GMV / impressions per day (1× = an average October day): one scale for both lines
+  const idx = (y, r) => ({ g: r[1] / B[y].oct.gpd, i: r[5] / B[y].oct.ipd });
+  const mx = Math.ceil(Math.max(...yrs.flatMap(y => month(y, "11").map(d => { const v = idx(y, byDate.get(d)); return Math.max(v.g, v.i); }))) + 0.3);
+  const W = 1120, H = 316, L = 64, R = 64, T = 50, Bt = 24, iw = W - L - R, bw = iw / 30;
+  const ys = v => T + (H - T - Bt) * (1 - v / mx), xc = k => L + (k + 0.5) * bw;
   const chart = y => {
     const cohOf = {}; for (const c of Object.values(B[y].coh)) for (const d of c.dates) if (d.slice(5, 7) === "11") cohOf[d] = c.P;
-    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Beauty GMV per day, November ${y}, by cohort period" style="width:100%;height:auto;display:block">`;
-    // cohort bands (consecutive days of one period)
+    const day = k => `${y}-11-${String(k + 1).padStart(2, "0")}`;
+    const pts = Array.from({ length: 30 }, (_, k) => { const r = byDate.get(day(k)); return r && { k, r, ...idx(y, r) }; });
+    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="GMV and impressions per day indexed to October, November ${y}" style="width:100%;height:auto;display:block">`;
+    // cohort bands
     let i = 0, nb = 0;
     while (i < 30) {
-      const d = `${y}-11-${String(i + 1).padStart(2, "0")}`, P = cohOf[d];
-      let j = i; while (j + 1 < 30 && cohOf[`${y}-11-${String(j + 2).padStart(2, "0")}`] === P) j++;
-      const x0 = xs(i), x1 = xs(j + 1), ev = P && fbEvent(P.cohort);
-      s += `<rect x="${x0 + 1}" y="${T - 22}" width="${x1 - x0 - 2}" height="${H - Bt - T + 22}" rx="6" fill="${!P ? "transparent" : ev ? "var(--accent-soft)" : "var(--flat-bg)"}" opacity="${ev ? 0.9 : 0.6}"/>`;
-      // narrow (1–2 day) bands next to each other: alternate the label between two rows so they don't collide
+      const P = cohOf[day(i)];
+      let j = i; while (j + 1 < 30 && cohOf[day(j + 1)] === P) j++;
+      const x0 = L + i * bw, x1 = L + (j + 1) * bw, ev = P && fbEvent(P.cohort);
+      s += `<rect x="${x0 + 1}" y="${T - 42}" width="${x1 - x0 - 2}" height="${H - Bt - T + 42}" rx="6" fill="${!P ? "transparent" : ev ? "var(--accent-soft)" : "var(--flat-bg)"}" opacity="${ev ? 0.75 : 0.5}"/>`;
       if (P) { const narrow = x1 - x0 < 80; nb = narrow ? nb + 1 : 0;
-        s += `<text x="${(x0 + x1) / 2}" y="${narrow && nb % 2 === 0 ? T + 6 : T - 8}" font-size="11" font-weight="${ev ? 700 : 500}" text-anchor="middle" fill="${ev ? "var(--accent)" : "var(--fg-2)"}">${esc(FB_SHORT[P.cohort])}</text>`; }
+        s += `<text x="${(x0 + x1) / 2}" y="${narrow && nb % 2 === 0 ? T - 26 : T - 12}" font-size="11" font-weight="${ev ? 700 : 500}" text-anchor="middle" fill="${ev ? "var(--accent)" : "var(--fg-2)"}">${esc(FB_SHORT[P.cohort])}</text>`; }
       i = j + 1;
     }
-    for (const t of [0.25, 0.5, 0.75, 1]) s += `<line x1="${L}" x2="${W - R}" y1="${ys(mx * t)}" y2="${ys(mx * t)}" stroke="var(--grid)" stroke-width="1"/><text x="${L - 6}" y="${ys(mx * t) + 4}" font-size="10" text-anchor="end" fill="var(--muted)">${fbK(mx * t)}</text>`;
-    // bars
-    for (let k = 0; k < 30; k++) {
-      const d = `${y}-11-${String(k + 1).padStart(2, "0")}`, r = byDate.get(d); if (!r) continue;
-      const P = cohOf[d], ev = P && fbEvent(P.cohort), h = H - Bt - ys(r[1]);
-      s += `<rect x="${xs(k) + 3}" y="${ys(r[1])}" width="${bw - 6}" height="${h}" rx="3" fill="${ev ? "var(--accent)" : "var(--muted)"}" opacity="${ev ? 1 : 0.55}"><title>${fmtD(d)} ${y}${P ? " · " + P.cohort.replace(/_/g, " ") : " · not in a cohort period (LFL gap)"}\nGMV ${fbK(r[1])} (${fbPc(r[1] / B[y].sep.gpd - 1)} vs Sept/day, ${fbPc(r[1] / B[y].oct.gpd - 1)} vs Oct/day)\nImpressions ${fbK(r[5])} (${fbPc(r[5] / B[y].sep.ipd - 1)} vs Sept/day)\nMarkdown ${fbPct(r[6] / r[7])}</title></rect>`;
-      if (k % 2 === 0 || k === 29) s += `<text x="${xs(k) + bw / 2}" y="${H - 6}" font-size="10" text-anchor="middle" fill="var(--muted)">${k + 1}</text>`;
+    // grid: whole multiples of October
+    for (let t = 1; t <= mx; t++) s += `<line x1="${L}" x2="${W - R}" y1="${ys(t)}" y2="${ys(t)}" stroke="${t === 1 ? "var(--fg-2)" : "var(--grid)"}" stroke-width="${t === 1 ? 1.2 : 1}"${t === 1 ? ' stroke-dasharray="5 4"' : ""}/><text x="${L - 8}" y="${ys(t) + 4}" font-size="10.5" text-anchor="end" fill="${t === 1 ? "var(--fg)" : "var(--muted)"}" font-weight="${t === 1 ? 700 : 400}">${t}×${t === 1 ? " Oct" : ""}</text>`;
+    // fill between the lines: green where GMV runs above impressions (each impression earned more than in October), red where below
+    for (let k = 0; k < 29; k++) {
+      const a = pts[k], b = pts[k + 1]; if (!a || !b) continue;
+      const d0 = a.g - a.i, d1 = b.g - b.i, xa = xc(k), xb = xc(k + 1);
+      const poly = (x0, g0, i0, x1, g1, i1, pos) => `<polygon points="${x0},${ys(g0)} ${x1},${ys(g1)} ${x1},${ys(i1)} ${x0},${ys(i0)}" fill="var(${pos ? "--good" : "--bad"})" fill-opacity=".18"/>`;
+      if (d0 * d1 >= 0) s += poly(xa, a.g, a.i, xb, b.g, b.i, d0 + d1 >= 0);
+      else { const t = d0 / (d0 - d1), xm = xa + (xb - xa) * t, vm = a.g + (b.g - a.g) * t; s += poly(xa, a.g, a.i, xm, vm, vm, d0 > 0) + poly(xm, vm, vm, xb, b.g, b.i, d1 > 0); }
     }
-    // Sept and Oct average per day
-    const refs = [["Sept avg", B[y].sep.gpd, "5 4"], ["Oct avg", B[y].oct.gpd, "2 3"]].sort((a, b) => b[1] - a[1]);
-    const ly0 = ys(refs[0][1]) + 4, ly1 = Math.max(ys(refs[1][1]) + 4, ly0 + 13);
-    refs.forEach(([lbl, v, dash], k) => { s += `<line x1="${L}" x2="${W - R}" y1="${ys(v)}" y2="${ys(v)}" stroke="var(--fg-2)" stroke-width="1.5" stroke-dasharray="${dash}"/><text x="${W - R + 6}" y="${k ? ly1 : ly0}" font-size="10.5" fill="var(--fg-2)">${lbl} ${fbK(v)}</text>`; });
+    // lines + dots
+    const line = (f, col, dash) => `<polyline points="${pts.filter(Boolean).map(p => `${xc(p.k)},${ys(p[f])}`).join(" ")}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"${dash ? ` stroke-dasharray="${dash}"` : ""}/>`;
+    s += line("i", "var(--fg-2)", "6 4") + line("g", "var(--accent)");
+    for (const p of pts) if (p) s += `<circle cx="${xc(p.k)}" cy="${ys(p.g)}" r="3.6" fill="var(--accent)" stroke="var(--surface)" stroke-width="1.5"/>`;
+    // the peak day, labelled
+    const pk = pts.filter(Boolean).reduce((a, b) => b.g > a.g ? b : a);
+    s += `<text x="${xc(pk.k)}" y="${ys(pk.g) - 9}" font-size="11.5" font-weight="700" text-anchor="middle" fill="var(--accent)">${pk.g.toFixed(1)}×</text>`;
+    // direct labels at the right edge
+    const last = pts[29] || pts.filter(Boolean).pop(), up = last.g >= last.i, mid = (ys(last.g) + ys(last.i)) / 2, gap = Math.max(14, Math.abs(ys(last.g) - ys(last.i)));
+    const yG = up ? mid - gap / 2 : mid + gap / 2, yI = up ? mid + gap / 2 : mid - gap / 2;
+    s += `<text x="${xc(last.k) + 10}" y="${yG + 4}" font-size="11" font-weight="700" fill="var(--accent)">GMV</text><text x="${xc(last.k) + 10}" y="${yI + 4}" font-size="11" font-weight="600" fill="var(--fg-2)">Imps</text>`;
+    // day ticks + one hover target per day
+    for (let k = 0; k < 30; k++) {
+      if (k % 2 === 0 || k === 29) s += `<text x="${xc(k)}" y="${H - 7}" font-size="10" text-anchor="middle" fill="var(--muted)">${k + 1}</text>`;
+      const p = pts[k]; if (!p) continue; const P = cohOf[day(k)], r = p.r;
+      s += `<rect x="${L + k * bw}" y="${T}" width="${bw}" height="${H - Bt - T}" fill="transparent"><title>${fmtD(day(k))} ${y}${P ? " · " + P.cohort.replace(/_/g, " ") : ""}\nGMV ${fbK(r[1])} · ${p.g.toFixed(2)}× Oct (${fbPc(r[1] / B[y].sep.gpd - 1)} vs Sept)\nImpressions ${fbK(r[5])} · ${p.i.toFixed(2)}× Oct (${fbPc(r[5] / B[y].sep.ipd - 1)} vs Sept)\nGMV per impression ${fbPc(p.g / p.i - 1)} vs Oct · UCR ${(r[2] / r[4] * 100).toFixed(2)}% · MKD ${fbPct(r[6] / r[7])}</title></rect>`;
+    }
     s += `<line x1="${L}" x2="${W - R}" y1="${H - Bt}" y2="${H - Bt}" stroke="var(--axis)"/></svg>`;
-    // markdown and impressions strips on the same day axis (own rows, no second y-axis)
-    const strip = (lbl, f, fmt, hue) => {
-      let t = `<svg viewBox="0 0 ${W} 22" style="width:100%;height:auto;display:block" aria-hidden="true"><text x="${L - 6}" y="15" font-size="10" text-anchor="end" fill="var(--fg-2)">${lbl}</text>`;
-      for (let k = 0; k < 30; k++) { const r = byDate.get(`${y}-11-${String(k + 1).padStart(2, "0")}`); if (!r) continue; const v = f(r), a = Math.max(0.08, Math.min(1, v.a));
-        t += `<rect x="${xs(k) + 1}" y="1" width="${bw - 2}" height="20" rx="3" fill="${hue}" fill-opacity="${a.toFixed(2)}"/><text x="${xs(k) + bw / 2}" y="15" font-size="10" text-anchor="middle" fill="${a > 0.55 ? "var(--surface)" : "var(--fg)"}">${fmt(v.v)}</text>`; }
-      return t + `</svg>`;
-    };
-    const mkS = strip("MKD %", r => ({ v: r[6] / r[7], a: (r[6] / r[7] - 0.1) / 0.5 }), v => Math.round(v * 100), "var(--warn)");
-    const imS = strip("Imps ×Sept", r => ({ v: r[5] / B[y].sep.ipd, a: (r[5] / B[y].sep.ipd - 0.8) / 4 }), v => v.toFixed(1), "var(--accent)");
-    const n = B[y].nov;
-    return `<div class="novc"><div class="novh"><b>${y === yrs[1] ? "LY" : "LLY"} · November ${y}</b><span>${fbK(n.g)} GMV · ${fbK(n.gpd)}/day <i class="${fbCls(n.gpd / B[y].sep.gpd - 1)}">${fbPc(n.gpd / B[y].sep.gpd - 1)} vs Sept</i> <i class="${fbCls(n.gpd / B[y].oct.gpd - 1)}">${fbPc(n.gpd / B[y].oct.gpd - 1)} vs Oct</i> · MKD ${fbPct(n.mk)} · ${fbK(n.im)} impressions</span></div>${s}${mkS}${imS}</div>`;
+    // markdown strip on the same day axis
+    let mkS = `<svg viewBox="0 0 ${W} 24" style="width:100%;height:auto;display:block" aria-hidden="true"><text x="${L - 8}" y="16" font-size="10.5" text-anchor="end" fill="var(--fg-2)">MKD %</text>`;
+    for (const p of pts) if (p) { const v = p.r[6] / p.r[7], a = Math.max(0.08, Math.min(1, (v - 0.1) / 0.5));
+      mkS += `<rect x="${L + p.k * bw + 1.5}" y="2" width="${bw - 3}" height="20" rx="4" fill="var(--warn)" fill-opacity="${a.toFixed(2)}"/><text x="${xc(p.k)}" y="16" font-size="10" text-anchor="middle" fill="${a > 0.55 ? "var(--surface)" : "var(--fg)"}">${Math.round(v * 100)}</text>`; }
+    mkS += `</svg>`;
+    const n = B[y].nov, gO = n.gpd / B[y].oct.gpd, iO = n.ipd / B[y].oct.ipd;
+    return `<div class="novc"><div class="novh"><b>${y === yrs[1] ? "LY" : "LLY"} · November ${y}</b>`
+      + `<span class="kp"><em>GMV</em> ${fbK(n.gpd)}/day <i class="${fbCls(gO - 1)}">${gO.toFixed(2)}× Oct</i></span>`
+      + `<span class="kp"><em>Imps</em> ${fbK(n.ipd)}/day <i class="${fbCls(iO - 1)}">${iO.toFixed(2)}× Oct</i></span>`
+      + `<span class="kp"><em>Per impression</em> <i class="${fbCls(gO / iO - 1)}">${fbPc(gO / iO - 1)} vs Oct</i></span>`
+      + `<span class="kp"><em>MKD</em> ${fbPct(n.mk)}</span></div>${s}${mkS}</div>`;
   };
   // ---- scorecard: each cohort period, both years, vs Sept / Oct of the same year and YoY
   const hc = (v, scale = 1, inv = false) => { if (v == null || !isFinite(v)) return ""; const a = Math.min(1, Math.abs(v) / scale) * 0.55, good = inv ? v < 0 : v > 0; return `background:color-mix(in srgb, var(${good ? "--good" : "--bad"}) ${Math.round(a * 100)}%, transparent)`; };
@@ -1962,15 +1988,16 @@ function fbNov() {
       + `<td class="g0">${fbK(a0.gpd)}</td><td>${fbK(a1.gpd)}</td>${cell(a1.gpd / a0.gpd - 1, 0.4)}`
       + `${cell(a0.gpd / s0.gpd - 1, 3, { cls: "g0" })}${cell(a1.gpd / s1.gpd - 1, 3)}${cell(a0.gpd / o0.gpd - 1, 3)}${cell(a1.gpd / o1.gpd - 1, 3)}`
       + `${cell(a0.ipd / s0.ipd - 1, 3, { cls: "g0" })}${cell(a1.ipd / s1.ipd - 1, 3)}${cell(a0.ipd / o0.ipd - 1, 3)}${cell(a1.ipd / o1.ipd - 1, 3)}${cell(a1.ipd / a0.ipd - 1, 0.4)}`
+      + `${cell((a0.gpd / o0.gpd) / (a0.ipd / o0.ipd) - 1, 0.4, { cls: "g0" })}${cell((a1.gpd / o1.gpd) / (a1.ipd / o1.ipd) - 1, 0.4)}`
       + `<td class="g0">${fbPct(a0.mk)}</td><td>${fbPct(a1.mk)}</td>${cell(a1.mk - a0.mk, 0.15, { inv: true, fmt: pp })}</tr>`;
   };
   const coh = FB.periods.map(P => { const a0 = B[yrs[0]].coh[P.p].a, a1 = B[yrs[1]].coh[P.p].a;
     return row(`${fbEvent(P.cohort) ? "<b>" : ""}${esc(FB_SHORT[P.cohort])}${fbEvent(P.cohort) ? "</b>" : ""}`, `${fbDates(P.lly[0], P.lly[1])} ${yy(yrs[0])} · ${fbDates(P.ly[0], P.ly[1])} ${yy(yrs[1])}`, a0, a1, fbEvent(P.cohort) ? "evr" : ""); });
   const base = (lbl, k) => { const a0 = B[yrs[0]][k], a1 = B[yrs[1]][k];
-    return `<tr class="sep"><td>${lbl}</td><td class="g0">${fbK(a0.gpd)}</td><td>${fbK(a1.gpd)}</td>${cell(a1.gpd / a0.gpd - 1, 0.4)}<td class="g0 na" colspan="4">base</td><td class="g0 na">${fbK(a0.ipd)}/day</td><td class="na">${fbK(a1.ipd)}/day</td><td class="na" colspan="2"></td>${cell(a1.ipd / a0.ipd - 1, 0.4)}<td class="g0">${fbPct(a0.mk)}</td><td>${fbPct(a1.mk)}</td>${cell(a1.mk - a0.mk, 0.15, { inv: true, fmt: pp })}</tr>`; };
-  const tab = `<div class="mtscroll" style="max-height:none"><table class="mt nov"><thead><tr><th></th><th class="g0" colspan="3">GMV per day</th><th class="g0" colspan="4">GMV uplift (per day)</th><th class="g0" colspan="5">Impressions uplift (per day)</th><th class="g0" colspan="3">Markdown %</th></tr>`
+    return `<tr class="sep"><td>${lbl}</td><td class="g0">${fbK(a0.gpd)}</td><td>${fbK(a1.gpd)}</td>${cell(a1.gpd / a0.gpd - 1, 0.4)}<td class="g0 na" colspan="4">base</td><td class="g0 na">${fbK(a0.ipd)}/day</td><td class="na">${fbK(a1.ipd)}/day</td><td class="na" colspan="2"></td>${cell(a1.ipd / a0.ipd - 1, 0.4)}<td class="g0 na" colspan="2">${k === "oct" ? "base" : ""}</td><td class="g0">${fbPct(a0.mk)}</td><td>${fbPct(a1.mk)}</td>${cell(a1.mk - a0.mk, 0.15, { inv: true, fmt: pp })}</tr>`; };
+  const tab = `<div class="mtscroll" style="max-height:none"><table class="mt nov"><thead><tr><th></th><th class="g0" colspan="3">GMV per day</th><th class="g0" colspan="4">GMV uplift (per day)</th><th class="g0" colspan="5">Impressions uplift (per day)</th><th class="g0" colspan="2" title="GMV per impression vs October of the same year: above 0 = each impression earned more than in October">Earned per impression</th><th class="g0" colspan="3">Markdown %</th></tr>`
     + `<tr><th>Cohort</th><th class="g0">${yy(yrs[0])}</th><th>${yy(yrs[1])}</th><th>YoY</th><th class="g0">vs Sept ${yy(yrs[0])}</th><th>vs Sept ${yy(yrs[1])}</th><th>vs Oct ${yy(yrs[0])}</th><th>vs Oct ${yy(yrs[1])}</th>`
-    + `<th class="g0">vs Sept ${yy(yrs[0])}</th><th>vs Sept ${yy(yrs[1])}</th><th>vs Oct ${yy(yrs[0])}</th><th>vs Oct ${yy(yrs[1])}</th><th>YoY</th><th class="g0">${yy(yrs[0])}</th><th>${yy(yrs[1])}</th><th>YoY</th></tr></thead><tbody>`
+    + `<th class="g0">vs Sept ${yy(yrs[0])}</th><th>vs Sept ${yy(yrs[1])}</th><th>vs Oct ${yy(yrs[0])}</th><th>vs Oct ${yy(yrs[1])}</th><th>YoY</th><th class="g0">vs Oct ${yy(yrs[0])}</th><th>vs Oct ${yy(yrs[1])}</th><th class="g0">${yy(yrs[0])}</th><th>${yy(yrs[1])}</th><th>YoY</th></tr></thead><tbody>`
     + base("September (BAU)", "sep") + base("October", "oct") + coh.join("") + row("<b>November</b>", "", B[yrs[0]].nov, B[yrs[1]].nov, "tot") + `</tbody></table></div>`;
   // read-outs
   const C = FB.periods.map(P => ({ P, a0: B[yrs[0]].coh[P.p].a, a1: B[yrs[1]].coh[P.p].a })).map(c => ({ ...c, yoy: c.a1.gpd / c.a0.gpd - 1, iy: c.a1.ipd / c.a0.ipd - 1, dm: c.a1.mk - c.a0.mk }));
@@ -1981,8 +2008,9 @@ function fbNov() {
     `<li><b>Where LY lost the most:</b> ${worst.map(c => `${esc(FB_SHORT[c.P.cohort])} ${fbPc(c.yoy)} (imps ${fbPc(c.iy)}, MKD ${pp(c.dm)})`).join("; ")}. More markdown did not buy back the gap.</li>`,
     `<li><b>Best cohort YoY:</b> ${esc(FB_SHORT[best.P.cohort])} ${fbPc(best.yoy)} with impressions ${fbPc(best.iy)} and MKD ${pp(best.dm)}.</li>`,
   ];
-  return `<div class="rp"><div class="mh"><div><h2>November at a glance · ${yrs[0]} vs ${yrs[1]}</h2><p class="sub">Daily Beauty GMV, every November day. Shaded bands are the cohort periods (event periods in colour, MS / BAU in grey); dashed lines mark that year's September and October GMV per day. Under each chart: markdown % and impressions vs September per day. Hover a bar for the day. Both charts share one scale.</p></div></div>`
+  return `<div class="rp"><div class="mh"><div><h2>November at a glance · ${yrs[0]} vs ${yrs[1]}</h2><p class="sub">Every November day, GMV and impressions per day as a multiple of that year's average October day (1× = October), on one shared scale. Shaded bands are the cohort periods. Hover any day for GMV, impressions, UCR and markdown.</p></div></div>`
     + `<ul class="ln" style="margin:10px 0 4px">${ro.join("")}</ul>`
+    + `<div class="novlg"><span><i class="ln-g"></i>GMV × October</span><span><i class="ln-i"></i>Impressions × October</span><span><i class="sw" style="background:color-mix(in srgb, var(--good) 30%, transparent)"></i>GMV ahead of impressions: each impression earned more than in October</span><span><i class="sw" style="background:color-mix(in srgb, var(--bad) 30%, transparent)"></i>Impressions ahead of GMV: traffic diluted</span></div>`
     + `<div class="novg">${chart(yrs[0])}${chart(yrs[1])}</div>`
     + `<h3 style="margin-top:16px">Cohort scorecard</h3><p class="sub" style="margin-bottom:8px">Per-day figures, so periods of different length compare fairly. Uplift = the cohort's GMV (or impressions) per day vs the same year's September / October per day; YoY = ${yrs[1]} vs ${yrs[0]} on the like-for-like cohort dates. Green = up, red = down (for markdown, red = deeper); stronger shade = bigger move.</p>${tab}</div>`;
 }
