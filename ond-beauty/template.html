@@ -623,8 +623,8 @@ const METRICS = [
   { key: "rv",   name: "Inventory value (retail)", section: "assort", unit: "AED · stock × offer price", kind: "aed", zero: true, level: true, calc: a => a[I.rv] },
   { key: "woc",  name: "WoC (units)",       section: "assort", unit: "weeks · warehouse stock ÷ weekly retail units shipped from the warehouse (last 30 days)", kind: "wk", zero: true, level: true, ratio: true, lowerBetter: true, calc: a => a[I.ur30] ? a[I.st] / (a[I.ur30] / 30 * 7) : null },
   { key: "wocc", name: "WoC (COGS)",        section: "assort", unit: "weeks · warehouse inventory value at cost ÷ weekly retail COGS shipped from the warehouse (last 30 days)", kind: "wk", zero: true, level: true, ratio: true, lowerBetter: true, calc: a => a[I.cg30] ? a[I.cv] / (a[I.cg30] / 30 * 7) : null },
-  { key: "oos",  name: "OOS GMV loss",   section: "assort", unit: "AED · KSA + UAE", kind: "aed", zero: true, additive: true, lowerBetter: true, cover: OOS_DATES, calc: a => a[I.oos] },
-  { key: "oosr", name: "OOS loss / GMV", section: "assort", unit: "KSA + UAE", kind: "pct", zero: true, lowerBetter: true, cover: OOS_DATES, calc: a => a[I.gmvo] ? a[I.oos] / a[I.gmvo] : null },
+  { key: "oos",  name: "OOS GMV loss",   section: "assort", chartSec: "sales", unit: "AED · KSA + UAE", kind: "aed", zero: true, additive: true, lowerBetter: true, cover: OOS_DATES, calc: a => a[I.oos] },
+  { key: "oosr", name: "OOS loss / GMV", section: "assort", chartSec: "sales", unit: "KSA + UAE", kind: "pct", zero: true, lowerBetter: true, cover: OOS_DATES, calc: a => a[I.gmvo] ? a[I.oos] / a[I.gmvo] : null },
   // health: MTD tab only. share = this row's part of the total; ageing bands are this row's mix of inventory value at cost (TY only)
   { key: "shst", name: "Stock share",                  section: "health", kind: "pct", share: "st", neutral: true, shade: true, level: true, calc: a => a[I.st] },
   { key: "shcv", name: "Inventory value (cost) share", section: "health", kind: "pct", share: "cv", neutral: true, shade: true, level: true, calc: a => a[I.cv] },
@@ -1068,13 +1068,13 @@ function render() {
   const built = {};
   let sec = null;
   // key charts first within each section (highlighted); "Key only" hides the rest
-  const secOrder = Object.keys(SECTIONS), isKey = m => KEY_METRICS.has(m.key);
+  const secOrder = Object.keys(SECTIONS), isKey = m => KEY_METRICS.has(m.key), csec = m => m.chartSec || m.section || "sales";   // chartSec: Daily trend section only
   const shownM = METRICS.filter(m => m.section !== "health" && (state.charts !== "key" || isKey(m)))
-    .map((m, i) => ({ m, i })).sort((a, b) => (secOrder.indexOf(a.m.section || "sales") - secOrder.indexOf(b.m.section || "sales")) || (isKey(b.m) - isKey(a.m)) || (a.i - b.i)).map(x => x.m);
+    .map((m, i) => ({ m, i })).sort((a, b) => (secOrder.indexOf(csec(a.m)) - secOrder.indexOf(csec(b.m))) || (isKey(b.m) - isKey(a.m)) || (a.i - b.i)).map(x => x.m);
   for (const m of shownM) {
-    if ((m.section || "sales") !== sec) {
-      sec = m.section || "sales";
-      const nk = shownM.filter(x => (x.section || "sales") === sec && isKey(x)).length, nAll = METRICS.filter(x => (x.section || "sales") === sec).length;
+    if (csec(m) !== sec) {
+      sec = csec(m);
+      const nk = shownM.filter(x => csec(x) === sec && isKey(x)).length, nAll = METRICS.filter(x => x.section !== "health" && csec(x) === sec).length;
       const h = document.createElement("h3"); h.className = "sec"; h.innerHTML = `${SECTIONS[sec]}${nk && state.charts !== "key" ? ` <span class="seck">${nk} key of ${nAll}</span>` : ""}`; grid.appendChild(h);
     }
     const b = built[m.key] = build(m);
