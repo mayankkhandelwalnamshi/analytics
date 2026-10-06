@@ -252,8 +252,71 @@ def build():
         (out.parent / "data" / f"{name}.txt").write_text(base64.b64encode(gzip.compress(b, 9)).decode())
     # retail SKUs at risk (sql/risk_skus.sql): plain JSON, loaded when the Risk SKUs tab opens
     (out.parent / "data" / "risk.txt").write_text((DATA / "risk_skus.json").read_text())
+    # Nov Flashback + Buyers ref (sql/flashback.sql): plain JSON, loaded when either tab opens
+    if (DATA / "flashback_raw.json").exists():
+        (out.parent / "data" / "fb.txt").write_text(json.dumps(pack_flashback(), separators=(",", ":")))
     print("data files:", {n: f"{len(gzip.compress(b, 6)) // 1024} KB" for n, b in bufs.items()})
     print(f"wrote {out} ({len(html) // 1024} KB, {[x['n'] for x in meta['sets']]} rows, {len(meta['combos'])} combos)")
+
+
+FB_YEARS = (2024, 2025, 2026)   # 2026 = September baseline only (current conversion)
+FB_MIN = 5000                  # brands / categories / sub-categories under this LY + LLY window GMV fold into "(other)"
+
+
+def pack_flashback():
+    """data/flashback_raw.json ({"Y|p|days|c": "brand,cat,sub,gmv,u,mkd,np,gv,si,nsi;..."}, period 0 = September)
+    -> per level (overall, country, category, sub-category, brand) and entity: v[year][period] = [gmv, u, mkd, np, gv, imp]."""
+    raw = json.loads((DATA / "flashback_raw.json").read_text())
+    periods = json.loads((DATA / "flashback_periods.json").read_text())
+    n_p = len(periods) + 1
+    days = {y: [0] * n_p for y in FB_YEARS}
+    recs = []
+    for k, v in raw.items():
+        y, p, d, c = map(int, k.split("|"))
+        days[y][p] = d
+        for r in v.split(";"):
+            x = r.split(",")
+            recs.append((y, p, c, x[0], x[1], x[2], [float(t) for t in x[3:6]] + [float(x[6]), float(x[7]), float(x[8]) + float(x[9])]))
+    # window GMV (LY + LLY, periods 1..n) decides who gets a row of their own
+    win = {"cat": {}, "sub": {}, "brand": {}}
+    for y, p, c, b, cat, sub, m in recs:
+        if y < 2026 and p > 0:
+            for lv, key in (("cat", cat), ("sub", cat + "|" + sub), ("brand", b)):
+                win[lv][key] = win[lv].get(key, 0) + m[0]
+    keep = {lv: {k for k, g in w.items() if g >= FB_MIN and k not in ("(other brands)", "(none)", "(none)|(none)")} for lv, w in win.items()}
+    brand_cat = {}
+    for y, p, c, b, cat, sub, m in recs:
+        if y == 2025 and p > 0 and b in keep["brand"]:
+            brand_cat.setdefault(b, {})[cat] = brand_cat.get(b, {}).get(cat, 0) + m[0]
+    levels = {lv: {} for lv in ("all", "country", "cat", "sub", "brand")}
+    yi = {y: i for i, y in enumerate(FB_YEARS)}
+
+    def add(lv, key, y, p, m):
+        e = levels[lv].setdefault(key, [[[0] * 6 for _ in range(n_p)] for _ in FB_YEARS])
+        cell = e[yi[y]][p]
+        for i in range(6):
+            cell[i] += m[i]
+
+    for y, p, c, b, cat, sub, m in recs:
+        add("all", "Beauty", y, p, m)
+        add("country", ["KSA", "UAE", "Other GCC"][c], y, p, m)
+        add("cat", cat if cat in keep["cat"] else "(other)", y, p, m)
+        add("sub", cat + "|" + sub if cat + "|" + sub in keep["sub"] else "(other)|(other)", y, p, m)
+        add("brand", b if b in keep["brand"] else "(other brands)", y, p, m)
+    out = {}
+    for lv, ents in levels.items():
+        rows = []
+        for key, v in ents.items():
+            row = {"k": key, "v": [[[round(t) for t in cell] for cell in yr] for yr in v]}
+            if lv == "brand" and key in brand_cat:
+                row["cat"] = max(brand_cat[key], key=brand_cat[key].get)
+            rows.append(row)
+        # LY window GMV, largest first; the "(other …)" bucket last
+        rows.sort(key=lambda r: (r["k"].startswith("(other"), -sum(cell[0] for cell in r["v"][1][1:])))
+        out[lv] = rows
+    return {"periods": [{"p": p["p"], "cohort": p["cohort"].replace("_", " "), "ty": [p["ty"][0], p["ty"][-1]],
+                         "ly": [p["ly"][0], p["ly"][-1]], "lly": [p["lly"][0], p["lly"][-1]]} for p in periods],
+            "years": list(FB_YEARS), "days": [days[y] for y in FB_YEARS], "lv": out, "uplift": 1.25}
 
 
 if __name__ == "__main__":

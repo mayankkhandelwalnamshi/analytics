@@ -145,6 +145,39 @@ h3.sec:first-child { margin-top: 0; }
 .tile .tl { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12.5px; color: var(--fg-2); white-space: nowrap; }
 .tile .tl .chip { font-size: 12px; padding: 3px 8px; border-radius: 7px; font-weight: 600; }
 body[data-tab="mtd"] .tonly, body[data-tab="rca"] .tonly, body[data-tab="sku"] .tonly, body[data-tab="sku"] .nosku { display: none !important; }
+body[data-tab="fb"] .tonly, body[data-tab="buy"] .tonly, body[data-tab="fb"] .bar, body[data-tab="buy"] .bar { display: none !important; }
+body:not([data-tab="fb"]) .fbt { display: none; }
+body:not([data-tab="buy"]) .buyt { display: none; }
+/* Nov Flashback + Buyers ref: fixed views, no filters */
+.fbt, .buyt { margin-top: 18px; display: grid; gap: 14px; }
+.fbt .rp, .buyt .rp { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; min-width: 0; }
+.fbt h2, .buyt h2 { margin: 0; font-size: 16px; } .fbt h3, .buyt h3 { margin: 0 0 6px; font-size: 14px; }
+.fbt .sub, .buyt .sub { margin: 4px 0 0; color: var(--fg-2); font-size: 12.5px; line-height: 1.5; }
+.fbt .mh, .buyt .mh { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 16px; align-items: flex-start; }
+.fbt .tiles { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-top: 12px; }
+.fbt .tile .tv { font-size: 24px; margin: 4px 0 6px; }
+.fbt .tile .tl { flex-wrap: wrap; white-space: normal; gap: 4px; }
+.fbt .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 14px; }
+.fbt ul.ln { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; font-size: 13px; line-height: 1.45; }
+.fbt ul.ln li { border-left: 3px solid var(--line); padding-left: 9px; }
+.fbt ul.ln.good li { border-color: var(--good); } .fbt ul.ln.bad li { border-color: var(--bad); } .fbt ul.ln.warn li { border-color: var(--warn); }
+.fbt .up, .buyt .up { color: var(--good); } .fbt .down, .buyt .down { color: var(--bad); }
+.drv { display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 11.5px; font-weight: 600; white-space: nowrap; background: var(--flat-bg); color: var(--fg-2); }
+.drv.imp { background: var(--accent-soft); color: var(--accent); } .drv.mkd, .drv.both { background: var(--warn-bg); color: var(--warn); }
+.drv.org { background: var(--good-bg); color: var(--good); } .drv.dec { background: var(--bad-bg); color: var(--bad); }
+.fbt .mt td small, .buyt .mt td small { color: var(--muted); font-size: 11px; margin-left: 4px; }
+.fbt .mt td.pl, .fbt .mt th.pl { background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
+.fbt .mt tr.ex td:first-child { padding-left: 26px; font-weight: 500; color: var(--fg-2); }
+.fbt .mt tr.ex td { background: var(--bg); } .fbt .mt tr.ex td.pl { background: color-mix(in srgb, var(--accent) 5%, var(--bg)); }
+.fbt .mt tr.sep td { color: var(--fg-2); font-style: italic; }
+.fbt .mt .tg { font: inherit; font-weight: 600; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.fbt .mt .tg:hover { color: var(--accent); }
+.fbt .mt .tg svg { transition: transform .15s; } .fbt .mt .tg[aria-expanded="true"] svg { transform: rotate(180deg); }
+.buyt .mt td.bc { text-align: left; vertical-align: top; line-height: 1.35; min-width: 104px; }
+.buyt .mt td.bc b { font-size: 14px; } .buyt .mt td.bc span { display: block; font-size: 11.5px; font-family: var(--mono); }
+.buyt .mt td:first-child { vertical-align: top; } .buyt .mt td:first-child small { display: block; margin: 2px 0 0; font-weight: 400; }
+.buyt input[type=search] { font: inherit; font-size: 13px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); width: 220px; }
+@media (max-width: 700px) { .buyt input[type=search] { width: 100%; } }
 body:not([data-tab="mtd"]) .mtd { display: none; }
 body:not([data-tab="sku"]) .skus { display: none; }
 body:not([data-tab="rca"]) .rca { display: none; }
@@ -365,6 +398,8 @@ details.gloss { margin-top: 12px; }
     <button role="tab" aria-selected="false" id="tab-mtd" data-tab="mtd">MTD performance</button>
     <button role="tab" aria-selected="false" id="tab-sku" data-tab="sku">Risk SKUs</button>
     <button role="tab" aria-selected="false" id="tab-rca" data-tab="rca">RCA</button>
+    <button role="tab" aria-selected="false" id="tab-fb" data-tab="fb">Nov Flashback</button>
+    <button role="tab" aria-selected="false" id="tab-buy" data-tab="buy">Buyers ref</button>
   </nav>
   <div class="bar">
     <div class="filters" id="filters">
@@ -424,6 +459,10 @@ details.gloss { margin-top: 12px; }
   <section class="skus" id="skus" aria-label="Retail SKUs at risk"></section>
 
   <section class="rca" id="rca" aria-label="Root cause analysis of MTD GMV"></section>
+
+  <section class="fbt" id="fbt" aria-label="Nov Flashback: LY and LLY 20 Oct to 10 Dec by cohort period"></section>
+
+  <section class="buyt" id="buyt" aria-label="Buyers reference: markdown, GMV and impressions spike by brand and cohort"></section>
 
   <section class="grid tonly" id="grid"><p class="loading">Loading Beauty sales data…</p></section>
 
@@ -804,10 +843,11 @@ const chip = (lbl, dl) => `<span class="chip ${dl ? dl.cls : ""}" title="vs ${lb
 const state = { region: "ALL", align: "lfl", range: "td", view: "daily", hide: [], zoom: null, expand: null, f: Object.fromEntries(DIMS.map(dm => [dm.key, []])),
   drill: { date: null, period: "day", dim: "cat", sort: "gmv" },
   sku: { c: null, sort: "rk", q: "", n: 60, risk: "all" },
+  fb: { lv: "all", open: [] }, buy: { q: "" },
   tab: "trend", rca: { period: null, cut: "cat", all: false }, mtd: { cut: "cat", period: null, groups: ["sales", "traffic", "assort", "health"], sort: "gmv:v", dir: -1, all: false, v: 2, drill: [] } };
 try {
   const sv = JSON.parse(localStorage.getItem("ondBeauty") || "{}");
-  Object.assign(state, sv, { f: Object.assign(state.f, sv.f || {}), drill: Object.assign(state.drill, sv.drill || {}), mtd: Object.assign(state.mtd, sv.mtd || {}), sku: Object.assign(state.sku, sv.sku || {}, { n: 60 }), rca: Object.assign(state.rca, sv.rca || {}), zoom: null });
+  Object.assign(state, sv, { f: Object.assign(state.f, sv.f || {}), drill: Object.assign(state.drill, sv.drill || {}), mtd: Object.assign(state.mtd, sv.mtd || {}), sku: Object.assign(state.sku, sv.sku || {}, { n: 60 }), rca: Object.assign(state.rca, sv.rca || {}), fb: Object.assign(state.fb, sv.fb || {}), buy: Object.assign(state.buy, sv.buy || {}), zoom: null });
 } catch (e) {}
 for (const dm of DIMS) state.f[dm.key] = (state.f[dm.key] || []).filter(v => META.names[dm.key].includes(v));
 if (!["lfl", "date"].includes(state.align)) state.align = "lfl";
@@ -1059,6 +1099,8 @@ function render() {
   if (state.tab === "mtd") { renderMtd(); return; }
   if (state.tab === "sku") { renderSkus(); return; }
   if (state.tab === "rca") { renderRca(); return; }
+  if (state.tab === "fb") { renderFb(); return; }
+  if (state.tab === "buy") { renderBuy(); return; }
   const zb = document.getElementById("zoominfo");
   zb.hidden = !state.zoom;
   if (state.zoom) zb.querySelector("span").textContent = `Zoomed to ${fmtD(state.zoom[0])} – ${fmtD(state.zoom[1])}`;
@@ -1671,6 +1713,218 @@ document.getElementById("rca").addEventListener("click", e => {
   else return;
   save(); renderRca();
 });
+
+// ---------- Nov Flashback + Buyers ref: LY / LLY 20 Oct – 10 Dec by cohort period, against that year's September (sql/flashback.sql) ----------
+// FB.lv[level] = [{ k, cat?, v: [year][period] = [gmv, units, mkd, np, gv, impressions] }], years 2024, 2025, 2026 (Sept only); period 0 = September
+let FB = null, FB_ERR = null;
+function loadFb() {
+  if (FB || FB_ERR) return;
+  fetch("data/fb.txt").then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(d => { FB = d; if (state.tab === "fb" || state.tab === "buy") render(); })
+    .catch(e => { FB_ERR = e.message; if (state.tab === "fb" || state.tab === "buy") render(); });
+}
+const FB_LV = { all: "Overall by period", country: "Country", cat: "Category", sub: "Sub-category", brand: "Brand" };
+const FB_DRV = { imp: "Impressions-led", mkd: "Markdown-led", both: "Imps + markdown", org: "Organic", neu: "Neutral", dec: "Declined" };
+const FB_DRV_T = {
+  imp: "GMV rose vs Sept mostly because impressions rose (impressions explain 60%+ of the lift) and markdown rose under 3pp",
+  mkd: "GMV rose vs Sept with markdown up 3pp or more, and impressions explain under 60% of the lift",
+  both: "Impressions explain 60%+ of the lift and markdown also rose 3pp or more",
+  org: "GMV rose vs Sept without much more markdown (under 3pp) or impressions: demand / conversion rose on its own",
+  neu: "GMV per day within ±10% of September",
+  dec: "GMV per day 10%+ below September",
+};
+const fbPc = (v, d = 0) => v == null || !isFinite(v) ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v * 100).toFixed(d) + "%";
+const fbPp = v => v == null || !isFinite(v) ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v * 100).toFixed(1) + "pp";
+const fbPct = v => v == null || !isFinite(v) ? "–" : (v * 100).toFixed(1) + "%";
+const fbCls = v => v == null || !isFinite(v) || Math.abs(v) < 1e-9 ? "" : v > 0 ? "up" : "down";
+const fbSp = (v, isNew) => isNew ? `<span class="na" title="Too little in September to compare with">new</span>` : `<span class="${fbCls(v)}">${fbPc(v)}</span>`;
+const fbK = v => { if (v == null || !isFinite(v)) return "–"; const a = Math.abs(v); return a >= 1e9 ? (v / 1e9).toFixed(2) + "B" : a >= 1e6 ? (v / 1e6).toFixed(a >= 1e8 ? 0 : a >= 1e7 ? 1 : 2) + "M" : a >= 1e3 ? (v / 1e3).toFixed(a >= 1e5 ? 0 : 1) + "K" : String(Math.round(v)); };
+const fbName = (lv, r) => r.k === "Beauty" ? "All Beauty" : lv === "sub" ? r.k.split("|").map(x => x.replace(/_/g, " ")).join(" › ") : r.k.replace(/_/g, " ");
+const fbTyDays = p => { const t = FB.periods[p - 1].ty; return (toT(t[1]) - toT(t[0])) / DAY + 1; };
+const fbWin = () => FB.periods.map(p => p.p);
+const fbDates = (a, b) => a === b ? fmtD(a) : `${fmtD(a)} – ${fmtD(b)}`;
+
+function fbSum(r, yi, ps) {
+  const o = [0, 0, 0, 0, 0, 0]; let d = 0;
+  for (const p of ps) { const c = r.v[yi][p]; for (let i = 0; i < 6; i++) o[i] += c[i]; d += FB.days[yi][p]; }
+  return { m: o, d };
+}
+// one year over periods ps, against the same year's September (per day)
+function fbStat(r, yi, ps) {
+  const a = fbSum(r, yi, ps), s = fbSum(r, yi, [0]);
+  const g = a.m[0], im = a.m[5], gpd = a.d ? g / a.d : null, ipd = a.d ? im / a.d : null;
+  const sg = s.d ? s.m[0] / s.d : 0, si = s.d ? s.m[5] / s.d : 0;
+  const mk = a.m[3] > 0 ? a.m[2] / a.m[3] : null, smk = s.m[3] > 0 ? s.m[2] / s.m[3] : null;
+  const o = { g, im, d: a.d, gpd, ipd, mk, smk, sgpd: sg, sipd: si,
+    // a September base under 300 AED / 5K impressions a day is too small to compare with ("new")
+    spG: sg >= 300 && gpd != null ? gpd / sg - 1 : null, spI: si >= 5000 && ipd != null ? ipd / si - 1 : null,
+    newG: sg < 300 && g > 0, newI: si < 5000 && im > 0,
+    dMk: mk != null && smk != null ? mk - smk : null, gpi: im > 0 ? g / im : null, sgpi: s.m[5] > 0 ? s.m[0] / s.m[5] : null };
+  o.drv = fbDriver(o);
+  return o;
+}
+function fbDriver(o) {
+  if (o.spG == null || !o.g) return null;
+  if (Math.abs(o.spG) < 0.1) return "neu";
+  if (o.spG < 0) return "dec";
+  const G = Math.log1p(o.spG), I = o.spI == null || o.spI <= -1 ? 0 : Math.log1p(o.spI), mk = (o.dMk || 0) >= 0.03;
+  if (I / G >= 0.6) return mk ? "both" : "imp";
+  return mk ? "mkd" : "org";
+}
+const fbDrvCell = o => !o || !o.drv ? "–" : `<span class="drv ${o.drv}" title="${FB_DRV_T[o.drv]}">${FB_DRV[o.drv]}</span>${o.drv === "dec" ? `<small>${o.spI != null && o.spI < -0.1 ? "fewer imps" : "weaker conversion"}</small>` : ""}`;
+
+// 2026 plan: LY GMV × uplift. Impressions needed = target ÷ today's GMV per impression (Sept 2026 = CTR × UCR × ASP);
+// "if conversion lifts like LY" divides that by LY's lift in GMV per impression from Sept to the period.
+// Rows with too little Sept 2026 traffic (under 200K impressions or 30 units) use their parent's GMV per impression (≈).
+function fbPlan(r, ps, parent) {
+  const ly = fbStat(r, 1, ps), tgt = ly.g * FB.uplift, own = fbSum(r, 2, [0]);
+  let cur = own, approx = false;
+  if ((own.m[5] < 2e5 || own.m[1] < 30) && parent) { cur = fbSum(parent, 2, [0]); approx = true; }
+  const gpi = cur.m[5] > 0 && cur.m[0] > 0 ? cur.m[0] / cur.m[5] : null;
+  const need = gpi && tgt ? tgt / gpi : null;
+  const lift = ly.gpi && ly.sgpi ? ly.gpi / ly.sgpi : null;
+  const needL = need && lift ? need / lift : null;
+  const tyDays = ps.reduce((a, p) => a + (p ? fbTyDays(p) : 0), 0), ipdNow = own.d ? own.m[5] / own.d : 0;
+  return { ly, tgt, need, needL, approx, lift, tyDays, ipdNow,
+    vsLy: need && ly.im ? need / ly.im - 1 : null, vsLyL: needL && ly.im ? needL / ly.im - 1 : null,
+    runX: need && ipdNow && tyDays ? need / tyDays / ipdNow : null, runXL: needL && ipdNow && tyDays ? needL / tyDays / ipdNow : null };
+}
+function fbParent(lv, r) {
+  if (lv === "all") return null;
+  if (lv === "country" || lv === "cat") return FB.lv.all[0];
+  const ck = lv === "sub" ? r.k.split("|")[0] : r.cat;
+  return FB.lv.cat.find(x => x.k === ck) || FB.lv.all[0];
+}
+const fbYearTds = (o, sep) => sep
+  ? `<td class="g0">${fbK(o.sgpd)}</td><td class="na">base</td><td class="na">base</td><td>${fbPct(o.smk)}</td><td class="na">–</td>`
+  : `<td class="g0">${fbK(o.gpd)}</td><td>${fbSp(o.spG, o.newG)}</td><td>${fbSp(o.spI, o.newI)}</td>`
+    + `<td>${fbPct(o.mk)}<small>${fbPp(o.dMk)}</small></td><td style="text-align:left">${fbDrvCell(o)}</td>`;
+const fbPlanTds = (pl, sep) => sep ? `<td class="pl g0" colspan="5"><span class="na">September = the base each period is compared with</span></td>`
+  : `<td class="pl g0">${fbK(pl.tgt)}</td><td class="pl">${fbK(pl.need)}${pl.approx ? `<small title="Too little Sept 2026 traffic of its own: uses its category's GMV per impression">≈</small>` : ""}</td>`
+    + `<td class="pl"><span class="${fbCls(-pl.vsLy)}">${fbPc(pl.vsLy)}</span></td><td class="pl"><span class="${fbCls(-pl.vsLyL)}">${fbPc(pl.vsLyL)}</span></td>`
+    + `<td class="pl" title="Impressions per day needed ÷ Sept 2026 impressions per day">${pl.runX == null ? "–" : "×" + pl.runX.toFixed(1)}</td>`;
+
+function fbTable(lv) {
+  const rows = FB.lv[lv], open = new Set(state.fb.open.filter(x => x.startsWith(lv + ":")).map(x => x.slice(lv.length + 1)));
+  const win = fbWin(), first = lv === "all" ? "Period (2026 dates)" : FB_LV[lv];
+  const yh = y => `<th class="g0" title="GMV per day in the period">GMV / day</th><th title="GMV per day vs the same year's September per day">GMV vs Sept</th><th title="Impressions per day vs the same year's September per day">Imps vs Sept</th><th title="Markdown % (change vs September in pp)">MKD %</th><th style="text-align:left">What drove it</th>`;
+  let h = `<div class="mtscroll"><table class="mt"><thead><tr><th></th><th class="g0" colspan="5">LLY · ${FB.years[0]}</th><th class="g0" colspan="5">LY · ${FB.years[1]}</th>`
+    + `<th class="g0 pl" colspan="5">2026 plan · GMV +${Math.round((FB.uplift - 1) * 100)}% vs LY</th></tr>`
+    + `<tr><th>${first}</th>${yh(0)}${yh(1)}<th class="g0 pl" title="LY GMV × ${FB.uplift}">Target GMV</th><th class="pl" title="Target ÷ today's GMV per impression (Sept 2026 CTR × UCR × ASP)">Imps needed</th>`
+    + `<th class="pl" title="Impressions needed vs LY impressions in the same period">vs LY imps</th><th class="pl" title="If GMV per impression moves from Sept to the period the way it did LY">vs LY if conv. moves like LY</th><th class="pl">× today's imps/day</th></tr></thead><tbody>`;
+  const line = (label, r, ps, cls, parent) => {
+    const sep = ps.length === 1 && ps[0] === 0;
+    const o0 = fbStat(r, 0, ps), o1 = fbStat(r, 1, ps), pl = sep ? null : fbPlan(r, ps, parent);
+    return `<tr class="${cls}">${label}${fbYearTds(o0, sep)}${fbYearTds(o1, sep)}${fbPlanTds(pl, sep)}</tr>`;
+  };
+  const pLabel = p => { const P = FB.periods[p - 1]; return `<td title="LY ${fbDates(P.ly[0], P.ly[1])} ${FB.years[1]} · LLY ${fbDates(P.lly[0], P.lly[1])} ${FB.years[0]}">${esc(P.cohort)}<small>${fbDates(P.ty[0], P.ty[1])}</small></td>`; };
+  if (lv === "all") {
+    const r = rows[0];
+    h += line(`<td>September (BAU base)</td>`, r, [0], "sep", null);
+    for (const p of win) h += line(pLabel(p), r, [p], "", null);
+    h += line(`<td>20 Oct – 10 Dec window</td>`, r, win, "tot", null);
+  } else {
+    for (const r of rows) {
+      const isOpen = open.has(r.k), parent = fbParent(lv, r);
+      const nm = `<td><button class="tg" data-tg="${esc(lv + ":" + r.k)}" aria-expanded="${isOpen}">${CARET}${esc(fbName(lv, r))}</button>${r.cat ? `<small>${esc(r.cat.replace(/_/g, " "))}</small>` : ""}</td>`;
+      h += line(nm, r, win, "", parent);
+      if (isOpen) { h += line(`<td>September (BAU base)</td>`, r, [0], "ex sep", parent); for (const p of win) h += line(pLabel(p), r, [p], "ex", parent); }
+    }
+  }
+  return h + `</tbody></table></div>`;
+}
+
+// learnings from the data: what worked LY (replicate), what didn't (improve), what LY missed vs LLY
+function fbLearn() {
+  const all = FB.lv.all[0], win = fbWin(), L = { good: [], bad: [], warn: [] };
+  const per = win.map(p => ({ P: FB.periods[p - 1], o0: fbStat(all, 0, [p]), o1: fbStat(all, 1, [p]) }));
+  for (const x of [...per].sort((a, b) => (b.o1.spG || 0) - (a.o1.spG || 0)).slice(0, 3))
+    L.good.push(`<b>${esc(x.P.cohort)}</b> (${fbDates(x.P.ly[0], x.P.ly[1])} LY): GMV/day ${fbPc(x.o1.spG)} vs Sept at ${fbPct(x.o1.mk)} markdown (${fbPp(x.o1.dMk)}), impressions ${fbPc(x.o1.spI)} · <span class="drv ${x.o1.drv}">${FB_DRV[x.o1.drv]}</span>`);
+  for (const x of per.map(x => ({ ...x, vs: x.o0.gpd ? x.o1.gpd / x.o0.gpd - 1 : null })).filter(x => x.vs != null && x.vs < -0.05).sort((a, b) => a.vs - b.vs).slice(0, 4)) {
+    const vs = x.vs;
+    L.bad.push(`<b>${esc(x.P.cohort)}</b>: LY GMV/day ${fbPc(vs)} vs LLY (${fbK(x.o1.gpd)} vs ${fbK(x.o0.gpd)}), markdown ${fbPct(x.o1.mk)} vs ${fbPct(x.o0.mk)} LLY, impressions/day ${fbPc(x.o0.ipd ? x.o1.ipd / x.o0.ipd - 1 : null)}`);
+  }
+  const br = FB.lv.brand.filter(r => !r.k.startsWith("(other")).map(r => ({ r, o0: fbStat(r, 0, win), o1: fbStat(r, 1, win) }));
+  const top = br.filter(x => x.o1.g >= 20000);
+  const org = top.filter(x => x.o1.spG >= 0.3 && (x.o1.dMk ?? 1) < 0.05).sort((a, b) => b.o1.g - a.o1.g).slice(0, 6);
+  if (org.length) L.good.push(`Grew 30%+ vs Sept without extra markdown (under +5pp vs Sept): ${org.map(x => `<b>${esc(x.r.k.replace(/_/g, " "))}</b> ${fbPc(x.o1.spG)} at ${fbPct(x.o1.mk)}`).join(", ")}`);
+  const imp = top.filter(x => x.o1.drv === "imp" && x.o1.spG >= 0.5).sort((a, b) => b.o1.g - a.o1.g).slice(0, 6);
+  if (imp.length) L.good.push(`Impressions did the work (repeat the visibility): ${imp.map(x => `<b>${esc(x.r.k.replace(/_/g, " "))}</b> GMV ${fbPc(x.o1.spG)}, imps ${fbPc(x.o1.spI)}`).join(", ")}`);
+  const nopay = top.filter(x => (x.o1.dMk || 0) >= 0.1 && (x.o1.spG ?? 1) < 0.1).sort((a, b) => b.o1.g - a.o1.g).slice(0, 6);
+  if (nopay.length) L.bad.push(`Markdown didn't pay (markdown +10pp or more vs Sept, GMV/day up under 10%): ${nopay.map(x => `<b>${esc(x.r.k.replace(/_/g, " "))}</b> ${fbPct(x.o1.mk)} (${fbPp(x.o1.dMk)}), GMV ${fbPc(x.o1.spG)}`).join(", ")}`);
+  const lost = br.filter(x => x.o0.g >= 20000 && x.o0.spG >= 0.5 && (x.o1.spG ?? -1) < 0.1).sort((a, b) => b.o0.g - a.o0.g).slice(0, 8);
+  if (lost.length) L.warn.push(`Spiked in LLY but not in LY (missed): ${lost.map(x => `<b>${esc(x.r.k.replace(/_/g, " "))}</b> LLY ${fbPc(x.o0.spG)} → LY ${fbPc(x.o1.spG)}`).join(", ")}`);
+  const fall = br.filter(x => x.o0.g >= 50000 && x.o1.g < x.o0.g * 0.7).sort((a, b) => (b.o0.g - b.o1.g) - (a.o0.g - a.o1.g)).slice(0, 8);
+  if (fall.length) L.warn.push(`Window GMV down 30%+ LY vs LLY: ${fall.map(x => `<b>${esc(x.r.k.replace(/_/g, " "))}</b> ${fbK(x.o1.g)} vs ${fbK(x.o0.g)}`).join(", ")}`);
+  const li = a => a.length ? a.map(t => `<li>${t}</li>`).join("") : `<li>Nothing stands out.</li>`;
+  return `<div class="two"><div><h3>What worked LY · replicate</h3><ul class="ln good">${li(L.good)}</ul></div>`
+    + `<div><h3>What didn't work · improve</h3><ul class="ln bad">${li(L.bad)}</ul><h3 style="margin-top:12px">Missed vs LLY</h3><ul class="ln warn">${li(L.warn)}</ul></div></div>`;
+}
+
+function renderFb() {
+  const box = document.getElementById("fbt");
+  if (!FB) { loadFb(); box.innerHTML = `<div class="rp"><p class="loading">${FB_ERR ? "Couldn't load the flashback data: " + esc(FB_ERR) : "Loading Nov Flashback…"}</p></div>`; return; }
+  if (!FB_LV[state.fb.lv]) state.fb.lv = "all";
+  const all = FB.lv.all[0], win = fbWin(), o0 = fbStat(all, 0, win), o1 = fbStat(all, 1, win), pl = fbPlan(all, win, null);
+  const s25 = fbSum(all, 1, [0]).m, s26 = fbSum(all, 2, [0]).m;
+  const fun = m => ({ ctr: m[5] ? m[4] / m[5] : null, ucr: m[4] ? m[1] / m[4] : null, asp: m[1] ? m[0] / m[1] : null, gpk: m[5] ? m[0] / m[5] * 1000 : null });
+  const f25 = fun(s25), f26 = fun(s26);
+  const tile = (t, v, note, chips) => `<div class="tile"><h3>${t}</h3><div class="tv">${v}</div>${note ? `<div class="tn">${note}</div>` : ""}<div class="tl">${chips}</div></div>`;
+  const chip = (lbl, v, txt) => `<span class="chip ${v == null ? "" : v >= 0 ? "up" : "down"}" style="background:var(--flat-bg)">${lbl} ${txt}</span>`;
+  const segs = Object.entries(FB_LV).map(([k, l]) => `<button data-lv="${k}" aria-pressed="${state.fb.lv === k}">${l}</button>`).join("");
+  box.innerHTML = `<div class="rp"><div class="mh"><div><h2>Nov Flashback · 20 Oct – 10 Dec</h2>`
+    + `<p class="sub">How each cohort period did in LY (${FB.years[1]}) and LLY (${FB.years[0]}) against that year's September (BAU), and the impressions 2026 needs to grow GMV ${Math.round((FB.uplift - 1) * 100)}% vs LY at today's conversion. Periods follow the LFL cohorts of the 2026 dates; LY / LLY use the like-for-like dates. Per-day figures, so periods of different length compare fairly.</p></div></div>`
+    + `<div class="tiles">`
+    + tile(`LLY ${FB.years[0]} · window GMV`, fbK(o0.g), `${fbK(o0.gpd)}/day · MKD ${fbPct(o0.mk)}`, chip("vs Sept/day", o0.spG, fbPc(o0.spG)))
+    + tile(`LY ${FB.years[1]} · window GMV`, fbK(o1.g), `${fbK(o1.gpd)}/day · MKD ${fbPct(o1.mk)}`, chip("vs Sept/day", o1.spG, fbPc(o1.spG)) + chip("vs LLY", o0.g ? o1.g / o0.g - 1 : null, fbPc(o0.g ? o1.g / o0.g - 1 : null)))
+    + tile(`2026 target · +${Math.round((FB.uplift - 1) * 100)}% vs LY`, fbK(pl.tgt), `${fbK(pl.tgt / pl.tyDays)}/day vs ${fbK(s26[0] / FB.days[2][0])}/day in Sept 2026`, chip("vs Sept 26/day", 1, fbPc(pl.tgt / pl.tyDays / (s26[0] / FB.days[2][0]) - 1)))
+    + tile("Impressions needed · today's conversion", fbK(pl.need), `${fbK(pl.need / pl.tyDays)}/day · ×${pl.runX.toFixed(1)} Sept 2026 imps/day`, chip("vs LY imps", -pl.vsLy, fbPc(pl.vsLy)))
+    + tile("…if conversion moves like LY", fbK(pl.needL), `LY's GMV per impression in the window was ${fbPc(pl.lift - 1)} vs its Sept`, chip("vs LY imps", -pl.vsLyL, fbPc(pl.vsLyL)))
+    + tile("Today's funnel · Sept 2026", `${f26.gpk.toFixed(1)} <small style="font-size:13px;font-weight:500">AED / 1K imps</small>`, `LY Sept: ${f25.gpk.toFixed(1)} AED / 1K imps`,
+      chip("CTR", f26.ctr - f25.ctr, `${(f26.ctr * 100).toFixed(2)}% (LY ${(f25.ctr * 100).toFixed(2)}%)`) + chip("UCR", f26.ucr - f25.ucr, `${(f26.ucr * 100).toFixed(2)}% (LY ${(f25.ucr * 100).toFixed(2)}%)`) + chip("ASP", f26.asp - f25.asp, `${Math.round(f26.asp)} (LY ${Math.round(f25.asp)})`))
+    + `</div></div>`
+    + `<div class="rp"><h2 style="margin-bottom:10px">Learnings · LY and LLY</h2>${fbLearn()}</div>`
+    + `<div class="rp" style="padding:14px 0 6px"><div class="mh" style="padding:0 14px 10px"><div><h2>${FB_LV[state.fb.lv]}</h2><p class="sub">${state.fb.lv === "all" ? "Each cohort period, LLY and LY, against September." : "Window totals (20 Oct – 10 Dec); click a name to open its periods."} Imps needed (and "× today's imps/day") use today's GMV per impression; the next column assumes GMV per impression moves from Sept the way it did LY.</p></div>`
+    + `<div class="seg" role="group" aria-label="View by">${segs}</div></div>${fbTable(state.fb.lv)}</div>`
+    + `<div class="rp"><h3>How to read</h3><ul class="ln" style="color:var(--fg-2)">`
+    + `<li>GMV / day and impressions / day are compared with the same year's September per day (the BAU base): +150% = 2.5× a September day.</li>`
+    + `<li>What drove it: ${Object.entries(FB_DRV).map(([k, l]) => `<b>${l}</b> = ${FB_DRV_T[k]}`).join("; ")}.</li>`
+    + `<li>2026 plan: target = LY GMV × ${FB.uplift}. GMV = impressions × CTR × UCR × ASP, so impressions needed = target ÷ (Sept 2026 CTR × UCR × ASP). "If conv. moves like LY" divides that by LY's change in GMV per impression from September to the period (below 1 when LY's extra impressions converted worse than September's). Rows with under 200K Sept 2026 impressions or 30 units use their category's rates (≈).</li>`
+    + `<li>Scope as the rest of the dashboard: Namshi marketplaces, GMV above zero, Beauty, no samples &amp; GWP; impressions = search + non-search, all platforms. Brands, categories and sub-categories under ${fbK(5000)} AED window GMV (LY + LLY) are grouped as "(other)".</li></ul></div>`;
+}
+
+function renderBuy() {
+  const box = document.getElementById("buyt");
+  if (!FB) { loadFb(); box.innerHTML = `<div class="rp"><p class="loading">${FB_ERR ? "Couldn't load the buyers reference: " + esc(FB_ERR) : "Loading buyers reference…"}</p></div>`; return; }
+  const win = fbWin();
+  box.innerHTML = `<div class="rp" style="padding:14px 0 6px"><div class="mh" style="padding:0 14px 10px"><div><h2>Buyers ref · markdown by brand and cohort</h2>`
+    + `<p class="sub">For each brand and cohort period: <b>bold = the markdown % the brand ran LY</b>, the bare minimum to ask the brand for in 2026 (grey = LLY). GMV and Imps = LY GMV / impressions per day vs LY September per day. Brands are sorted by LY window GMV.</p></div>`
+    + `<input type="search" id="buyq" placeholder="Find a brand or category" value="${esc(state.buy.q)}" aria-label="Find a brand or category"></div>`
+    + `<div class="mtscroll"><table class="mt"><thead><tr><th>Brand</th><th class="g0" title="September markdown: LY (LLY in grey)">Sept base</th><th class="g0" title="20 Oct – 10 Dec">Window</th>`
+    + win.map(p => { const P = FB.periods[p - 1]; return `<th class="g0" style="text-align:left;text-transform:none;letter-spacing:0" title="LY ${fbDates(P.ly[0], P.ly[1])} · LLY ${fbDates(P.lly[0], P.lly[1])}">${esc(P.cohort)}<br><small style="font-weight:400">${fbDates(P.ty[0], P.ty[1])} 2026</small></th>`; }).join("")
+    + `</tr></thead><tbody id="buyb"></tbody></table></div></div>`;
+  fillBuy();
+}
+function fillBuy() {
+  const q = state.buy.q.trim().toLowerCase(), win = fbWin();
+  const cell = (r, ps) => {
+    const o1 = fbStat(r, 1, ps), o0 = fbStat(r, 0, ps), ask = o1.mk ?? o0.mk;
+    if (!o1.g && !o0.g) return `<td class="bc g0 na">–</td>`;
+    return `<td class="bc g0"><b>${fbPct(ask)}</b><small>LLY ${fbPct(o0.mk)}</small><span class="${fbCls(o1.spG)}">GMV ${o1.newG ? "new" : fbPc(o1.spG)}</span><span>Imps ${o1.newI ? "new" : fbPc(o1.spI)}</span></td>`;
+  };
+  const sep = r => { const a = fbStat(r, 1, [0]), b = fbStat(r, 0, [0]); return `<td class="bc g0"><b>${fbPct(a.smk)}</b><small>LLY ${fbPct(b.smk)}</small><span>${fbK(a.sgpd)}/day</span></td>`; };
+  const row = (r, nm, sub, cls) => `<tr class="${cls}"><td>${esc(nm)}${sub ? `<small>${esc(sub)}</small>` : ""}</td>${sep(r)}${cell(r, win)}${win.map(p => cell(r, [p])).join("")}</tr>`;
+  const rows = FB.lv.brand.filter(r => !q || r.k.toLowerCase().includes(q) || r.k.replace(/_/g, " ").toLowerCase().includes(q) || (r.cat || "").toLowerCase().includes(q));
+  document.getElementById("buyb").innerHTML = row(FB.lv.all[0], "All Beauty", "", "tot")
+    + (rows.length ? rows.map(r => row(r, r.k.replace(/_/g, " "), (r.cat || "").replace(/_/g, " "), "")).join("") : `<tr><td colspan="${win.length + 3}" class="na">No brand matches “${esc(q)}”.</td></tr>`);
+}
+document.getElementById("fbt").addEventListener("click", e => {
+  const lv = e.target.closest("button[data-lv]");
+  if (lv) { state.fb.lv = lv.dataset.lv; save(); renderFb(); return; }
+  const tg = e.target.closest("button[data-tg]");
+  if (tg) { const k = tg.dataset.tg, o = new Set(state.fb.open); o.has(k) ? o.delete(k) : o.add(k); state.fb.open = [...o].slice(-40); save(); renderFb(); }
+});
+document.getElementById("buyt").addEventListener("input", e => { if (e.target.id !== "buyq") return; state.buy.q = e.target.value; save(); fillBuy(); });
 
 // ---------- Risk SKUs: retail supplier SKUs out of stock or with WoC <= 3, top 500 per country by GMV since 1 Jul (sql/risk_skus.sql) ----------
 let SKUS = null, SKUS_ERR = null;
