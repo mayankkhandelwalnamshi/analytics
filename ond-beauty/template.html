@@ -107,6 +107,10 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .opt em { font-style: normal; font-family: var(--mono); font-size: 11px; color: var(--muted); }
 .popf { display: flex; justify-content: space-between; align-items: center; gap: 8px; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 6px; font-size: 12px; color: var(--muted); }
 .lnk { font: inherit; font-size: 12px; font-weight: 600; background: none; border: 0; color: var(--accent); cursor: pointer; padding: 4px 6px; border-radius: 6px; }
+.pdfb { font: inherit; font-size: 12.5px; font-weight: 600; color: #fff; background: var(--accent); border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
+.pdfb:disabled { opacity: 0.6; cursor: default; }
+.fbdl { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.fbdl .st { font-size: 11.5px; color: var(--muted); max-width: 260px; text-align: right; }
 .lnk:disabled { color: var(--muted); cursor: default; opacity: 0.6; }
 .fsum { font-size: 12px; color: var(--muted); }
 .loading { padding: 40px 0; color: var(--muted); }
@@ -2115,7 +2119,9 @@ function renderFb() {
   const chip = (lbl, v, txt) => `<span class="chip ${v == null ? "" : v >= 0 ? "up" : "down"}" style="background:var(--flat-bg)">${lbl} ${txt}</span>`;
   const segs = Object.entries(FB_LV).map(([k, l]) => `<button data-lv="${k}" aria-pressed="${state.fb.lv === k}">${l}</button>`).join("");
   box.innerHTML = `<div class="rp"><div class="mh"><div><h2>Nov Flashback · 1 – 30 Nov</h2>`
-    + `<p class="sub">How each cohort period did in LY (${FB.years[1]}) and LLY (${FB.years[0]}) against that year's September (BAU), and the impressions 2026 needs to grow GMV ${Math.round((FB.uplift - 1) * 100)}% vs LY at today's conversion. Full calendar November (1–30 Nov) in every year, so the totals here match the daily charts. Periods follow the LFL cohorts of the 2026 dates; LY / LLY use the like-for-like dates, with days the mapping skips (20 Nov LY, 20–21 Nov LLY) counted in the BAU week and days outside November (1 Dec LY, 1–2 Dec LLY) left out. Per-day figures, so periods of different length compare fairly.</p></div></div>`
+    + `<p class="sub">How each cohort period did in LY (${FB.years[1]}) and LLY (${FB.years[0]}) against that year's September (BAU), and the impressions 2026 needs to grow GMV ${Math.round((FB.uplift - 1) * 100)}% vs LY at today's conversion. Full calendar November (1–30 Nov) in every year, so the totals here match the daily charts. Periods follow the LFL cohorts of the 2026 dates; LY / LLY use the like-for-like dates, with days the mapping skips (20 Nov LY, 20–21 Nov LLY) counted in the BAU week and days outside November (1 Dec LY, 1–2 Dec LLY) left out. Per-day figures, so periods of different length compare fairly.</p></div>`
+    + (DL ? `<div class="fbdl"><button class="pdfb" data-pdf ${DL_BUSY ? "disabled" : ""}>${DL_BUSY ? "Preparing…" : "Download PDF report"}</button><span class="st" id="fbdlst"></span></div>` : "")
+    + `</div>`
     + `<div class="tiles">`
     + tile(`LLY ${FB.years[0]} · Nov GMV`, fbK(o0.g), `${fbK(o0.gpd)}/day · MKD ${fbPct(o0.mk)}`, chip("vs Sept/day", o0.spG, fbPc(o0.spG)))
     + tile(`LY ${FB.years[1]} · Nov GMV`, fbK(o1.g), `${fbK(o1.gpd)}/day · MKD ${fbPct(o1.mk)}`, chip("vs Sept/day", o1.spG, fbPc(o1.spG)) + chip("vs LLY", o0.g ? o1.g / o0.g - 1 : null, fbPc(o0.g ? o1.g / o0.g - 1 : null)))
@@ -2174,7 +2180,27 @@ function fillBuy() {
   document.getElementById("buyb").innerHTML = row(FB.lv.all[0], "All Beauty", "", "tot")
     + (rows.length ? rows.map(r => row(r, r.k.replace(/_/g, " "), (r.cat || "").replace(/_/g, " "), "")).join("") : `<tr><td colspan="${per.length + (key ? 2 : 3)}" class="na">No brand matches “${esc(q)}”.</td></tr>`);
 }
+// Nov Flashback PDF: a detailed LY / LLY report built offline (report/flashback_report.py), offered through the downloads capability
+let DL = null, DL_BUSY = false;
+(window.claude?.use ? window.claude.use("downloads").catch(() => null) : Promise.resolve(null)).then(d => { DL = d; if (DL && FB) renderFb(); });
+async function saveFbPdf() {
+  const st = () => document.getElementById("fbdlst"), say = t => { const el = st(); if (el) el.textContent = t; };
+  DL_BUSY = true; renderFb();
+  try {
+    const r = await fetch("data/nov_flashback_report.pdf");
+    if (!r.ok) throw { message: `HTTP ${r.status}` };
+    await DL.save({ filename: "Beauty_Nov_Flashback_2024_2025.pdf", data: await r.blob() });
+    DL_BUSY = false; renderFb(); say("Saved.");
+  } catch (e) {
+    DL_BUSY = false;
+    const c = e && e.code;
+    if (["unavailable", "not_granted", "capability_disabled", "capability_removed"].includes(c)) DL = null;
+    renderFb();
+    say(c === "declined" ? "Download cancelled." : c === "rate_limited" ? "A save prompt is already open — try again in a moment." : DL ? "Couldn't prepare the PDF: " + ((e && e.message) || "error") : "Downloads aren't available in this view.");
+  }
+}
 document.getElementById("fbt").addEventListener("click", e => {
+  if (e.target.closest("button[data-pdf]")) { if (DL && !DL_BUSY) saveFbPdf(); return; }
   const lv = e.target.closest("button[data-lv]");
   if (lv) { state.fb.lv = lv.dataset.lv; save(); renderFb(); return; }
   const tg = e.target.closest("button[data-tg]");
