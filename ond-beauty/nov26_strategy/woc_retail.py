@@ -57,3 +57,9 @@ ASP26 = 65.0
 for nm,a in (('ASP 65 (plan)',ASP26),('ASP 71 (2024 drop)',71.0),('ASP 62 (2025 drop)',62.0),('ASP 53.3 (LY Nov)',asp_ly)):
     nu=nov_ret6/a; ye=AV-rest-nu
     print(f"[MP 13%] {nm:20s} Nov units {nu:,.0f}  13Oct-31Dec {rest+nu:,.0f} (Oct {units('oct',go,ao)[0]:,.0f} Dec {units('dec',go,ao)[0]:,.0f})  YE {ye:,.0f}  WoC {ye/WK:4.2f}")
+# PLAN (13 Oct 2026, revised): December units held flat at LY (85,511 retail units) instead of the October trend.
+# WoC denominator unchanged: Dec '25 retail units / 31 x 7 = 19.3K a week.
+dec_flat = LY['dec'][1]; oct_r = units('oct',go,ao)[0]
+for nm,a in (('ASP 65 (plan)',ASP26),('ASP 71 (2024 drop)',71.0),('ASP 62 (2025 drop)',62.0),('ASP 53.3 (LY Nov)',asp_ly)):
+    nu=nov_ret6/a; sold=oct_r+nu+dec_flat; ye=AV-sold
+    print(f"[Dec flat] {nm:20s} Oct {oct_r:,.0f} Nov {nu:,.0f} Dec {dec_flat:,} = {sold:,.0f}  YE {ye:,.0f}  WoC {ye/WK:4.2f}")
