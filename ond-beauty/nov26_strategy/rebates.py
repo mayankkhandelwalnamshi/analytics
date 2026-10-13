@@ -19,12 +19,9 @@ T=[sum(v[i] for v in R.values()) for i in range(9)]
 p=lambda a,b: a/b*100
 print('TOTAL nov25 rev',T[0],'pc1',round(p(T[1],T[0]),1),'rebate',T[2],round(p(T[2],T[0]),1),'pc1+reb',round(p(T[1]+T[2],T[0]),1))
 print('TOTAL ytd25 pc1',round(p(T[4],T[3]),1),'reb',round(p(T[5],T[3]),1),'incl',round(p(T[4]+T[5],T[3]),1))
+# TY shown for reference only, not used in the doc
 print('TOTAL ytd26 pc1',round(p(T[7],T[6]),1),'reb',round(p(T[8],T[6]),1),'incl',round(p(T[7]+T[8],T[6]),1))
 for k,v in R.items():
     print(f"{k:22s} N25 pc1 {p(v[1],v[0]):6.1f} reb {p(v[2],v[0]):5.1f} incl {p(v[1]+v[2],v[0]):6.1f} | TY pc1 {p(v[7],v[6]):5.1f} reb {p(v[8],v[6]):4.1f} incl {p(v[7]+v[8],v[6]):5.1f}")
-# Nov26 forecast: rev at target. Nov25 rev/gmv ratio
-rr=15258346/16440910; rev26=20551138*rr; rate=T[2]/T[0]
-print('rev26',round(rev26),'rebate rate',round(rate*100,1),'rebate AED',round(rev26*rate))
-for nm,pre in (('LY pre-rebate -5.2',-0.052),('0%',0.0),('LLY +5.6',0.056)):
-    print(nm,'incl',round((pre+rate)*100,1),'PC1 AED',round(rev26*(pre+rate)))
 print('Nov25 PC1 incl AED', T[1]+T[2])
+# PC1 incl. rebates is used for LY (Nov '25) only; TY figures stay before rebates.

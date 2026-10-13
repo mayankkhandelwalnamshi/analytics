@@ -6,7 +6,7 @@ Numbers behind the "Beauty — November '26 Strategy" doc (as of 12 Oct 2026). G
 - `plan.py` – top 15 brands, stock + open POs at 80% fill, year-end WoC scenarios, brand health table, GMV per 1K impressions.
 - `daily.py` – Nov '24 / Nov '25 daily GMV, units, impressions, glance views: UCR vs traffic.
 - `peaks_margin.py` – first-half share, event vs shoulder days, PC1 / markdown history, Nov multiples.
-- `rebates.py` – PC1 before / incl. rebates by brand (Nov '25, YTD) and the Nov '26 rebate approximation (Nov '25 rebate rate × target revenue).
+- `rebates.py` – PC1 before / incl. rebates by brand for Nov '25 (LY only; TY stays before rebates).
 
 Definitions: Beauty = item_d `business_unit = 'beauty'`, no samples & GWP; sales on Namshi marketplaces with `gmv_inc_vat > 0`.
 Retail stock = primary, live Namshi retail listings (partner 3001) in SA + AE. WoC = units / (Dec '25 retail units / 31 × 7).

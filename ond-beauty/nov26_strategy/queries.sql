@@ -83,3 +83,11 @@ s AS (SELECT sk.brand,
  WHERE order_date_key BETWEEN '2025-01-01' AND '2026-10-12' AND marketplace IN ('namshi','namshi_v2') AND gmv_inc_vat>0 GROUP BY 1)
 SELECT COALESCE(s.brand, rb.brand) brand, s.rev_n25, s.pc1_n25, rb.rb_n25, s.rev_ytd26, s.pc1_ytd26, rb.rb_ytd26
 FROM s FULL JOIN rb ON s.brand = rb.brand;
+
+-- 8. Brand-group check: rebates are booked by sku, so group deals land on brands already; no rebate sits on a group code.
+WITH it AS (SELECT sku, MAX(brand_code) brand_code, MAX(merch_team) merch_team FROM `noonbinamshi.custom_views.item_d` GROUP BY 1),
+g AS (SELECT LOWER(brands) brand, ANY_VALUE(brand_group) brand_group FROM `noonbinmlook.namshi_analytics_custom.brand_group_beauty` GROUP BY 1),
+gn AS (SELECT DISTINCT LOWER(brand_group) grp FROM `noonbinmlook.namshi_analytics_custom.brand_group_beauty`),
+rb AS (SELECT it.brand_code brand, SUM(value) v FROM `noonbinamfin.rebate_v1.rebate_income` r JOIN it USING (sku)
+  WHERE it.merch_team='beauty' AND r.entry_type='invoice' AND r.order_date >= '2025-01-01' GROUP BY 1)
+SELECT rb.brand, g.brand_group, rb.brand IN (SELECT grp FROM gn) is_group_code, v FROM rb LEFT JOIN g ON g.brand = rb.brand ORDER BY v DESC;
