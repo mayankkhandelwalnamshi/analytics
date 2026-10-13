@@ -335,7 +335,7 @@ TILES = [("Nov '26 GMV target", "AED 20.6M", "+25% vs Nov '25 (16.4M)", "hero"),
 tiles = "".join(f'<div class="tile {c}"><div class="tl">{E(a)}</div><div class="tv">{E(b)}</div><div class="ts">{E(s)}</div></div>' for a, b, s, c in TILES)
 
 SECTIONS = [("target", "Target"), ("brands", "Focus brands"), ("stock", "Stock"), ("health", "Brand health"), ("themes", "Themes & asks"),
-            ("learnings", "Learnings"), ("owners", "Who does what")]
+            ("learnings", "Learnings"), ("open", "Open items")]
 nav = "".join(f'<a href="#{k}">{v}</a>' for k, v in SECTIONS)
 
 CSS = """
@@ -579,10 +579,8 @@ page = f"""<title>Beauty November '26 Strategy</title>
   <div class="learn"><div class="num">4</div><div><h3>Deeper markdown did not buy growth</h3><p>Markdown went from 35% to 44%, GMV fell 8%, and PC1 before rebates went from +5.6% to {MINUS}5.2%. Rebates (AED 2.36M) lifted LY to +10.3%, but half went to NYX and Maybelline; Charlotte Tilbury and Kylie had none. <b>No event markdown without agreed brand funding.</b></p></div></div>
 </section>
 
-<section id="owners">
-  <h2><span class="n">07</span>Who does what</h2>
-  {owners}
-  <h3>Open items</h3>
+<section id="open">
+  <h2><span class="n">07</span>Open items</h2>
   <ul class="checks">
     <li>Official November daily targets in the planning table (Planning)</li>
     <li>EBITDA BP assumption for November (Finance)</li>
