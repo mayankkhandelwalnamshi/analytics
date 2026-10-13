@@ -65,3 +65,21 @@ SELECT y, per, seg, COUNT(DISTINCT d) days, SUM(g) g, SUM(u) u, SUM(c)/SUM(r) pc
 
 -- 6. Impressions by brand and daily traffic, Nov '24 / Nov '25: onsite_v1.onsite_measures (search_impressions + non_search_impressions,
 --    glance_views) joined to item_d on sku_config, alongside sales_metrics GMV / units (see daily.py for the daily rows).
+
+-- 7. Rebates by brand (invoice entries, rebate_v1.rebate_income; table starts Jan 2025) joined to PC1 / revenue from sales_metrics.
+--    PC1 incl. rebates % = (pc1_gross + rebate) / rev_gross. Every Beauty rebate line maps to a brand via sku, so no brand-group split.
+WITH it AS (SELECT sku, MAX(brand_code) brand_code, MAX(merch_team) merch_team FROM `noonbinamshi.custom_views.item_d` GROUP BY 1),
+rb AS (SELECT it.brand_code brand,
+  SUM(IF(order_date BETWEEN '2025-11-01' AND '2025-11-30', value, 0)) rb_n25,
+  SUM(IF(order_date BETWEEN '2025-01-01' AND '2025-10-12', value, 0)) rb_ytd25,
+  SUM(IF(order_date BETWEEN '2026-01-01' AND '2026-10-12', value, 0)) rb_ytd26
+ FROM `noonbinamfin.rebate_v1.rebate_income` r JOIN it USING (sku)
+ WHERE it.merch_team='beauty' AND r.entry_type='invoice' AND r.order_date >= '2025-01-01' GROUP BY 1),
+sk AS (SELECT sku, IFNULL(ANY_VALUE(brand_code),'(none)') brand FROM `noonbinamshi.custom_views.item_d` WHERE business_unit='beauty' AND IFNULL(inventory_type,'')<>'samples & gwp' GROUP BY 1),
+s AS (SELECT sk.brand,
+  SUM(IF(order_date_key BETWEEN '2025-11-01' AND '2025-11-30', rev_gross, 0)) rev_n25, SUM(IF(order_date_key BETWEEN '2025-11-01' AND '2025-11-30', pc1_gross, 0)) pc1_n25,
+  SUM(IF(order_date_key BETWEEN '2026-01-01' AND '2026-10-12', rev_gross, 0)) rev_ytd26, SUM(IF(order_date_key BETWEEN '2026-01-01' AND '2026-10-12', pc1_gross, 0)) pc1_ytd26
+ FROM `noonbinamshi.custom_views.sales_metrics` JOIN sk USING (sku)
+ WHERE order_date_key BETWEEN '2025-01-01' AND '2026-10-12' AND marketplace IN ('namshi','namshi_v2') AND gmv_inc_vat>0 GROUP BY 1)
+SELECT COALESCE(s.brand, rb.brand) brand, s.rev_n25, s.pc1_n25, rb.rb_n25, s.rev_ytd26, s.pc1_ytd26, rb.rb_ytd26
+FROM s FULL JOIN rb ON s.brand = rb.brand;
