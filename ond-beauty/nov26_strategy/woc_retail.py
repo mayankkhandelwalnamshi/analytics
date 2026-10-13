@@ -63,7 +63,7 @@ dec_flat = LY['dec'][1]; oct_r = units('oct',go,ao)[0]
 for nm,a in (('ASP 65 (plan)',ASP26),('ASP 71 (2024 drop)',71.0),('ASP 62 (2025 drop)',62.0),('ASP 53.3 (LY Nov)',asp_ly)):
     nu=nov_ret6/a; sold=oct_r+nu+dec_flat; ye=AV-sold
     print(f"[Dec flat] {nm:20s} Oct {oct_r:,.0f} Nov {nu:,.0f} Dec {dec_flat:,} = {sold:,.0f}  YE {ye:,.0f}  WoC {ye/WK:4.2f}")
-# PLAN (13 Oct 2026, revised): December retail units +10% vs LY (94.1K).
+# PLAN (13 Oct 2026, final): December retail units -10% vs LY (77.0K); +10% kept for reference.
 for dl,lab in ((1.10,'+10%'),(0.90,'-10%')):
     dd=LY['dec'][1]*dl
     for nm,a in (('ASP 65 (plan)',ASP26),('ASP 71',71.0),('ASP 62',62.0),('ASP 53.3',asp_ly)):
