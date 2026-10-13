@@ -19,3 +19,8 @@ for k,v in S.items():
     print(f"{k:6s} retail GMV {g/1e6:5.1f}M units sold {sold/1e3:5.0f}K  YE {ye/1e3:5.0f}K  WoC {ye/WK:4.1f}  nov ret GMV {v[1][1]/1e6:.1f}M units {v[1][0]/1e3:.0f}K")
 print('retail share Oct TY',round(share*100,1),'Nov retail GMV target',round(nov_ret/1e6,2),'cap',round(CAP))
 print('LY 13 Oct-31 Dec retail GMV', sum(v[0] for v in LY.values())/1e6)
+# November ASP sensitivity (promo month): Oct/Dec at the October trend, Nov retail GMV = target x TY retail share.
+asp_ly=LY['nov'][0]/LY['nov'][1]; rest=units('oct',go,ao)[0]+units('dec',go,ao)[0]
+for nm,a in (('TY uplift +11%',asp_ly*ao),('LY promo ASP (base)',asp_ly),('5% below LY',asp_ly*0.95),('10% below LY',asp_ly*0.90)):
+    nu=nov_ret/a; ye=AV-rest-nu
+    print(f"Nov ASP {nm:20s} {a:5.1f}  Nov units {nu/1e3:4.0f}K  YE {ye/1e3:4.0f}K  WoC {ye/WK:4.1f}")
