@@ -69,3 +69,8 @@ for k,v in B.items():
     rows.append((k,n25/n24-1, y26/y25-1, o26/o25-1))
     f=lambda x: f"{x:6.1f}" if x is not None else '   n/a'
     print(f"{k:24s} {n24/1e6:6.2f} {n25/1e6:6.2f} {(n25/n24-1)*100:+6.0f}% {(y26/y25-1)*100:+6.0f}% {(o26/o25-1)*100:+6.0f}% {p_ty:6.1f} {p25:7.1f} {m_ty:6.1f} {m25:5.1f} {m24:5.1f} | {s[0]:6d} {avail:7.0f} {f(wp)} {f(wr)}  trend {tr-1:+.0%} need_units {n25u*1.25:.0f}")
+# Revised PO retail value (13 Oct 2026): SKUs with a live primary Namshi retail offer price use it; SKUs without one
+# use cost x 1.35 (35% margin on cost) instead of the brand ratio gross-up above.
+PO_RVAL_PRICED, PO_COST_NOPRICE = 29107372, 1342124
+po_r2 = PO_RVAL_PRICED + PO_COST_NOPRICE * 1.35
+print('PO retail (cost x1.35 fallback)', round(po_r2/1e6,2), '@80%', round(po_r2*FILL/1e6,2), 'available retail', round((stk_r + po_r2*FILL)/1e6,2))
