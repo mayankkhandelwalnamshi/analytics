@@ -119,7 +119,7 @@ def chart_cohorts():
 # ---------------------------------------------------------------- 3. year-end stock
 STOCK = [("End 2024", "actual", 399915, 20.9, "h"), ("End 2025", "actual", 393278, 20.4, "h"),
          ("Last-4-week trend", "retail GMV −30%", 241727, 12.5, "s"), ("October trend", "retail GMV −11%", 165601, 8.6, "s"),
-         ("Nov at target", "AED 18.5M retail", 46135, 2.4, "s"), ("CT MKD ≤30%", "CT 8.9K Nov units", 48833, 2.5, "s")]
+         ("Nov at target", "AED 17.9M retail", 57705, 3.0, "s"), ("CT MKD ≤30%", "CT 8.9K Nov units", 60912, 3.2, "s")]
 CAP = 193089
 
 
@@ -326,10 +326,10 @@ funnel_rows = [[f"<b>{E(NM[d['brand']])}</b>", chip(bucket(d)),
                 sg(d['jo_gmv']) if d['jo_gmv'] is not None else '<span class="muted">new in 2026</span>',
                 sg(d['imps']), sg(d['ctr']), sg(d['ucr']), f"{d['woc']:.1f}" if d['bm'] == 'retail' else "–"] for d in H]
 
-TILES = [("Nov '26 GMV target", "AED 20.6M", "+25% vs Nov '25 (16.4M)", "hero"), ("Retail GMV target", "AED 18.5M", "+22% vs LY (15.2M) · 90% of target", "hero"),
-         ("MP GMV target", "AED 2.1M", "+67% vs LY (1.2M) · 10% of target", "hero"),
-         ("Impressions needed", "≈ 588M", "+45% vs LY (407M)", ""), ("Retail impressions", "≈ 517M", "+40% vs LY (369M) · 88%", ""),
-         ("MP impressions", "≈ 72M", "+93% vs LY (37M) · 12%", ""),
+TILES = [("Nov '26 GMV target", "AED 20.6M", "+25% vs Nov '25 (16.4M)", "hero"), ("Retail GMV target", "AED 17.9M", "+18% vs LY (15.2M) · 87% of target", "hero"),
+         ("MP GMV target", "AED 2.7M", "+117% vs LY (1.2M) · 13% of target", "hero"),
+         ("Impressions needed", "≈ 593M", "+46% vs LY (407M)", ""), ("Retail impressions", "≈ 499M", "+35% vs LY (369M) · 84%", ""),
+         ("MP impressions", "≈ 93M", "+151% vs LY (37M) · 16%", ""),
          ("Year-end retail stock", "≤ 193K units", "10 WoC · LY closed 393K (20.4 wks)", ""), ("Stock available for Q4", "503K units", "AED 53.2M retail · 31.5M cost", ""),
          ("PC1 before rebates", "≈ +5%", f"LY {MINUS}5.2% · LLY +5.6%", "")]
 tiles = "".join(f'<div class="tile {c}"><div class="tl">{E(a)}</div><div class="tv">{E(b)}</div><div class="ts">{E(s)}</div></div>' for a, b, s, c in TILES)
@@ -442,8 +442,8 @@ def fig(title, sub, body, src, legend=None):
 
 
 agenda = tbl(["TY agenda", "What it takes", "Where we start"], [
-    ["<b>November GMV +25% vs LY</b><br><span class='muted'>AED 20.6M</span>", "AED 685K a day vs 548K LY. About 588M impressions (+45%): 517M retail, 72M MP.", f"1–12 Oct is {MINUS}7% YoY. Retail UCR has been 26% below LY since July."],
-    ["<b>Close 2026 under 10 WoC</b><br><span class='muted'>≤ 193K retail units</span>", "Sell 310K retail units from 13 Oct to 31 Dec.", "503K units available. Plan case closes at 46K (2.4 WoC); the risk is stock-outs."],
+    ["<b>November GMV +25% vs LY</b><br><span class='muted'>AED 20.6M</span>", "AED 685K a day vs 548K LY. About 593M impressions (+46%): 499M retail, 93M MP.", f"1–12 Oct is {MINUS}7% YoY. Retail UCR has been 26% below LY since July."],
+    ["<b>Close 2026 under 10 WoC</b><br><span class='muted'>≤ 193K retail units</span>", "Sell 310K retail units from 13 Oct to 31 Dec.", "503K units available. Plan case closes at 58K (3.0 WoC); the risk is stock-outs."],
     ["<b>Protect the bottom line</b>", "Markdown at 40% or less. Push gift sets and launches (17–24% PC1).", f"Nov '25 PC1 was {MINUS}5.2% before rebates at 44% markdown."],
     ["<b>Win the event windows</b>", "Hero singles first half, then Black Friday. Keep the shoulders alive.", "Singles fell 26% LY; Black Friday held (+2%)."]])
 
@@ -461,24 +461,24 @@ buckets = tbl(["Bucket", "Rule (1 Jul – 12 Oct vs LY)", "Brands", "Support req
 
 themes = tbl(["Theme", "Evidence", "Ask"], [
     ["<b>Win Singles, then Black Friday</b>", f"Singles {MINUS}26% LY: AED 1.1M of the 1.35M decline. Black Friday +2%.", "Hero singles in the first half, then Black Friday."],
-    ["<b>Impressions plan</b>", "About 588M needed (+45%): retail 517M, MP 72M.", "BP / non-BP split based on conversion."],
+    ["<b>Impressions plan</b>", "About 593M needed (+46%): retail 499M, MP 93M.", "BP / non-BP split based on conversion."],
     ["<b>Peaks and shoulders</b>", "9 event days ≈ 21 shoulder days ≈ AED 8–9M each.", "Own offers and visibility for pre- and post-event days."],
     ["<b>Gift sets</b>", f"Set PC1 17–20% vs core {MINUS}10% to +1%.", "Push to 100% sell-through."],
     ["<b>DM and CRM</b>", "Retargeting between peaks.", "Ring-fenced budget (amount TBC)."],
     ["<b>GCC</b>", f"Other GCC is 4% of Nov and {MINUS}70% YTD. KSA {MINUS}AED 1.3M vs Nov '24.", "Focus recovery on KSA."]])
 
 funnel = tbl(["", "Retail", "MP", "Total"], [
-    ["Nov '26 GMV target", "AED 18.5M", "AED 2.1M", "AED 20.6M"],
+    ["Nov '26 GMV target", "AED 17.9M", "AED 2.7M", "AED 20.6M"],
     ["Nov '25: CTR / UCR / ASP", "2.39% / 3.23% / AED 53.3", "2.00% / 2.76% / AED 60.2", ""],
     ["Jul–Oct TY vs LY: CTR / UCR / ASP", f"+2% / <span class='neg'>{MINUS}26%</span> / +8%", f"<span class='neg'>{MINUS}18%</span> / +23% / <span class='neg'>{MINUS}21%</span>", ""],
     ["Nov '26 at 70/30: CTR / UCR / ASP", "2.42% / 2.64% / AED 56.2", "1.74% / 3.19% / AED 51.4", ""],
     ["GMV per 1K impressions", "AED 41.2 → 35.8", "AED 33.2 → 28.7", "AED 40.4 → 34.9"],
-    ["<b>Impressions needed</b>", "<b>≈ 517M (+40%)</b>", "<b>≈ 72M (+93%)</b>", "<b>≈ 588M (+45%)</b>"],
-    ["Range: LY conversion → full Jul–Oct trend", "449–557M", "62–78M", "511–635M"]], "num")
+    ["<b>Impressions needed</b>", "<b>≈ 499M (+35%)</b>", "<b>≈ 93M (+151%)</b>", "<b>≈ 593M (+46%)</b>"],
+    ["Range: LY conversion → full Jul–Oct trend", "434–538M", "81–101M", "515–640M"]], "num")
 
 owners = tbl(["Team", "Ask", "By"], [
     ["<b>Brand Partnerships</b>", "Lock November funding before any event markdown: no funding, no markdown. Secure gift sets and launches for Mid- and High-risk brands.", "25 Oct"],
-    ["<b>Onsite</b>", "Plan about 588M impressions (517M retail, 72M MP). Front-load Pre 11.11 and BF week, and weight to brands above AED 40 per 1K.", "28 Oct"],
+    ["<b>Onsite</b>", "Plan about 593M impressions (499M retail, 93M MP). Front-load Pre 11.11 and BF week, and weight to brands above AED 40 per 1K.", "28 Oct"],
     ["<b>Category / Trading</b>", "Hero singles in the first half. Markdown at 40% or less. Category-led promo and flash sales for the five High-risk brands.", "31 Oct"],
     ["<b>CRM / DM</b>", "Retargeting plan for the shoulder days between peaks.", "28 Oct"],
     ["<b>Planning / Supply</b>", "Track PO landing (91% due before 1 Nov). Watch December cover on NYX and Make Up For Ever.", "1 Nov"],
@@ -537,9 +537,9 @@ page = f"""<title>Beauty November '26 Strategy</title>
   <h2><span class="n">03</span>Stock: enough to hit the target, and the 10-week cap is within reach</h2>
   {fig("We close under the 193K cap if retail holds October's trend or hits the November target", "Year-end retail units. 2026 = 503K available, minus retail sales from 13 Oct to 31 Dec. Red: over the cap.", chart_stock(), "psku_sku_mapped and stock_summary_history, 12 Oct · POs ETA before 31 Dec at 80% fill · WoC vs Dec '25 retail units (19.3K a week)")}
   <ul class="tight">
-    <li><b>503K retail units available</b> (262K on hand + 241K from POs at 80% fill) = <b>AED 53.2M</b> at retail, 2.9x November's retail need. 91% of PO units land before 1 Nov.</li>
-    <li><b>Plan case closes at 46K units (2.4 WoC).</b> November retail of AED 18.5M is about 347K units at LY's promo ASP. Range: 8K to 81K units, depending on whether November ASP is 10% below or 11% above LY.</li>
-    <li><b>Charlotte Tilbury capped at 30% markdown: +2.7K units at year end (2.5 WoC).</b> CT sold 13.6K units in Nov '25 at 55% markdown, 2.9x October. In Nov '24, at 6%, it sold 1.3x October. At 30% we expect 2.1x the October run-rate: 8.9K units at ASP AED 154 (LY 98), AED 1.37M. Other brands need to fill the AED 0.25M gap. CT itself closes the year at 11K units, 8 weeks of its own cover, up from 3.5K.</li>
+    <li><b>503K retail units available</b> (262K on hand + 241K from POs at 80% fill) = <b>AED 53.2M</b> at retail, 3.0x November's retail need. 91% of PO units land before 1 Nov.</li>
+    <li><b>Plan case closes at 58K units (3.0 WoC).</b> November retail of AED 17.9M is about 336K units at LY's promo ASP. Range: 20K to 91K units, depending on whether November ASP is 10% below or 11% above LY.</li>
+    <li><b>Charlotte Tilbury capped at 30% markdown: +3.2K units at year end (3.2 WoC).</b> CT sold 13.6K units in Nov '25 at 55% markdown, 2.9x October. In Nov '24, at 6%, it sold 1.3x October. At 30% we expect 2.1x the October run-rate: 8.9K units at ASP AED 154 (LY 98), AED 1.37M. Other brands need to fill the AED 0.20M gap. CT itself closes the year at 11K units, 8 weeks of its own cover, up from 4.1K.</li>
     <li><b>The risk is running out of stock, not overstock.</b> NYX and Make Up For Ever cover their November need only 1.1x.</li>
   </ul>
   <p class="note">Method: retail GMV only. Sales from 13 Oct to 31 Dec = LY retail GMV × TY trend ÷ TY retail ASP. CT scenario: November unit lift over October interpolated between Nov '24 (6% MKD, 1.3x) and Nov '25 (55%, 2.9x). PO SKUs with no live price are valued at cost × 1.35.</p>
@@ -565,7 +565,7 @@ page = f"""<title>Beauty November '26 Strategy</title>
   {fig("Most of last year's decline came from the Singles window. Black Friday held.", "Beauty GMV by November window, AED.", chart_windows(), "sales_metrics · 1–30 Nov 2024 and 2025", [("Nov 2024", "--grey2"), ("Nov 2025", "--plum")])}
   {themes}
   <h3>Impressions needed, by retail and MP</h3>
-  <p>Each segment's Nov '25 funnel, adjusted 70% by its own Jul–Oct trend vs LY and 30% unchanged. Retail's gap is conversion; MP's is CTR and ASP. Getting retail UCR back to LY would bring the total close to 511M.</p>
+  <p>Each segment's Nov '25 funnel, adjusted 70% by its own Jul–Oct trend vs LY and 30% unchanged. Retail's gap is conversion; MP's is CTR and ASP. Getting retail UCR back to LY would bring the total close to 515M.</p>
   {funnel}
   {fig("The best converters get less traffic than their GMV share", "Nov '25, top brands, sorted by GMV per 1K impressions. Plum = share of GMV, grey = share of impressions.", chart_share(), "sales_metrics, onsite_measures · 1–30 Nov 2025")}
 </section>
@@ -586,7 +586,7 @@ page = f"""<title>Beauty November '26 Strategy</title>
     <li>Official November daily targets in the planning table (Planning)</li>
     <li>EBITDA BP assumption for November (Finance)</li>
     <li>Share of promo funded by each brand, TY / LY / LLY (Brand Partnerships)</li>
-    <li>BP vs non-BP brand list, to split the 588M impressions (Onsite)</li>
+    <li>BP vs non-BP brand list, to split the 593M impressions (Onsite)</li>
     <li>DM and CRM budget amount (Marketing)</li>
   </ul>
 </section>

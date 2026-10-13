@@ -15,7 +15,7 @@ asp=fp_u*(1-CAP_MKD/100)*realis; nov_g=nov_u*asp
 print(f"Nov lift vs Oct: {l24:.2f}x at {m24}% MKD (Nov '24), {l25:.2f}x at {m25}% (Nov '25) -> {lift:.2f}x at {CAP_MKD:.0f}%")
 print(f"Oct '26 run-rate {oct26:,.0f} units -> Nov '26 CT {nov_u:,.0f} units at ASP {asp:.0f} (LY {g/u:.0f}) = AED {nov_g/1e6:.2f}M")
 # Plan case (woc_retail.py): Nov retail AED 18.5M at LY promo ASP -> 347K units, YE 46,135, 19.3K units/wk.
-RET_NOV_LY=(15207634,285397); WK=85511/31*7; TGT=20551138*0.90; YE=46135
+RET_NOV_LY=(15207634,285397); WK=85511/31*7; TGT=20551138*0.87; YE=57705   # MP 13% plan case (woc_retail.py)
 ct_g_sh=g/RET_NOV_LY[0]; ct_u_sh=u/RET_NOV_LY[1]
 plan_ct_u=TGT/(RET_NOV_LY[0]/RET_NOV_LY[1])*ct_u_sh; plan_ct_g=TGT*ct_g_sh
 oth_asp=(RET_NOV_LY[0]-g)/(RET_NOV_LY[1]-u)

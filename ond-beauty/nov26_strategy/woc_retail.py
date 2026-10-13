@@ -47,3 +47,8 @@ for nm,a in (('LY promo ASP (base)',asp_ly),('TY uplift +11%',asp_ly*ao),('10% b
     nu=nov_ret5/a; ye=AV-rest-nu
     print(f"[MP 11%] Nov ASP {nm:20s} Nov units {nu/1e3:4.0f}K  YE {ye/1e3:4.0f}K  WoC {ye/WK:4.1f}")
 # FINAL (13 Oct 2026): MP at 10% of the Nov target -> retail AED 18.5M, MP AED 2.1M (see the [MP 10%] block above).
+# FINAL (13 Oct 2026, revised): MP at 13% of the Nov target -> retail AED 17.9M, MP AED 2.7M. Supersedes the 10% case.
+nov_ret6 = target * 0.87
+for nm,a in (('LY promo ASP (base)',asp_ly),('TY uplift +11%',asp_ly*ao),('10% below LY',asp_ly*0.90)):
+    nu=nov_ret6/a; ye=AV-rest-nu
+    print(f"[MP 13%] Nov ASP {nm:20s} Nov units {nu/1e3:5.1f}K  YE {ye:,.0f}  WoC {ye/WK:4.2f}  13Oct-31Dec units {(rest+nu)/1e3:.0f}K  Nov ret GMV {nov_ret6/1e6:.2f}M")
