@@ -10,3 +10,4 @@ Numbers behind the "Beauty — November '26 Strategy" doc (as of 12 Oct 2026). G
 
 Definitions: Beauty = item_d `business_unit = 'beauty'`, no samples & GWP; sales on Namshi marketplaces with `gmv_inc_vat > 0`.
 Retail stock = primary, live Namshi retail listings (partner 3001) in SA + AE. WoC = units / (Dec '25 retail units / 31 × 7).
+- `impressions_funnel.py` – impressions needed for AED 20.6M: Nov '25 funnel (CTR, UCR, ASP) adjusted by TY vs LY trends (1–12 Oct and Jul–Sep). Base ≈ 565M, range 508–647M.

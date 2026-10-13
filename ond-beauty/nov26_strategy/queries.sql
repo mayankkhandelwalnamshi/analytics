@@ -91,3 +91,14 @@ gn AS (SELECT DISTINCT LOWER(brand_group) grp FROM `noonbinmlook.namshi_analytic
 rb AS (SELECT it.brand_code brand, SUM(value) v FROM `noonbinamfin.rebate_v1.rebate_income` r JOIN it USING (sku)
   WHERE it.merch_team='beauty' AND r.entry_type='invoice' AND r.order_date >= '2025-01-01' GROUP BY 1)
 SELECT rb.brand, g.brand_group, rb.brand IN (SELECT grp FROM gn) is_group_code, v FROM rb LEFT JOIN g ON g.brand = rb.brand ORDER BY v DESC;
+
+-- 9. Monthly Beauty funnel (impressions, glance views, units, GMV) for Jul-Nov 2025 and Jul-12 Oct 2026 -> CTR, UCR, ASP, GMV per 1K impressions
+WITH cf AS (SELECT sku_config FROM `noonbinamshi.custom_views.item_d` WHERE business_unit='beauty' AND IFNULL(inventory_type,'')<>'samples & gwp' GROUP BY 1),
+sk AS (SELECT sku FROM `noonbinamshi.custom_views.item_d` WHERE business_unit='beauty' AND IFNULL(inventory_type,'')<>'samples & gwp' GROUP BY 1),
+p AS (SELECT d, CASE WHEN EXTRACT(MONTH FROM d)=10 THEN IF(EXTRACT(DAY FROM d)<=12, FORMAT_DATE('%Y-10(1-12)', d), NULL) ELSE FORMAT_DATE('%Y-%m', d) END per
+  FROM UNNEST(ARRAY_CONCAT(GENERATE_DATE_ARRAY('2025-07-01','2025-11-30'), GENERATE_DATE_ARRAY('2026-07-01','2026-10-12'))) d),
+t AS (SELECT p.per, SUM(o.search_impressions+o.non_search_impressions) im, SUM(o.glance_views) gv FROM `noonbinamshi.onsite_v1.onsite_measures` o JOIN cf USING (sku_config) JOIN p ON p.d=o.date
+  WHERE (o.date BETWEEN '2025-07-01' AND '2025-11-30' OR o.date BETWEEN '2026-07-01' AND '2026-10-12') AND p.per IS NOT NULL GROUP BY 1),
+s AS (SELECT p.per, SUM(gmv_inc_vat) g, SUM(items_gross) u FROM `noonbinamshi.custom_views.sales_metrics` JOIN sk USING (sku) JOIN p ON p.d=order_date_key
+  WHERE (order_date_key BETWEEN '2025-07-01' AND '2025-11-30' OR order_date_key BETWEEN '2026-07-01' AND '2026-10-12') AND marketplace IN ('namshi','namshi_v2') AND gmv_inc_vat>0 AND p.per IS NOT NULL GROUP BY 1)
+SELECT per, g, u, im, gv, gv/im ctr, u/gv ucr, g/u asp, g/im*1000 gpk FROM s JOIN t USING (per) ORDER BY per;
