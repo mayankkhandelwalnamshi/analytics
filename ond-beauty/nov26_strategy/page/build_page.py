@@ -119,7 +119,7 @@ def chart_cohorts():
 # ---------------------------------------------------------------- 3. year-end stock
 STOCK = [("End 2024", "actual", 399915, 20.9, "h"), ("End 2025", "actual", 393278, 20.4, "h"),
          ("Last-4-week trend", "retail GMV −30%", 241727, 12.5, "s"), ("October trend", "retail GMV −11%", 165601, 8.6, "s"),
-         ("Nov at target", "AED 18.5M retail", 46135, 2.4, "s")]
+         ("Nov at target", "AED 18.5M retail", 46135, 2.4, "s"), ("CT MKD ≤30%", "CT 8.9K Nov units", 48833, 2.5, "s")]
 CAP = 193089
 
 
@@ -539,9 +539,10 @@ page = f"""<title>Beauty November '26 Strategy</title>
   <ul class="tight">
     <li><b>503K retail units available</b> (262K on hand + 241K from POs at 80% fill) = <b>AED 53.2M</b> at retail, 2.9x November's retail need. 91% of PO units land before 1 Nov.</li>
     <li><b>Plan case closes at 46K units (2.4 WoC).</b> November retail of AED 18.5M is about 347K units at LY's promo ASP. Range: 8K to 81K units, depending on whether November ASP is 10% below or 11% above LY.</li>
+    <li><b>Charlotte Tilbury capped at 30% markdown: +2.7K units at year end (2.5 WoC).</b> CT sold 13.6K units in Nov '25 at 55% markdown, 2.9x October. In Nov '24, at 6%, it sold 1.3x October. At 30% we expect 2.1x the October run-rate: 8.9K units at ASP AED 154 (LY 98), AED 1.37M. Other brands need to fill the AED 0.25M gap. CT itself closes the year at 11K units, 8 weeks of its own cover, up from 3.5K.</li>
     <li><b>The risk is running out of stock, not overstock.</b> NYX and Make Up For Ever cover their November need only 1.1x.</li>
   </ul>
-  <p class="note">Method: retail GMV only. Sales from 13 Oct to 31 Dec = LY retail GMV × TY trend ÷ TY retail ASP. PO SKUs with no live price are valued at cost × 1.35.</p>
+  <p class="note">Method: retail GMV only. Sales from 13 Oct to 31 Dec = LY retail GMV × TY trend ÷ TY retail ASP. CT scenario: November unit lift over October interpolated between Nov '24 (6% MKD, 1.3x) and Nov '25 (55%, 2.9x). PO SKUs with no live price are valued at cost × 1.35.</p>
 </section>
 
 <section id="health">
