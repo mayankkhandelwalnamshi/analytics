@@ -24,3 +24,10 @@ asp_ly=LY['nov'][0]/LY['nov'][1]; rest=units('oct',go,ao)[0]+units('dec',go,ao)[
 for nm,a in (('TY uplift +11%',asp_ly*ao),('LY promo ASP (base)',asp_ly),('5% below LY',asp_ly*0.95),('10% below LY',asp_ly*0.90)):
     nu=nov_ret/a; ye=AV-rest-nu
     print(f"Nov ASP {nm:20s} {a:5.1f}  Nov units {nu/1e3:4.0f}K  YE {ye/1e3:4.0f}K  WoC {ye/WK:4.1f}")
+# Retail / MP split of the Nov target on the 1 Jul - 12 Oct 2026 mix (MP 17.7%), replacing the 1-12 Oct retail share.
+MP_JUL_OCT, RET_JUL_OCT = 3888061, 18038402
+mp_sh = MP_JUL_OCT / (MP_JUL_OCT + RET_JUL_OCT); nov_ret2 = target * (1 - mp_sh)
+print(f"MP share {mp_sh:.1%}  Nov retail target {nov_ret2/1e6:.2f}M  MP target {target*mp_sh/1e6:.2f}M")
+for nm,a in (('LY promo ASP (base)',asp_ly),('TY uplift +11%',asp_ly*ao),('10% below LY',asp_ly*0.90)):
+    nu=nov_ret2/a; ye=AV-rest-nu
+    print(f"Nov ASP {nm:20s} Nov units {nu/1e3:4.0f}K  YE {ye/1e3:4.0f}K  WoC {ye/WK:4.1f}")
