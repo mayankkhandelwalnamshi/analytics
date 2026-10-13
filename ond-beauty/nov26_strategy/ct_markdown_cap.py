@@ -29,3 +29,8 @@ fwd=28871; rest_oct=oct26-CT['2026-10'][1]; ty_tr=oct26/CT['2025-10'][1]; dec=CT
 for nm,n in (("plan (LY share)",plan_ct_u),("30% MKD cap",nov_u)):
     close=fwd-rest_oct-n-dec
     print(f"CT {nm:16s} sells {rest_oct+n+dec:,.0f} (Oct {rest_oct:,.0f} Nov {n:,.0f} Dec {dec:,.0f}) closes {close:,.0f} units = {close/(dec/31*7):.1f} WoC on its Dec rate")
+# Plan at Nov '26 retail ASP 65 (woc_retail.py): 275,069 Nov units, YE 118,175. CT keeps its LY unit share of the plan.
+NOV_U65, YE65 = 275069, 118175
+p_u=NOV_U65*ct_u_sh; oth65=(TGT-plan_ct_g)/(NOV_U65-p_u); fill65=gap/oth65; ye65=YE65+p_u-nov_u-fill65
+print(f"[ASP 65] plan CT {p_u:,.0f} units -> capped {nov_u:,.0f} ({nov_u-p_u:+,.0f}); gap filled at other-brand ASP {oth65:.1f} = {fill65:,.0f} units; YE {ye65:,.0f} WoC {ye65/WK:.2f}")
+close=fwd-rest_oct-p_u-dec; print(f"[ASP 65] CT closes {close:,.0f} in plan vs {fwd-rest_oct-nov_u-dec:,.0f} capped")

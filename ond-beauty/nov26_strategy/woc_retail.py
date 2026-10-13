@@ -52,3 +52,8 @@ nov_ret6 = target * 0.87
 for nm,a in (('LY promo ASP (base)',asp_ly),('TY uplift +11%',asp_ly*ao),('10% below LY',asp_ly*0.90)):
     nu=nov_ret6/a; ye=AV-rest-nu
     print(f"[MP 13%] Nov ASP {nm:20s} Nov units {nu/1e3:5.1f}K  YE {ye:,.0f}  WoC {ye/WK:4.2f}  13Oct-31Dec units {(rest+nu)/1e3:.0f}K  Nov ret GMV {nov_ret6/1e6:.2f}M")
+# PLAN (13 Oct 2026): Nov '26 retail ASP AED 65. Oct '26 is running ~97 (1-12 Oct); Oct->Nov fell 27% in 2024 and 36% in 2025 -> ~62-71.
+ASP26 = 65.0
+for nm,a in (('ASP 65 (plan)',ASP26),('ASP 71 (2024 drop)',71.0),('ASP 62 (2025 drop)',62.0),('ASP 53.3 (LY Nov)',asp_ly)):
+    nu=nov_ret6/a; ye=AV-rest-nu
+    print(f"[MP 13%] {nm:20s} Nov units {nu:,.0f}  13Oct-31Dec {rest+nu:,.0f} (Oct {units('oct',go,ao)[0]:,.0f} Dec {units('dec',go,ao)[0]:,.0f})  YE {ye:,.0f}  WoC {ye/WK:4.2f}")
