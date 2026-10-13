@@ -102,3 +102,9 @@ t AS (SELECT p.per, SUM(o.search_impressions+o.non_search_impressions) im, SUM(o
 s AS (SELECT p.per, SUM(gmv_inc_vat) g, SUM(items_gross) u FROM `noonbinamshi.custom_views.sales_metrics` JOIN sk USING (sku) JOIN p ON p.d=order_date_key
   WHERE (order_date_key BETWEEN '2025-07-01' AND '2025-11-30' OR order_date_key BETWEEN '2026-07-01' AND '2026-10-12') AND marketplace IN ('namshi','namshi_v2') AND gmv_inc_vat>0 AND p.per IS NOT NULL GROUP BY 1)
 SELECT per, g, u, im, gv, gv/im ctr, u/gv ucr, g/u asp, g/im*1000 gpk FROM s JOIN t USING (per) ORDER BY per;
+
+-- 10. Brand health (retail top 15 / MP top 5 by GMV since 1 Jul 2026): YTD and 1-12 Oct GMV and PC1 vs LY, Nov '25 / Nov '24 markdown,
+--     Jul-Oct GMV and units vs LY, last-45-day retail units (29 Aug - 12 Oct) for WoC. Business model at sku level.
+--     Traffic: onsite_measures Jul-Oct TY vs LY by brand, sku_config counted as retail if any of its skus is retail.
+--     Stock: psku_sku_mapped 12 Oct (primary, live, partner 3001, SA+AE) units x offer_price; POs as in query 4 with
+--     offer price on primary Namshi retail listings, cost x 1.35 when no live price; forward = stock + 80% of PO.

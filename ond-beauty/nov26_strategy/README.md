@@ -14,3 +14,4 @@ Retail stock = primary, live Namshi retail listings (partner 3001) in SA + AE. W
 - `woc_retail.py` – year-end WoC from retail GMV only: LY retail GMV × TY trend ÷ TY retail ASP → units; plan case = AED 20.6M × 86% retail share in November.
 - `impressions_funnel_bm.py` – impressions needed by retail (AED 18.5M) and MP (AED 2.1M): each segment's Nov '25 CTR / UCR / ASP × (70% Jul–Oct TY-vs-LY trend + 30% no change). Base ≈ 517M + 72M = 588M, range 511–635M.
 - `nov_cohort_targets.py` – Nov '26 target split by cohort (Nov target not yet in the planning table; Oct target AED 8.62M is).
+- `brand_health.py` – brand health tables and risk buckets (retail top 15, MP top 5).
