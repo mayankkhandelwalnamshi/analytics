@@ -1,7 +1,7 @@
 # Impressions needed by business model: Nov '25 funnel per segment x its own TY trend (1-12 Oct; Jul-Sep as range).
 D={'mp':{'nov25':(1233276,20502,37137031,743500),'oct_ly':(323846,4303,7354890,168105),'oct_ty':(430987,6606,12666358,259196),'q3_ly':(2969933,37353,68650214,1833756),'q3_ty':(3457075,55421,100426555,2172253)},
    'retail':{'nov25':(15207743,285397,369416421,8824327),'oct_ly':(3066696,34956,63536737,1575476),'oct_ty':(2717025,27882,60372876,1591826),'q3_ly':(24178847,286742,534067098,13288335),'q3_ty':(15321377,169851,430128724,10820212)}}
-TGT={'retail':20551138*0.89,'mp':20551138*0.11}  # MP at 11% of the Nov target
+TGT={'retail':20551138*0.90,'mp':20551138*0.10}  # MP at 10% of the Nov target (final)
 def f(t): g,u,im,gv=t; return dict(ctr=gv/im,ucr=u/gv,asp=g/u,gpk=g/im*1000,im=im)
 tot={}
 for bm in ('retail','mp'):
