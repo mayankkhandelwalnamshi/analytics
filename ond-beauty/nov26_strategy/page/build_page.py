@@ -119,7 +119,7 @@ def chart_cohorts():
 # ---------------------------------------------------------------- 3. year-end stock
 STOCK = [("End 2024", "actual", 399915, 20.9, "h"), ("End 2025", "actual", 393278, 20.4, "h"),
          ("Last-4-week trend", "retail GMV −30%", 241727, 12.5, "s"), ("October trend", "retail GMV −11%", 165601, 8.6, "s"),
-         ("Nov at target", "17.9M at ASP 65", 118175, 6.1, "s"), ("+ CT MKD ≤30%", "CT 8.9K Nov units", 119193, 6.2, "s")]
+         ("Nov at target", "17.9M at ASP 65", 118175, 6.1, "s")]
 CAP = 193089
 
 
@@ -539,10 +539,9 @@ page = f"""<title>Beauty November '26 Strategy</title>
   <ul class="tight">
     <li><b>503K retail units available</b> (262K on hand + 241K from POs at 80% fill) = <b>AED 53.2M</b> at retail, 3.0x November's retail need. 91% of PO units land before 1 Nov.</li>
     <li><b>Plan case: sell 275K retail units in November and close the year at 118K (6.1 WoC).</b> AED 17.9M retail at ASP AED 65. October is running at AED 97; ASP fell 27% from October to November in 2024 and 36% in 2025, which points to 62–71. Range: 105K at ASP 62 to 141K at ASP 71. At last November's ASP of 53.3 it would take 336K units and close at 58K.</li>
-    <li><b>Charlotte Tilbury capped at 30% markdown: +1K units at year end (6.2 WoC).</b> CT sold 13.6K units in Nov '25 at 55% markdown, 2.9x October. In Nov '24, at 6%, it sold 1.3x October. At 30% we expect 2.1x the October run-rate: 8.9K units at ASP AED 154 (LY 98), AED 1.37M. Other brands need to fill the AED 0.20M gap. CT itself closes the year at 11K units, 8 weeks of its own cover, up from 7K.</li>
     <li><b>The risk is running out of stock, not overstock.</b> NYX and Make Up For Ever cover their November need only 1.1x.</li>
   </ul>
-  <p class="note">Method: retail GMV only. Sales from 13 Oct to 31 Dec = LY retail GMV × TY trend ÷ TY retail ASP; November = retail target ÷ ASP 65 (385K units 13 Oct – 31 Dec). CT scenario: November unit lift over October interpolated between Nov '24 (6% MKD, 1.3x) and Nov '25 (55%, 2.9x). PO SKUs with no live price are valued at cost × 1.35.</p>
+  <p class="note">Method: retail GMV only. Sales from 13 Oct to 31 Dec = LY retail GMV × TY trend ÷ TY retail ASP; November = retail target ÷ ASP 65 (385K units 13 Oct – 31 Dec). PO SKUs with no live price are valued at cost × 1.35.</p>
 </section>
 
 <section id="health">
