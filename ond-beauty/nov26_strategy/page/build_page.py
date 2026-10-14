@@ -2,7 +2,7 @@
 
 python3 ond-beauty/nov26_strategy/page/build_page.py  ->  ond-beauty/dist/nov26_strategy.html
 
-All figures as of 12 Oct 2026; the queries and calculations live in ../ (queries.sql, *.py).
+All figures as of 13 Oct 2026 (refreshed 14 Oct; see ../refresh_13oct.py); the queries and calculations live in ../ (queries.sql, *.py).
 Charts are inline SVG coloured through CSS tokens, so they follow the viewer's light / dark theme.
 """
 import html
@@ -50,7 +50,7 @@ def rect(x, y, w, h, cls, rx=2, title=None):
 G = {2024: [6855585, 6926332, 12706844, 9111608, 8670958, 8723815, 7095023, 8278112, 7948656, 8777059, 17785925, 8898392],
      2025: [7745502, 6926861, 18676633, 7980590, 10107349, 8709243, 8290997, 10014889, 8842244, 8044470, 16440910, 8798689],
      2026: [5862235, 6216703, 11487996, 6288631, 8241744, 5976895, 6236584, 6166883, 6374596]}
-OCT_PACE, NOV_TGT, OCT_TGT = 8132734, 20551138, 8623116
+OCT_PACE, NOV_TGT, OCT_TGT = 7952719, 20551138, 8623116
 
 
 def chart_monthly():
@@ -71,14 +71,14 @@ def chart_monthly():
         for i, v in enumerate(G[yr]):
             b.append(f'<circle cx="{x(i + 1):.1f}" cy="{y(v):.1f}" r="{3.5 if yr == 2026 else 2.5}" class="dot {cls}"><title>{yr} {i + 1:02d}: AED {v / 1e6:.1f}M</title></circle>')
     b.append(f'<path d="M{x(9):.1f},{y(G[2026][-1]):.1f} L{x(10):.1f},{y(OCT_PACE):.1f} L{x(11):.1f},{y(NOV_TGT):.1f}" class="line ty dash"/>')
-    b.append(f'<circle cx="{x(10):.1f}" cy="{y(OCT_PACE):.1f}" r="4" class="hollow"><title>Oct at 1–12 Oct pace: AED 8.1M</title></circle>')
+    b.append(f'<circle cx="{x(10):.1f}" cy="{y(OCT_PACE):.1f}" r="4" class="hollow"><title>Oct at 1–13 Oct pace: AED 8.0M</title></circle>')
     b.append(f'<line x1="{x(10) - 9:.1f}" x2="{x(10) + 9:.1f}" y1="{y(OCT_TGT):.1f}" y2="{y(OCT_TGT):.1f}" class="tick-ty"><title>Oct target: AED 8.6M</title></line>')
     b.append(f'<circle cx="{x(11):.1f}" cy="{y(NOV_TGT):.1f}" r="7" class="target"><title>Nov target: AED 20.6M</title></circle>')
     b.append(t(x(11) - 12, y(NOV_TGT) + 5, "Target 20.6M", "val-ty", "end"))
     b.append(t(x(11) + step / 2 + 6, y(G[2024][10]) + 4, "Nov '24 17.8M", "lab"))
     b.append(t(x(11) + step / 2 + 6, y(G[2025][10]) + 14, "Nov '25 16.4M", "lab"))
     b.append(t(x(9) + 4, y(G[2026][-1]) + 18, "2026", "val-ty"))
-    b.append(t(x(10) + 6, y(OCT_PACE) + 30, "Oct pace 8.1M", "lab"))
+    b.append(t(x(10) + 6, y(OCT_PACE) + 30, "Oct pace 8.0M", "lab"))
     b.append(t(x(10) + 6, y(OCT_PACE) + 44, "Oct target 8.6M", "lab-ty"))
     b.append(t(x(12) + 6, y(G[2025][11]) + 14, "2025", "lab"))
     b.append(t(x(12) + 6, y(G[2024][11]) - 4, "2024", "lab"))
@@ -118,8 +118,8 @@ def chart_cohorts():
 
 # ---------------------------------------------------------------- 3. year-end stock
 STOCK = [("End 2024", "actual", 399915, 20.9, "h"), ("End 2025", "actual", 393278, 20.4, "h"),
-         ("Last-4-week trend", "retail GMV −30%", 241727, 12.5, "s"), ("October trend", "retail GMV −11%", 165601, 8.6, "s"),
-         ("Nov at target", "ASP 65 · Dec −10%", 116806, 6.0, "s")]
+         ("Last-4-week trend", "retail GMV −29%", 256345, 13.3, "s"), ("October trend", "retail GMV −11%", 179758, 9.3, "s"),
+         ("Nov at target", "ASP 65 · Dec −10%", 132395, 6.9, "s")]
 CAP = 193089
 
 
@@ -151,9 +151,6 @@ NM = {'kiko_milano': 'KIKO Milano', 'charlotte_tilbury': 'Charlotte Tilbury', 'k
       'loreal_professionnel': "L'Oréal Professionnel", 'make_up_for_ever': 'Make Up For Ever', 'estee_lauder': 'Estée Lauder',
       'lancome': 'Lancôme', 'armani': 'Armani', 'maybelline_new_york': 'Maybelline', 'anastasia_beverly_hills': 'Anastasia Beverly Hills',
       'clinique': 'Clinique', 'clara': 'Clara', 'louzan': 'Louzan', 'laverne': 'Laverne', 'bath_body_works': 'Bath & Body Works', 'h_m': 'H&M'}
-JO = {'kiko_milano': 1603312, 'charlotte_tilbury': 1579030, 'kerastase': 1172953, 'mac_cosmetics': 1100407, 'nyx_professional_makeup': 1056639,
-      'kylie_cosmetics': 746363, 'elizabeth_arden': 708164, 'loreal_professionnel': 517536, 'make_up_for_ever': 509084, 'estee_lauder': 454944,
-      'lancome': 435324, 'armani': 413094, 'maybelline_new_york': 393497, 'anastasia_beverly_hills': 317618, 'clinique': 311673}
 SIDE = {'kerastase': 'l', 'mac_cosmetics': 'l', 'maybelline_new_york': 'l', 'kylie_cosmetics': 'b'}
 
 
@@ -187,10 +184,10 @@ def chart_risk():
     b.append(f'<line x1="{cx(-25):.1f}" x2="{cx(-25):.1f}" y1="{y0}" y2="{B}" class="ref"/>')
     b.append(t(L + 8, y0 + 14, "HIGH-RISK ZONE", "eyebrow-bad"))
     b.append(t(R, cy(20) - 6, "20 weeks", "lab", "end"))
-    b.append(t((L + R) / 2, B + 36, "GMV 1 Jul – 12 Oct vs LY", "axis", "middle"))
+    b.append(t((L + R) / 2, B + 36, "GMV 1 Jul – 13 Oct vs LY", "axis", "middle"))
     b.append(t(L - 40, y0 - 2, "WoC", "axis"))
     for d in [d for d in H if d['bm'] == 'retail']:
-        g, w, r = d['jo_gmv'] * 100, d['woc'], math.sqrt(JO[d['brand']] / 1e6) * 10
+        g, w, r = d['jo_gmv'] * 100, d['woc'], math.sqrt(d['jo'] / 1e6) * 10
         bk = bucket(d)
         b.append(f'<circle cx="{cx(g):.1f}" cy="{cy(w):.1f}" r="{r:.1f}" class="bub {bk}"><title>{E(NM[d["brand"]])}: {pct(d["jo_gmv"])} GMV since July, {w:.1f} weeks of cover</title></circle>')
         s = SIDE.get(d['brand'], 'r')
@@ -315,7 +312,7 @@ def pcv(v):
 
 retail = [d for d in H if d['bm'] == 'retail']
 mp = [d for d in H if d['bm'] == 'mp']
-share = {k: sum(JO[d['brand']] for d in retail if bucket(d) == k) / sum(JO.values()) for k in BLABEL}
+share = {k: sum(d['jo'] for d in retail if bucket(d) == k) / sum(d['jo'] for d in retail) for k in BLABEL}
 
 retail_rows = [[f"<b>{E(NM[d['brand']])}</b>", chip(bucket(d)), f"{d['ytd'] / 1e6:.2f}", sg(d['ytd_yoy']), f"{d['oct'] / 1e3:.0f}", sg(d['oct_yoy']),
                 pcv(d['pc1']), pp(d['pc1_pp']), pcv(d['pc1o']), pp(d['pc1o_pp']), pcv(d['mkd25']), pcv(d['mkd24']),
@@ -330,7 +327,7 @@ TILES = [("Nov '26 GMV target", "AED 20.6M", "+25% vs Nov '25 (16.4M)", "hero"),
          ("MP GMV target", "AED 2.7M", "+117% vs LY (1.2M) · 13% of target", "hero"),
          ("Impressions needed", "≈ 593M", "+46% vs LY (407M)", ""), ("Retail impressions", "≈ 499M", "+35% vs LY (369M) · 84%", ""),
          ("MP impressions", "≈ 93M", "+151% vs LY (37M) · 16%", ""),
-         ("Year-end retail stock", "≤ 193K units", "10 WoC · LY closed 393K (20.4 wks)", ""), ("Stock available for Q4", "503K units", "AED 53.2M retail · 31.5M cost", ""),
+         ("Year-end retail stock", "≤ 193K units", "10 WoC · LY closed 393K (20.4 wks)", ""), ("Stock available for Q4", "517K units", "AED 54.1M retail · 32.0M cost", ""),
          ("PC1 before rebates", "≈ +5%", f"LY {MINUS}5.2% · LLY +5.6%", "")]
 tiles = "".join(f'<div class="tile {c}"><div class="tl">{E(a)}</div><div class="tv">{E(b)}</div><div class="ts">{E(s)}</div></div>' for a, b, s, c in TILES)
 
@@ -442,8 +439,8 @@ def fig(title, sub, body, src, legend=None):
 
 
 agenda = tbl(["TY agenda", "What it takes", "Where we start"], [
-    ["<b>November GMV +25% vs LY</b><br><span class='muted'>AED 20.6M</span>", "AED 685K a day vs 548K LY. About 593M impressions (+46%): 499M retail, 93M MP.", f"1–12 Oct is {MINUS}7% YoY. Retail UCR has been 26% below LY since July."],
-    ["<b>Close 2026 under 10 WoC</b><br><span class='muted'>≤ 193K retail units</span>", "Sell 310K retail units from 13 Oct to 31 Dec.", "503K units available. Plan case closes at 117K (6.0 WoC); the risk is stock-outs."],
+    ["<b>November GMV +25% vs LY</b><br><span class='muted'>AED 20.6M</span>", "AED 685K a day vs 548K LY. About 592M impressions (+46%): 499M retail, 93M MP.", f"1–13 Oct is {MINUS}7% YoY. Retail UCR has been 26% below LY since July."],
+    ["<b>Close 2026 under 10 WoC</b><br><span class='muted'>≤ 193K retail units</span>", "Sell 324K retail units from 14 Oct to 31 Dec.", "517K units available. Plan case closes at 132K (6.9 WoC); the risk is stock-outs."],
     ["<b>Protect the bottom line</b>", "Markdown at 40% or less. Push gift sets and launches (17–24% PC1).", f"Nov '25 PC1 was {MINUS}5.2% before rebates at 44% markdown."],
     ["<b>Win the event windows</b>", "Hero singles first half, then Black Friday. Keep the shoulders alive.", "Singles fell 26% LY; Black Friday held (+2%)."]])
 
@@ -454,14 +451,14 @@ margin = tbl(["Margin line", "Nov '24", "Nov '25", "Nov '26 commitment"], [
     ["PC1 incl. rebates (LY only)", "–", "+10.3%", "<span class='muted'>not used for TY</span>"],
     ["EBITDA", "–", "–", "No worse than BP (assumption to insert)"]])
 
-buckets = tbl(["Bucket", "Rule (1 Jul – 12 Oct vs LY)", "Brands", "Support required"], [
+buckets = tbl(["Bucket", "Rule (1 Jul – 13 Oct vs LY)", "Brands", "Support required"], [
     [chip('stable'), f"GMV within {MINUS}12%, UCR not down more than 10%, WoC under 20", "Kylie Cosmetics, Armani, Lancôme · MP: all top 5", "Visibility. These brands convert well, so extra impressions turn into extra GMV."],
-    [chip('mid'), "Between Stable and High", "KIKO Milano, Charlotte Tilbury, Kérastase, Elizabeth Arden, L'Oréal Professionnel, Estée Lauder, Anastasia Beverly Hills", "Impressions, plus extra promo funding from category."],
-    [chip('high'), "GMV down 25%+ and WoC 20+", "NYX, MAC, Maybelline, Make Up For Ever, Clinique", "Impressions, category-led promo funding and flash sales, cross-selling with Fashion and Sports."]])
+    [chip('mid'), "Between Stable and High", "Charlotte Tilbury, KIKO Milano, Kérastase, Elizabeth Arden, L'Oréal Professionnel, Estée Lauder, Anastasia Beverly Hills, Clinique", "Impressions, plus extra promo funding from category."],
+    [chip('high'), "GMV down 25%+ and WoC 20+", "NYX, MAC, Maybelline, Make Up For Ever", "Impressions, category-led promo funding and flash sales, cross-selling with Fashion and Sports."]])
 
 themes = tbl(["Theme", "Evidence", "Ask"], [
     ["<b>Win Singles, then Black Friday</b>", f"Singles {MINUS}26% LY: AED 1.1M of the 1.35M decline. Black Friday +2%.", "Hero singles in the first half, then Black Friday."],
-    ["<b>Impressions plan</b>", "About 593M needed (+46%): retail 499M, MP 93M.", "BP / non-BP split based on conversion."],
+    ["<b>Impressions plan</b>", "About 592M needed (+46%): retail 499M, MP 93M.", "BP / non-BP split based on conversion."],
     ["<b>Peaks and shoulders</b>", "9 event days ≈ 21 shoulder days ≈ AED 8–9M each.", "Own offers and visibility for pre- and post-event days."],
     ["<b>Gift sets</b>", f"Set PC1 17–20% vs core {MINUS}10% to +1%.", "Push to 100% sell-through."],
     ["<b>DM and CRM</b>", "Retargeting between peaks.", "Ring-fenced budget (amount TBC)."],
@@ -471,10 +468,10 @@ funnel = tbl(["", "Retail", "MP", "Total"], [
     ["Nov '26 GMV target", "AED 17.9M", "AED 2.7M", "AED 20.6M"],
     ["Nov '25: CTR / UCR / ASP", "2.39% / 3.23% / AED 53.3", "2.00% / 2.76% / AED 60.2", ""],
     ["Jul–Oct TY vs LY: CTR / UCR / ASP", f"+2% / <span class='neg'>{MINUS}26%</span> / +8%", f"<span class='neg'>{MINUS}18%</span> / +23% / <span class='neg'>{MINUS}21%</span>", ""],
-    ["Nov '26 at 70/30: CTR / UCR / ASP", "2.42% / 2.64% / AED 56.2", "1.74% / 3.19% / AED 51.4", ""],
-    ["GMV per 1K impressions", "AED 41.2 → 35.8", "AED 33.2 → 28.7", "AED 40.4 → 34.9"],
-    ["<b>Impressions needed</b>", "<b>≈ 499M (+35%)</b>", "<b>≈ 93M (+151%)</b>", "<b>≈ 593M (+46%)</b>"],
-    ["Range: LY conversion → full Jul–Oct trend", "434–538M", "81–101M", "515–640M"]], "num")
+    ["Nov '26 at 70/30: CTR / UCR / ASP", "2.42% / 2.64% / AED 56.2", "1.75% / 3.19% / AED 51.4", ""],
+    ["GMV per 1K impressions", "AED 41.2 → 35.8", "AED 33.2 → 28.7", "AED 40.4 → 34.7"],
+    ["<b>Impressions needed</b>", "<b>≈ 499M (+35%)</b>", "<b>≈ 93M (+151%)</b>", "<b>≈ 592M (+46%)</b>"],
+    ["Range: LY conversion → full Jul–Oct trend", "434–538M", "80–101M", "515–640M"]], "num")
 
 owners = tbl(["Team", "Ask", "By"], [
     ["<b>Brand Partnerships</b>", "Lock November funding before any event markdown: no funding, no markdown. Secure gift sets and launches for Mid- and High-risk brands.", "25 Oct"],
@@ -484,7 +481,7 @@ owners = tbl(["Team", "Ask", "By"], [
     ["<b>Planning / Supply</b>", "Track PO landing (91% due before 1 Nov). Watch December cover on NYX and Make Up For Ever.", "1 Nov"],
     ["<b>Finance</b>", "EBITDA BP assumption for November.", "25 Oct"]])
 
-RET15 = ["KIKO Milano", "Charlotte Tilbury", "Kérastase", "MAC", "NYX", "Kylie Cosmetics", "Elizabeth Arden", "L'Oréal Professionnel", "Make Up For Ever",
+RET15 = ["Charlotte Tilbury", "KIKO Milano", "Kérastase", "MAC", "NYX", "Kylie Cosmetics", "Elizabeth Arden", "L'Oréal Professionnel", "Make Up For Ever",
          "Estée Lauder", "Lancôme", "Armani", "Maybelline", "Anastasia Beverly Hills", "Clinique"]
 MP5 = ["Clara", "Louzan", "Laverne", "Bath & Body Works", "H&M"]
 bl = lambda xs: "".join(f'<span class="{"lead" if i < 3 else ""}">{E(n)}</span>' for i, n in enumerate(xs))
@@ -504,8 +501,8 @@ page = f"""<title>Beauty November '26 Strategy</title>
   <div class="rule"></div>
   <div class="eyebrow">Beauty Pulse · Strategy</div>
   <h1>Beauty · November '26 Strategy</h1>
-  <p class="lede">Grow November GMV 25% on last year and close 2026 under 10 weeks of cover. Built on the November 2024 and 2025 flashback, this year's trends to 12 October, and the stock and open POs on hand.</p>
-  <div class="meta">As of 12 Oct 2026 · Namshi marketplaces, Beauty, excl. samples &amp; GWP</div>
+  <p class="lede">Grow November GMV 25% on last year and close 2026 under 10 weeks of cover. Built on the November 2024 and 2025 flashback, this year's trends to 13 October, and the stock and open POs on hand.</p>
+  <div class="meta">As of 13 Oct 2026 · Namshi marketplaces, Beauty, excl. samples &amp; GWP</div>
 </header>
 <nav aria-label="Sections">{nav}</nav>
 
@@ -517,8 +514,8 @@ page = f"""<title>Beauty November '26 Strategy</title>
 
 <section id="target">
   <h2><span class="n">01</span>Target: +25% GMV and a protected bottom line</h2>
-  <p class="kick"><b>AED 20.6M in November:</b> +25% on Nov '25 and +16% on Nov '24. It's a stretch: November must reach 3.2x September's daily GMV (LY 1.9x, LLY 2.2x). The trend is improving, from {MINUS}28% YoY in September to {MINUS}7% for 1–12 October.</p>
-  {fig("The Nov '26 target of AED 20.6M is 16% above the Nov '24 peak", "Beauty GMV by month, AED. 2026 is running 28% below 2025 to September.", chart_monthly(), "sales_metrics · Jan 2024 – 12 Oct 2026 · Oct target from the planning table", [("2026 and plan", "--plum"), ("2025", "--grey"), ("2024", "--grey2")])}
+  <p class="kick"><b>AED 20.6M in November:</b> +25% on Nov '25 and +16% on Nov '24. It's a stretch: November must reach 3.2x September's daily GMV (LY 1.9x, LLY 2.2x). The trend is improving, from {MINUS}28% YoY in September to {MINUS}7% for 1–13 October.</p>
+  {fig("The Nov '26 target of AED 20.6M is 16% above the Nov '24 peak", "Beauty GMV by month, AED. 2026 is running 28% below 2025 to September.", chart_monthly(), "sales_metrics · Jan 2024 – 13 Oct 2026 · Oct target from the planning table", [("2026 and plan", "--plum"), ("2025", "--grey"), ("2024", "--grey2")])}
   {fig("Biggest lifts needed in Pre 11.11 and Black Friday week, +35% per day vs LY", "GMV per day by November cohort. Shaded: event cohorts. Under each cohort: Nov '26 total and per-day change vs Nov '25.", chart_cohorts(), "Official November targets aren't loaded yet (October's are, AED 8.6M). AED 20.6M is split on the last two Novembers' daily pattern.", LY_LEG + [("Nov '26 target", "--plum")])}
   <h3>Margin commitment</h3>
   {margin}
@@ -526,7 +523,7 @@ page = f"""<title>Beauty November '26 Strategy</title>
 
 <section id="brands">
   <h2><span class="n">02</span>Focus brands</h2>
-  <p class="kick">Ranked by GMV from 1 Jul to 12 Oct 2026. Together they are <b>63% of Beauty GMV</b>.</p>
+  <p class="kick">Ranked by GMV from 1 Jul to 13 Oct 2026. Together they are <b>63% of Beauty GMV</b>.</p>
   <div class="cols">
     <div class="card"><h4>Retail · top 15 = 63% of retail GMV</h4><div class="brandlist">{bl(RET15)}</div></div>
     <div class="card"><h4>MP · top 5 = 62% of MP GMV</h4><div class="brandlist">{bl(MP5)}</div><p class="note">Clara alone is 37% of MP GMV. Benefit is excluded (discontinued).</p></div>
@@ -535,13 +532,13 @@ page = f"""<title>Beauty November '26 Strategy</title>
 
 <section id="stock">
   <h2><span class="n">03</span>Stock: enough to hit the target, and the 10-week cap is within reach</h2>
-  {fig("We close under the 193K cap if retail holds October's trend or hits the November target", "Year-end retail units. 2026 = 503K available, minus retail sales from 13 Oct to 31 Dec. Red: over the cap.", chart_stock(), "psku_sku_mapped and stock_summary_history, 12 Oct · POs ETA before 31 Dec at 80% fill · WoC vs Dec '25 retail units (19.3K a week)")}
+  {fig("We close under the 193K cap if retail holds October's trend or hits the November target", "Year-end retail units. 2026 = 517K available, minus retail sales from 14 Oct to 31 Dec. Red: over the cap.", chart_stock(), "psku_sku_mapped and stock_summary_history, 13 Oct · POs ETA before 31 Dec at 80% fill · WoC vs Dec '25 retail units (19.3K a week)")}
   <ul class="tight">
-    <li><b>503K retail units available</b> (262K on hand + 241K from POs at 80% fill) = <b>AED 53.2M</b> at retail, 3.0x November's retail need. 91% of PO units land before 1 Nov.</li>
-    <li><b>Plan case: sell 275K retail units in November and close the year at 117K (6.0 WoC).</b> AED 17.9M retail at ASP AED 65. October is running at AED 97; ASP fell 27% from October to November in 2024 and 36% in 2025, which points to 62–71. Rest of October at the 7–13 Oct run-rate of 1.8K units a day: 35K units. December at −10% vs LY: 77K units. Range: 103K at ASP 62 to 140K at ASP 71. At last November's ASP of 53.3 it would take 336K units and close at 56K.</li>
-    <li><b>The risk is running out of stock, not overstock.</b> NYX and Make Up For Ever cover their November need only 1.1x.</li>
+    <li><b>517K retail units available</b> (263K on hand + 254K from POs at 80% fill) = <b>AED 54.1M</b> at retail, 3.0x November's retail need. 90% of PO units land before 1 Nov.</li>
+    <li><b>Plan case: sell 275K retail units in November and close the year at 132K (6.9 WoC).</b> AED 17.9M retail at ASP AED 65. October is running at AED 97; ASP fell 27% from October to November in 2024 and 36% in 2025, which points to 62–71. Rest of October (14–31 Oct) at the 7–13 Oct run-rate of 1.8K units a day: 33K units. December at −10% vs LY: 77K units. Range: 119K at ASP 62 to 156K at ASP 71. At last November's ASP of 53.3 it would take 336K units and close at 72K.</li>
+    <li><b>The risk is running out of stock, not overstock.</b> Make Up For Ever covers its November need only 1.0x and NYX 1.2x (stock plus 80% of POs vs Nov '25 units +25%).</li>
   </ul>
-  <p class="note">Method: retail GMV only. Sales from 13 Oct to 31 Dec = LY retail GMV × TY trend ÷ TY retail ASP; Plan case: 13–31 Oct = 7–13 Oct retail units per day × 19; November = retail target ÷ ASP 65; December −10% vs LY units (387K units 13 Oct – 31 Dec). PO SKUs with no live price are valued at cost × 1.35.</p>
+  <p class="note">Method: retail GMV only. Sales from 14 Oct to 31 Dec = LY retail GMV × TY trend ÷ TY retail ASP; Plan case: 14–31 Oct = 7–13 Oct retail units per day × 18; November = retail target ÷ ASP 65; December −10% vs LY units (385K units 14 Oct – 31 Dec). PO SKUs with no live price are valued at cost × 1.35.</p>
 </section>
 
 <section id="health">
@@ -549,14 +546,14 @@ page = f"""<title>Beauty November '26 Strategy</title>
   <p class="kick"><b>{share["high"] * 100:.0f}% of top-15 retail GMV sits in High-risk brands.</b> Buckets are set on post-July trends vs LY and current weeks of cover.</p>
   {bar3}
   {buckets}
-  {fig("High-risk brands are 25–50% behind LY since July and sit on 20+ weeks of cover", "Retail top 15. GMV since July vs LY (x) and current WoC on last-45-day sales (y). Bubble size = GMV since July.", chart_risk(), "sales_metrics, psku_sku_mapped · 1 Jul – 12 Oct 2026 vs 2025", [("Stable", "--good-f"), ("Mid risk", "--warn-f"), ("High risk", "--bad-f")])}
+  {fig("High-risk brands are 34–51% behind LY since July and sit on 24+ weeks of cover", "Retail top 15. GMV since July vs LY (x) and current WoC on last-45-day sales (y). Bubble size = GMV since July.", chart_risk(), "sales_metrics, psku_sku_mapped · 1 Jul – 13 Oct 2026 vs 2025", [("Stable", "--good-f"), ("Mid risk", "--warn-f"), ("High risk", "--bad-f")])}
   <h3>Retail · top 15</h3>
   {tbl(["Brand", "Bucket", "YTD GMV (M)", "YoY", "Oct GMV (K)", "YoY", "YTD PC1", "YoY", "Oct PC1", "YoY", "Nov '25 MKD", "Nov '24 MKD", "WoC now", "Fwd WoC", "Retail value now (M)", "Fwd retail value (M)"], retail_rows, "num")}
   <h3>MP · top 5</h3>
   {tbl(["Brand", "Bucket", "YTD GMV (M)", "YoY", "Oct GMV (K)", "YoY", "YTD PC1", "YoY", "Oct PC1", "YoY", "Nov '25 MKD", "Nov '24 MKD"], mp_rows, "num")}
   <h3>Post-July funnel vs LY: the evidence behind each bucket</h3>
   {tbl(["Brand", "Bucket", "GMV", "Impressions", "CTR", "UCR", "WoC now"], funnel_rows, "num")}
-  <p class="note">YTD = 1 Jan – 12 Oct; Oct = 1–12 Oct. PC1 is before rebates (pc1_gross / rev_gross); YoY in points. MKD = markdown as a share of full price. WoC now = stock on 12 Oct ÷ average weekly retail units over the last 45 days; Fwd WoC adds 80% of open POs. Louzan, Laverne and Bath &amp; Body Works are new in 2026.</p>
+  <p class="note">YTD = 1 Jan – 13 Oct; Oct = 1–13 Oct. PC1 is before rebates (pc1_gross / rev_gross); YoY in points. MKD = markdown as a share of full price. WoC now = stock on 13 Oct ÷ average weekly retail units over the last 45 days; Fwd WoC adds 80% of open POs. Louzan, Laverne and Bath &amp; Body Works are new in 2026.</p>
 </section>
 
 <section id="themes">
@@ -585,12 +582,12 @@ page = f"""<title>Beauty November '26 Strategy</title>
     <li>Official November daily targets in the planning table (Planning)</li>
     <li>EBITDA BP assumption for November (Finance)</li>
     <li>Share of promo funded by each brand, TY / LY / LLY (Brand Partnerships)</li>
-    <li>BP vs non-BP brand list, to split the 593M impressions (Onsite)</li>
+    <li>BP vs non-BP brand list, to split the 592M impressions (Onsite)</li>
     <li>DM and CRM budget amount (Marketing)</li>
   </ul>
 </section>
 
-<footer><span>Beauty Pulse · November '26 Strategy</span><span>Sources: sales_metrics, onsite_measures, psku_sku_mapped, stock_summary_history, po_expected_received_union, rebate_income · as of 12 Oct 2026</span></footer>
+<footer><span>Beauty Pulse · November '26 Strategy</span><span>Sources: sales_metrics, onsite_measures, psku_sku_mapped, stock_summary_history, po_expected_received_union, rebate_income · as of 13 Oct 2026</span></footer>
 </div>
 """
 OUT.parent.mkdir(parents=True, exist_ok=True)

@@ -1,4 +1,4 @@
--- Beauty · Nov '26 strategy · queries run 13 Oct 2026 (billing project noonprd-nm-analytics-ai)
+-- Beauty · Nov '26 strategy · queries run 13 Oct 2026, refreshed 14 Oct to 13 Oct data (see refresh_13oct.py) · billing project noonprd-nm-analytics-ai
 
 -- 1. Monthly Beauty GMV / PC1 / markdown, Jan 2024 to date
 WITH sk AS (SELECT sku FROM `noonbinamshi.custom_views.item_d` WHERE business_unit='beauty' AND IFNULL(inventory_type,'')<>'samples & gwp' GROUP BY 1)

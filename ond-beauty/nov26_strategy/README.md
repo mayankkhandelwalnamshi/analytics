@@ -16,3 +16,4 @@ Retail stock = primary, live Namshi retail listings (partner 3001) in SA + AE. W
 - `nov_cohort_targets.py` – Nov '26 target split by cohort (Nov target not yet in the planning table; Oct target AED 8.62M is).
 - `brand_health.py` – brand health tables and risk buckets (retail top 15, MP top 5).
 - `ct_markdown_cap.py` – Charlotte Tilbury Nov markdown capped at 30% (55% LY): units lift interpolated between Nov '24 and Nov '25, effect on year-end WoC.
+- `refresh_13oct.py` – 14 Oct refresh to 13 Oct data: rebuilds page/health.json, stock/PO, year-end WoC scenarios and impressions.
