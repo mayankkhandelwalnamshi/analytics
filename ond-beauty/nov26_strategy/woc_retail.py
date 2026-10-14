@@ -69,3 +69,8 @@ for dl,lab in ((1.10,'+10%'),(0.90,'-10%')):
     for nm,a in (('ASP 65 (plan)',ASP26),('ASP 71',71.0),('ASP 62',62.0),('ASP 53.3',asp_ly)):
         nu=nov_ret6/a; sold=oct_r+nu+dd; ye=AV-sold
         print(f"[Dec {lab}] {nm:14s} Dec {dd:,.0f} sold {sold:,.0f} YE {ye:,.0f} WoC {ye/WK:4.2f}")
+# PLAN (14 Oct 2026, final): 13-31 Oct retail units = 7-13 Oct 2026 DRR (12,741 / 7 = 1,820 a day) x 19 days; Dec -10% vs LY.
+DRR = 12741/7; oct_drr = DRR*19; dec_m10 = LY['dec'][1]*0.90
+for nm,a in (('ASP 65 (plan)',ASP26),('ASP 71',71.0),('ASP 62',62.0),('ASP 53.3',asp_ly)):
+    nu=nov_ret6/a; sold=oct_drr+nu+dec_m10; ye=AV-sold
+    print(f"[Oct DRR] {nm:14s} Oct {oct_drr:,.0f} Nov {nu:,.0f} Dec {dec_m10:,.0f} = {sold:,.0f}  YE {ye:,.0f}  WoC {ye/WK:4.2f}")

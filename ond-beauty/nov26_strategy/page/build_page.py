@@ -119,7 +119,7 @@ def chart_cohorts():
 # ---------------------------------------------------------------- 3. year-end stock
 STOCK = [("End 2024", "actual", 399915, 20.9, "h"), ("End 2025", "actual", 393278, 20.4, "h"),
          ("Last-4-week trend", "retail GMV −30%", 241727, 12.5, "s"), ("October trend", "retail GMV −11%", 165601, 8.6, "s"),
-         ("Nov at target", "ASP 65 · Dec −10%", 109422, 5.7, "s")]
+         ("Nov at target", "ASP 65 · Dec −10%", 116806, 6.0, "s")]
 CAP = 193089
 
 
@@ -443,7 +443,7 @@ def fig(title, sub, body, src, legend=None):
 
 agenda = tbl(["TY agenda", "What it takes", "Where we start"], [
     ["<b>November GMV +25% vs LY</b><br><span class='muted'>AED 20.6M</span>", "AED 685K a day vs 548K LY. About 593M impressions (+46%): 499M retail, 93M MP.", f"1–12 Oct is {MINUS}7% YoY. Retail UCR has been 26% below LY since July."],
-    ["<b>Close 2026 under 10 WoC</b><br><span class='muted'>≤ 193K retail units</span>", "Sell 310K retail units from 13 Oct to 31 Dec.", "503K units available. Plan case closes at 109K (5.7 WoC); the risk is stock-outs."],
+    ["<b>Close 2026 under 10 WoC</b><br><span class='muted'>≤ 193K retail units</span>", "Sell 310K retail units from 13 Oct to 31 Dec.", "503K units available. Plan case closes at 117K (6.0 WoC); the risk is stock-outs."],
     ["<b>Protect the bottom line</b>", "Markdown at 40% or less. Push gift sets and launches (17–24% PC1).", f"Nov '25 PC1 was {MINUS}5.2% before rebates at 44% markdown."],
     ["<b>Win the event windows</b>", "Hero singles first half, then Black Friday. Keep the shoulders alive.", "Singles fell 26% LY; Black Friday held (+2%)."]])
 
@@ -538,10 +538,10 @@ page = f"""<title>Beauty November '26 Strategy</title>
   {fig("We close under the 193K cap if retail holds October's trend or hits the November target", "Year-end retail units. 2026 = 503K available, minus retail sales from 13 Oct to 31 Dec. Red: over the cap.", chart_stock(), "psku_sku_mapped and stock_summary_history, 12 Oct · POs ETA before 31 Dec at 80% fill · WoC vs Dec '25 retail units (19.3K a week)")}
   <ul class="tight">
     <li><b>503K retail units available</b> (262K on hand + 241K from POs at 80% fill) = <b>AED 53.2M</b> at retail, 3.0x November's retail need. 91% of PO units land before 1 Nov.</li>
-    <li><b>Plan case: sell 275K retail units in November and close the year at 109K (5.7 WoC).</b> AED 17.9M retail at ASP AED 65. October is running at AED 97; ASP fell 27% from October to November in 2024 and 36% in 2025, which points to 62–71. December at −10% vs LY: 77K units. Range: 96K at ASP 62 to 133K at ASP 71. At last November's ASP of 53.3 it would take 336K units and close at 49K.</li>
+    <li><b>Plan case: sell 275K retail units in November and close the year at 117K (6.0 WoC).</b> AED 17.9M retail at ASP AED 65. October is running at AED 97; ASP fell 27% from October to November in 2024 and 36% in 2025, which points to 62–71. Rest of October at the 7–13 Oct run-rate of 1.8K units a day: 35K units. December at −10% vs LY: 77K units. Range: 103K at ASP 62 to 140K at ASP 71. At last November's ASP of 53.3 it would take 336K units and close at 56K.</li>
     <li><b>The risk is running out of stock, not overstock.</b> NYX and Make Up For Ever cover their November need only 1.1x.</li>
   </ul>
-  <p class="note">Method: retail GMV only. Sales from 13 Oct to 31 Dec = LY retail GMV × TY trend ÷ TY retail ASP; Plan case: November = retail target ÷ ASP 65, December −10% vs LY units (394K units 13 Oct – 31 Dec). PO SKUs with no live price are valued at cost × 1.35.</p>
+  <p class="note">Method: retail GMV only. Sales from 13 Oct to 31 Dec = LY retail GMV × TY trend ÷ TY retail ASP; Plan case: 13–31 Oct = 7–13 Oct retail units per day × 19; November = retail target ÷ ASP 65; December −10% vs LY units (387K units 13 Oct – 31 Dec). PO SKUs with no live price are valued at cost × 1.35.</p>
 </section>
 
 <section id="health">
